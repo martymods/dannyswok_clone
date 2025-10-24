@@ -12,17 +12,286 @@
  * purposes.
  */
 
-// Define placeholder imagery to match the requested layout
-const placeholderImages = [
-  'https://i.imgur.com/kbpceNv.jpg',
-  'https://i.imgur.com/lYKUORL.jpg',
-  'https://i.imgur.com/AXAHrf6.jpg',
-  'https://i.imgur.com/YkDi8Nb.jpg',
-  'https://i.imgur.com/TAq7lDR.jpg',
-  'https://i.imgur.com/Aowufa1.jpg',
-  'https://i.imgur.com/DJlmZDJ.jpg',
-  'https://i.imgur.com/knnQm7e.jpg',
+// Define the library of menu photography that was supplied for this clone.
+// Each filename contains one or two dish names separated by casing.  We use
+// the names encoded in the filenames to pair menu entries with imagery.
+const fallbackImage = 'images/chinesemenu/store_interior.jpg';
+
+const menuImageSources = [
+  'images/chinesemenu/b-b-q_spare_rib_tips_w_fried_rice_Fried_Scallop_w_French_Fries.jpg',
+  'images/chinesemenu/beef_w_brocccoli_combo_Shrimp_w_Lobster_Sauce_Combo.jpg',
+  'images/chinesemenu/beef_w_broccoli_Pepper_Steak_w_Onion.jpg',
+  'images/chinesemenu/beef_w_mixed_vegetables_Beef_w_Snow_Peas.jpg',
+  'images/chinesemenu/beef_w_scallop_General_Tso_Chicken.jpg',
+  'images/chinesemenu/boneless_spare_ribs_Pu_Pu_Platter.jpg',
+  'images/chinesemenu/cheese_wonton_B-B-Q-Spare_Ribs.jpg',
+  'images/chinesemenu/chicken_chow_mein_combo_Roast_Pork_Egg_Foo_Young_Combo.jpg',
+  'images/chinesemenu/chicken_lo_mein_Beef_Lo_Mein.jpg',
+  'images/chinesemenu/chicken_w_garlic_sauce_combo_Shrimp_w_Broccoli_combo.jpg',
+  'images/chinesemenu/chicken_w_mixed_vegeteables_Curry_Chicken.jpg',
+  'images/chinesemenu/chow_san_shiu_Steamed_Shrimp_w_Mixed_Vegetables.jpg',
+  'images/chinesemenu/egg_drop_soup_Wonton_soup.jpg',
+  'images/chinesemenu/four_season_Shrimp_Beef_w_Garlic_Sauce.jpg',
+  'images/chinesemenu/fried_chicken_wings_w_fried_rice_Fried_Crab_Meat_Sticks_w_French_Fries.jpg',
+  'images/chinesemenu/fried_jumbo_shrimp_w_fried_rice_Fried_Baby_Shrimp_w_French_Fries.jpg',
+  'images/chinesemenu/fried_onion_rings_Egg_Roll.jpg',
+  'images/chinesemenu/home_style_bean_curd_Mixed_Vegetabless.jpg',
+  'images/chinesemenu/hot_sour_soup_House_Special_Soup.jpg',
+  'images/chinesemenu/house_special_fried_rice_Shrimp_Fried_Rice.jpg',
+  'images/chinesemenu/hunan_beef_Shredded_Beef_Szechuan_Style.jpg',
+  'images/chinesemenu/kung_pao_chihcken_Chicken_w_Garlic_Sauce.jpg',
+  'images/chinesemenu/ma_po_to_fu_Broccoli_w_Garlic_Sauce.jpg',
+  'images/chinesemenu/mongolian_beed_Triple_Delight.jpg',
+  'images/chinesemenu/moo_goo_gai_pan_Chicken_w_Broccoli.jpg',
+  'images/chinesemenu/moo_goo_gai_pan_combo_Pepper_Steak_w_Onion_Combo.jpg',
+  'images/chinesemenu/orange_chicken_Sesame_Chicken.jpg',
+  'images/chinesemenu/party_tray_buffalo_wings.jpg',
+  'images/chinesemenu/party_tray_chicken_w_broccoli.jpg',
+  'images/chinesemenu/party_tray_chicken_wing.jpg',
+  'images/chinesemenu/party_tray_chicken_wings.jpg',
+  'images/chinesemenu/party_tray_fried_rice.jpg',
+  'images/chinesemenu/party_tray_gerenral_tso_chicken.jpg',
+  'images/chinesemenu/party_tray_shrimp_fried_rice.jpg',
+  'images/chinesemenu/party_tray_shrimp_lo_mein.jpg',
+  'images/chinesemenu/party_tray_spring_roll.jpg',
+  'images/chinesemenu/party_tray_vegetable_lo_mein.jpg',
+  'images/chinesemenu/pork_fried_rice_Beef_Fried_Rice.jpg',
+  'images/chinesemenu/roast_pork_w_chinese_vegetables_combo_B-B-Q_Spare_Ribs_Combo.jpg',
+  'images/chinesemenu/roast_pork_w_chinses_Vegetables_Roast_Pork_w_Snow_Peas.jpg',
+  'images/chinesemenu/seafood_combination_Happy_Family.jpg',
+  'images/chinesemenu/shrimp_chow_mein_Chicken_Chow_Mein.jpg',
+  'images/chinesemenu/shrimp_lo_mein_House_Special_Lo_Mein.jpg',
+  'images/chinesemenu/shrimp_mei_fun_Singapore_Mei_Fun.jpg',
+  'images/chinesemenu/shrimp_szechuan_shrimp_Shrimp_w_Garlic_Sauce.jpg',
+  'images/chinesemenu/shrimp_w_lobster_sauce_Shrimp_w_Chinese_Vegeteable.jpg',
+  'images/chinesemenu/shrimp_w_mixed_Vegetable_Shrimp_w_Snow_Pea.jpg',
+  'images/chinesemenu/steamed_scallop_shrimp_w_mixed_vegetables_Steamed_Checken_w_Broccoli.jpg',
+  'images/chinesemenu/store_interior.jpg',
+  'images/chinesemenu/store_interior2.jpg',
+  'images/chinesemenu/store_interior3.jpg',
+  'images/chinesemenu/sweet_sour_shrimp_Sweet_Sour_Chicken.jpg',
+  'images/chinesemenu/vegetable_lo_mein_Pork_Lo_Mein.jpg',
 ];
+
+const TOKEN_STOP_WORDS = new Set([
+  'w',
+  'with',
+  'and',
+  'in',
+  'on',
+  'style',
+  'sauce',
+  'special',
+  'combo',
+  'dinner',
+  'lunch',
+  'pt',
+  'pc',
+  'pcs',
+  'qt',
+  'platter',
+  'bowl',
+  'no',
+  'veggie',
+  'stick',
+  'sticks',
+  'young',
+  'foo',
+]);
+
+const TOKEN_REPLACEMENTS = {
+  tsos: 'tso',
+  tso: 'tso',
+  chihcken: 'chicken',
+  checken: 'chicken',
+  beed: 'beef',
+  gerenral: 'general',
+  vegetabless: 'vegetable',
+  vegeteable: 'vegetable',
+  vegeteables: 'vegetable',
+  chinses: 'chinese',
+  mixed: 'mixed',
+};
+
+function sanitizeKey(text) {
+  return text
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/\./g, '')
+    .replace(/'/g, '')
+    .replace(/\(/g, '')
+    .replace(/\)/g, '')
+    .replace(/\//g, ' ')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function normalizeToken(token) {
+  const replaced = TOKEN_REPLACEMENTS[token] || token;
+  if (replaced.endsWith('ies') && replaced.length > 3) {
+    return replaced.slice(0, -3) + 'y';
+  }
+  if (replaced.endsWith('s') && replaced.length > 3) {
+    return replaced.slice(0, -1);
+  }
+  return replaced;
+}
+
+function extractTokens(text) {
+  return text
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/\./g, '')
+    .replace(/'/g, '')
+    .replace(/\(/g, '')
+    .replace(/\)/g, '')
+    .replace(/\//g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter((token) => token && !TOKEN_STOP_WORDS.has(token) && !/^\d+$/.test(token))
+    .map(normalizeToken);
+}
+
+function buildImageEntries() {
+  const entries = [];
+  menuImageSources.forEach((src) => {
+    const fileName = src.substring(src.lastIndexOf('/') + 1, src.length - 4);
+    const upperIndex = fileName.search(/[A-Z]/);
+    const parts = upperIndex === -1
+      ? [fileName]
+      : [
+          fileName.slice(0, upperIndex).replace(/_+$/, ''),
+          fileName.slice(upperIndex).replace(/^_+/, ''),
+        ];
+    parts.forEach((part) => {
+      const tokens = Array.from(new Set(extractTokens(part.replace(/_/g, ' '))));
+      if (tokens.length) {
+        entries.push({ src, tokens: new Set(tokens) });
+      }
+    });
+  });
+  return entries;
+}
+
+const imageEntries = buildImageEntries();
+
+const manualImageMap = {
+  bbq_boneless_ribs: 'images/chinesemenu/boneless_spare_ribs_Pu_Pu_Platter.jpg',
+  bbq_ribs: 'images/chinesemenu/boneless_spare_ribs_Pu_Pu_Platter.jpg',
+  beef_bean_curd_with_black_pepper_sauce: 'images/chinesemenu/home_style_bean_curd_Mixed_Vegetabless.jpg',
+  beef_fried_rice: 'images/chinesemenu/pork_fried_rice_Beef_Fried_Rice.jpg',
+  beef_string_bean_black_bean_sauce: 'images/chinesemenu/home_style_bean_curd_Mixed_Vegetabless.jpg',
+  beef_yat_w_vegetables: 'images/chinesemenu/beef_w_mixed_vegetables_Beef_w_Snow_Peas.jpg',
+  brown_rice_no_veggie: 'images/chinesemenu/party_tray_fried_rice.jpg',
+  chicken_bean_curd_black_pepper_sauce: 'images/chinesemenu/home_style_bean_curd_Mixed_Vegetabless.jpg',
+  chicken_broth: 'images/chinesemenu/hot_sour_soup_House_Special_Soup.jpg',
+  chicken_fried_rice: 'images/chinesemenu/house_special_fried_rice_Shrimp_Fried_Rice.jpg',
+  chicken_noodle_soup: 'images/chinesemenu/hot_sour_soup_House_Special_Soup.jpg',
+  chicken_rice_soup: 'images/chinesemenu/egg_drop_soup_Wonton_soup.jpg',
+  chicken_teriyaki_on_stick_4: 'images/chinesemenu/party_tray_chicken_wing.jpg',
+  chicken_w_black_pepper_sauce: 'images/chinesemenu/moo_goo_gai_pan_combo_Pepper_Steak_w_Onion_Combo.jpg',
+  chicken_w_cashew_nuts: 'images/chinesemenu/kung_pao_chihcken_Chicken_w_Garlic_Sauce.jpg',
+  chicken_w_garlic_sauce_combo: 'images/chinesemenu/chicken_w_garlic_sauce_combo_Shrimp_w_Broccoli_combo.jpg',
+  chicken_w_string_bean_black_bean_sauce: 'images/chinesemenu/home_style_bean_curd_Mixed_Vegetabless.jpg',
+  chicken_w_vegetable_soup: 'images/chinesemenu/chow_san_shiu_Steamed_Shrimp_w_Mixed_Vegetables.jpg',
+  chicken_yat_w_vegetables: 'images/chinesemenu/chicken_w_mixed_vegeteables_Curry_Chicken.jpg',
+  curry_shrimp_with_onion: 'images/chinesemenu/chicken_w_mixed_vegeteables_Curry_Chicken.jpg',
+  dannys_special: 'images/chinesemenu/party_tray_buffalo_wings.jpg',
+  fried_chicken_gizzards: 'images/chinesemenu/fried_chicken_wings_w_fried_rice_Fried_Crab_Meat_Sticks_w_French_Fries.jpg',
+  fried_chicken_tenders_4pcs: 'images/chinesemenu/fried_chicken_wings_w_fried_rice_Fried_Crab_Meat_Sticks_w_French_Fries.jpg',
+  fried_chicken_wings_4pcs: 'images/chinesemenu/fried_chicken_wings_w_fried_rice_Fried_Crab_Meat_Sticks_w_French_Fries.jpg',
+  fried_crab_rangoon_10: 'images/chinesemenu/cheese_wonton_B-B-Q-Spare_Ribs.jpg',
+  fried_crab_sticks_4pcs: 'images/chinesemenu/fried_chicken_wings_w_fried_rice_Fried_Crab_Meat_Sticks_w_French_Fries.jpg',
+  fried_fish_2pcs: 'images/chinesemenu/fried_jumbo_shrimp_w_fried_rice_Fried_Baby_Shrimp_w_French_Fries.jpg',
+  fried_jumbo_shrimp_5pcs: 'images/chinesemenu/fried_jumbo_shrimp_w_fried_rice_Fried_Baby_Shrimp_w_French_Fries.jpg',
+  fried_pork_wonton_10: 'images/chinesemenu/cheese_wonton_B-B-Q-Spare_Ribs.jpg',
+  fried_scallops_10pcs: 'images/chinesemenu/b-b-q_spare_rib_tips_w_fried_rice_Fried_Scallop_w_French_Fries.jpg',
+  fried_shrimp_basket_15pc: 'images/chinesemenu/fried_jumbo_shrimp_w_fried_rice_Fried_Baby_Shrimp_w_French_Fries.jpg',
+  fried_tofu_in_japanese_style: 'images/chinesemenu/home_style_bean_curd_Mixed_Vegetabless.jpg',
+  fried_steamed_dumpling_8: 'images/chinesemenu/chicken_chow_mein_combo_Roast_Pork_Egg_Foo_Young_Combo.jpg',
+  fried_steamed_pork_dumplings_8: 'images/chinesemenu/pork_fried_rice_Beef_Fried_Rice.jpg',
+  fried_steamed_shrimp_dumpling_8: 'images/chinesemenu/chow_san_shiu_Steamed_Shrimp_w_Mixed_Vegetables.jpg',
+  french_fries: 'images/chinesemenu/b-b-q_spare_rib_tips_w_fried_rice_Fried_Scallop_w_French_Fries.jpg',
+  general_taos_tofu: 'images/chinesemenu/beef_w_scallop_General_Tso_Chicken.jpg',
+  general_tsos_tofu: 'images/chinesemenu/beef_w_scallop_General_Tso_Chicken.jpg',
+  general_tsos_shrimp: 'images/chinesemenu/party_tray_gerenral_tso_chicken.jpg',
+  gyoza_8: 'images/chinesemenu/chicken_chow_mein_combo_Roast_Pork_Egg_Foo_Young_Combo.jpg',
+  home_style_tofu: 'images/chinesemenu/home_style_bean_curd_Mixed_Vegetabless.jpg',
+  house_fried_rice: 'images/chinesemenu/house_special_fried_rice_Shrimp_Fried_Rice.jpg',
+  hunan_triple_crown: 'images/chinesemenu/hunan_beef_Shredded_Beef_Szechuan_Style.jpg',
+  pan_fried_wonton_w_garlic_sauce: 'images/chinesemenu/chicken_w_garlic_sauce_combo_Shrimp_w_Broccoli_combo.jpg',
+  pepper_steak_w_onion_combo: 'images/chinesemenu/moo_goo_gai_pan_combo_Pepper_Steak_w_Onion_Combo.jpg',
+  phoenix_and_dragon: 'images/chinesemenu/seafood_combination_Happy_Family.jpg',
+  pineapple_fried_rice: 'images/chinesemenu/house_special_fried_rice_Shrimp_Fried_Rice.jpg',
+  plain_fried_rice_no_veggie: 'images/chinesemenu/party_tray_fried_rice.jpg',
+  plain_yat_w_onion: 'images/chinesemenu/moo_goo_gai_pan_combo_Pepper_Steak_w_Onion_Combo.jpg',
+  pork_fried_rice: 'images/chinesemenu/pork_fried_rice_Beef_Fried_Rice.jpg',
+  pork_yat_w_onion: 'images/chinesemenu/moo_goo_gai_pan_combo_Pepper_Steak_w_Onion_Combo.jpg',
+  seafood_soup: 'images/chinesemenu/seafood_combination_Happy_Family.jpg',
+  shrimp_teriyaki_on_stick_4: 'images/chinesemenu/party_tray_shrimp_lo_mein.jpg',
+  shrimp_with_black_bean_sauce: 'images/chinesemenu/chow_san_shiu_Steamed_Shrimp_w_Mixed_Vegetables.jpg',
+  shrimp_w_cashew_nuts: 'images/chinesemenu/shrimp_szechuan_shrimp_Shrimp_w_Garlic_Sauce.jpg',
+  shrimp_w_mixed_veg: 'images/chinesemenu/shrimp_w_mixed_Vegetable_Shrimp_w_Snow_Pea.jpg',
+  shrimp_yat_w_vegetables: 'images/chinesemenu/chow_san_shiu_Steamed_Shrimp_w_Mixed_Vegetables.jpg',
+  spare_rib_tips_pt: 'images/chinesemenu/b-b-q_spare_rib_tips_w_fried_rice_Fried_Scallop_w_French_Fries.jpg',
+  spring_roll_3: 'images/chinesemenu/party_tray_spring_roll.jpg',
+  steak_egg_roll: 'images/chinesemenu/fried_onion_rings_Egg_Roll.jpg',
+  teriyaki_chicken_and_noodle: 'images/chinesemenu/chicken_lo_mein_Beef_Lo_Mein.jpg',
+  vegetable_egg_roll_1: 'images/chinesemenu/fried_onion_rings_Egg_Roll.jpg',
+  vegetable_fried_rice: 'images/chinesemenu/party_tray_vegetable_lo_mein.jpg',
+  vegetable_mei_fun_ho_fun_no_egg: 'images/chinesemenu/party_tray_vegetable_lo_mein.jpg',
+  white_rice: 'images/chinesemenu/party_tray_fried_rice.jpg',
+  yang_chow_fried_rice: 'images/chinesemenu/house_special_fried_rice_Shrimp_Fried_Rice.jpg',
+  fried_chicken_wings_w_fried_rice: 'images/chinesemenu/fried_chicken_wings_w_fried_rice_Fried_Crab_Meat_Sticks_w_French_Fries.jpg',
+  fried_crab_meat_sticks_w_french_fries: 'images/chinesemenu/fried_chicken_wings_w_fried_rice_Fried_Crab_Meat_Sticks_w_French_Fries.jpg',
+  fried_scallop_w_french_fries: 'images/chinesemenu/b-b-q_spare_rib_tips_w_fried_rice_Fried_Scallop_w_French_Fries.jpg',
+  shrimp_fried_rice: 'images/chinesemenu/house_special_fried_rice_Shrimp_Fried_Rice.jpg',
+  house_special_soup: 'images/chinesemenu/hot_sour_soup_House_Special_Soup.jpg',
+  shrimp_w_broccoli_combo: 'images/chinesemenu/chicken_w_garlic_sauce_combo_Shrimp_w_Broccoli_combo.jpg',
+  chicken_w_garlic_sauce_combo: 'images/chinesemenu/chicken_w_garlic_sauce_combo_Shrimp_w_Broccoli_combo.jpg',
+  '4_chicken_wings': 'images/chinesemenu/party_tray_chicken_wings.jpg',
+  '8_chicken_wings': 'images/chinesemenu/party_tray_chicken_wings.jpg',
+  '12_chicken_wings': 'images/chinesemenu/party_tray_chicken_wings.jpg',
+  '16_chicken_wings': 'images/chinesemenu/party_tray_chicken_wings.jpg',
+  '20_chicken_wings': 'images/chinesemenu/party_tray_chicken_wings.jpg',
+  '12_wing_dings': 'images/chinesemenu/party_tray_chicken_wings.jpg',
+  '20_wing_dings': 'images/chinesemenu/party_tray_chicken_wings.jpg',
+  '30_wing_dings': 'images/chinesemenu/party_tray_chicken_wings.jpg',
+  '50_wing_dings': 'images/chinesemenu/party_tray_chicken_wings.jpg',
+  '100_wing_dings': 'images/chinesemenu/party_tray_chicken_wings.jpg',
+};
+
+function findImageForItem(name) {
+  const key = sanitizeKey(name);
+  if (manualImageMap[key]) {
+    return manualImageMap[key];
+  }
+  const itemTokens = Array.from(new Set(extractTokens(name)));
+  if (!itemTokens.length) {
+    return null;
+  }
+  let bestMatch = null;
+  imageEntries.forEach((entry) => {
+    let shared = 0;
+    itemTokens.forEach((token) => {
+      if (entry.tokens.has(token)) {
+        shared += 1;
+      }
+    });
+    if (!shared) {
+      return;
+    }
+    const coverage = shared / itemTokens.length;
+    if (!bestMatch || coverage > bestMatch.coverage || (coverage === bestMatch.coverage && shared > bestMatch.shared)) {
+      bestMatch = { src: entry.src, coverage, shared };
+    }
+  });
+  if (bestMatch && bestMatch.coverage >= 0.5) {
+    return bestMatch.src;
+  }
+  return null;
+}
 
 const categoryDescriptions = {
   american: 'Golden fried favourites, wings and ribs cooked the Danny\'s way.',
@@ -417,8 +686,8 @@ function renderMenu() {
       singleMenu.classList.add('single_menu');
 
       const img = document.createElement('img');
-      const imageIndex = (catIndex + itemIndex) % placeholderImages.length;
-      img.src = placeholderImages[imageIndex];
+      const matchedImage = findImageForItem(item.name);
+      img.src = matchedImage || fallbackImage;
       img.alt = item.name;
 
       const content = document.createElement('div');
