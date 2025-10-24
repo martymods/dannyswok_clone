@@ -2,14 +2,8 @@
  * script.js
  *
  * This file contains all of the client side logic for the Danny's Wok clone.
- * It renders the menu on the page, manages a simple shopping cart and
- * integrates with Stripe's Payment Request API to offer Apple Pay and other
- * express checkout options.  To use this integration you will need to
- * replace the placeholder publishable key with your own and implement
- * server‑side code to create PaymentIntent objects.  Without a backend the
- * payment button will not complete a transaction but it will still display
- * the Apple Pay / Google Pay sheet on supported devices for demonstration
- * purposes.
+ * It renders the menu on the page, manages a shopping cart and powers a
+ * guided checkout experience for pickup or delivery orders.
  */
 
 // Define the library of menu photography that was supplied for this clone.
@@ -621,6 +615,31 @@ const menuData = [
 // duplicates.
 const cart = {};
 
+function calculateCartTotals() {
+  let total = 0;
+  let count = 0;
+  Object.values(cart).forEach((item) => {
+    total += item.price * item.quantity;
+    count += item.quantity;
+  });
+  return { total, count };
+}
+
+function updateItemQuantity(id, quantity) {
+  const numericQuantity = Number(quantity);
+  if (!Number.isFinite(numericQuantity)) {
+    return;
+  }
+  if (numericQuantity <= 0) {
+    removeFromCart(id);
+    return;
+  }
+  if (cart[id]) {
+    cart[id].quantity = Math.floor(numericQuantity);
+    updateCart();
+  }
+}
+
 // Utility: activate a tab by id
 function activateTab(targetId) {
   const links = document.querySelectorAll('#menuTab .nav-link');
@@ -745,19 +764,21 @@ function removeFromCart(id) {
 // Update the cart display and totals
 function updateCart() {
   const cartItemsContainer = document.getElementById('cart-items');
+  const emptyState = document.getElementById('cart-empty');
   if (!cartItemsContainer) {
     return;
   }
   cartItemsContainer.innerHTML = '';
-  let total = 0;
-  Object.keys(cart).forEach((id) => {
+  const { total, count } = calculateCartTotals();
+  const entries = Object.keys(cart);
+  cartItemsContainer.style.display = entries.length ? 'block' : 'none';
+  entries.forEach((id) => {
     const item = cart[id];
     const li = document.createElement('li');
     const nameSpan = document.createElement('span');
     nameSpan.textContent = `${item.quantity}× ${item.name}`;
     const priceSpan = document.createElement('span');
     const itemTotal = item.price * item.quantity;
-    total += itemTotal;
     priceSpan.textContent = `$${itemTotal.toFixed(2)}`;
     li.appendChild(nameSpan);
     li.appendChild(priceSpan);
@@ -772,62 +793,160 @@ function updateCart() {
     totalEl.textContent = `Total: $${total.toFixed(2)}`;
   }
 
-  // Update the payment request total if the paymentRequest exists
-  if (window.paymentRequest) {
-    window.paymentRequest.update({
-      total: { label: 'Total', amount: Math.round(total * 100) },
-      displayItems: Object.keys(cart).map((id) => ({
-        label: `${cart[id].quantity}× ${cart[id].name}`,
-        amount: Math.round(cart[id].price * cart[id].quantity * 100),
-      })),
-    });
+  if (emptyState) {
+    emptyState.style.display = entries.length ? 'none' : 'block';
+  }
+
+  const cartCountEl = document.getElementById('cart-count');
+  if (cartCountEl) {
+    cartCountEl.textContent = count;
+  }
+
+  const checkoutButton = document.getElementById('checkout-button');
+  if (checkoutButton) {
+    checkoutButton.disabled = entries.length === 0;
+  }
+
+  updateCheckoutView();
+}
+
+function toggleDeliveryFields(isDelivery) {
+  const deliveryFields = document.getElementById('delivery-fields');
+  if (!deliveryFields) {
+    return;
+  }
+  deliveryFields.classList.toggle('hidden', !isDelivery);
+}
+
+function toggleCheckoutPanel(open) {
+  const checkoutPanel = document.getElementById('checkout-panel');
+  if (!checkoutPanel) {
+    return;
+  }
+  checkoutPanel.classList.toggle('hidden', !open);
+  checkoutPanel.setAttribute('aria-hidden', String(!open));
+  if (open) {
+    updateCheckoutView();
+    const panelTop = checkoutPanel.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top: panelTop - 16, behavior: 'smooth' });
   }
 }
 
-// Initialize Stripe Payment Request.  Replace the publishable key below with
-// your Stripe key.  You will also need to implement server side code to
-// create PaymentIntent objects in order to complete a payment.  See:
-// https://stripe.com/docs/payments/payment-request-api for details.
-async function initPaymentRequest(total = 0) {
-  if (!window.Stripe) {
+function updateCheckoutView() {
+  const checkoutItems = document.getElementById('checkout-items');
+  const checkoutTotal = document.getElementById('checkout-total-amount');
+  const placeOrderBtn = document.getElementById('place-order');
+  if (!checkoutItems || !checkoutTotal) {
     return;
   }
-  const stripe = Stripe('pk_test_REPLACE_WITH_YOUR_PUBLISHABLE_KEY');
-  const paymentRequest = stripe.paymentRequest({
-    country: 'US',
-    currency: 'usd',
-    total: {
-      label: 'Total',
-      amount: Math.round(total * 100),
-    },
-    requestPayerName: true,
-    requestPayerEmail: true,
-  });
-  window.paymentRequest = paymentRequest;
-  const elements = stripe.elements();
-  const prButton = elements.create('paymentRequestButton', { paymentRequest });
-  const result = await paymentRequest.canMakePayment();
-  if (result) {
-    prButton.mount('#payment-request-button');
-  } else {
-    document.getElementById('payment-request-button').style.display = 'none';
+  checkoutItems.innerHTML = '';
+  const entries = Object.keys(cart);
+  if (!entries.length) {
+    const empty = document.createElement('p');
+    empty.classList.add('cart-empty');
+    empty.textContent = 'Add a few dishes to begin your order.';
+    checkoutItems.appendChild(empty);
+    checkoutTotal.textContent = '$0.00';
+    if (placeOrderBtn) {
+      placeOrderBtn.disabled = true;
+    }
+    return;
   }
-  paymentRequest.on('paymentmethod', async (ev) => {
-    // This is where you would create a PaymentIntent on your server
-    // and call ev.complete('success') or ev.complete('fail').  For now
-    // we simply thank the customer and reset the cart.
-    alert('Payment request received. Implement server side processing to handle payment.');
-    ev.complete('success');
-    Object.keys(cart).forEach((id) => delete cart[id]);
-    updateCart();
+  if (placeOrderBtn) {
+    placeOrderBtn.disabled = false;
+  }
+  entries.forEach((id) => {
+    const item = cart[id];
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('checkout-item');
+
+    const image = document.createElement('img');
+    image.src = findImageForItem(item.name) || fallbackImage;
+    image.alt = item.name;
+
+    const details = document.createElement('div');
+    details.classList.add('checkout-item-details');
+    const title = document.createElement('h4');
+    title.textContent = item.name;
+    const price = document.createElement('span');
+    price.textContent = `$${item.price.toFixed(2)} each`;
+    details.appendChild(title);
+    details.appendChild(price);
+
+    const quantity = document.createElement('div');
+    quantity.classList.add('checkout-quantity');
+    const controls = document.createElement('div');
+    controls.classList.add('quantity-controls');
+
+    const minusBtn = document.createElement('button');
+    minusBtn.type = 'button';
+    minusBtn.textContent = '–';
+    minusBtn.addEventListener('click', () => updateItemQuantity(id, item.quantity - 1));
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '1';
+    input.value = item.quantity;
+    input.addEventListener('change', (event) => {
+      updateItemQuantity(id, event.target.value);
+      event.target.value = cart[id] ? cart[id].quantity : 0;
+    });
+
+    const plusBtn = document.createElement('button');
+    plusBtn.type = 'button';
+    plusBtn.textContent = '+';
+    plusBtn.addEventListener('click', () => updateItemQuantity(id, item.quantity + 1));
+
+    controls.appendChild(minusBtn);
+    controls.appendChild(input);
+    controls.appendChild(plusBtn);
+
+    const itemTotal = document.createElement('div');
+    itemTotal.classList.add('checkout-item-total');
+    itemTotal.textContent = `$${(item.price * item.quantity).toFixed(2)}`;
+
+    quantity.appendChild(controls);
+    quantity.appendChild(itemTotal);
+
+    wrapper.appendChild(image);
+    wrapper.appendChild(details);
+    wrapper.appendChild(quantity);
+    checkoutItems.appendChild(wrapper);
   });
+
+  const { total } = calculateCartTotals();
+  checkoutTotal.textContent = `$${total.toFixed(2)}`;
 }
 
 // Kick off the rendering once the DOM has loaded
 document.addEventListener('DOMContentLoaded', () => {
   renderMenu();
   updateCart();
-  // Initialize payment request with a zero total; it will be updated when items
-  // are added to the cart.
-  initPaymentRequest(0);
+  const checkoutButton = document.getElementById('checkout-button');
+  if (checkoutButton) {
+    checkoutButton.addEventListener('click', () => toggleCheckoutPanel(true));
+  }
+  const closeCheckout = document.getElementById('close-checkout');
+  if (closeCheckout) {
+    closeCheckout.addEventListener('click', () => toggleCheckoutPanel(false));
+  }
+  const pickup = document.getElementById('fulfilment-pickup');
+  const delivery = document.getElementById('fulfilment-delivery');
+  if (pickup && delivery) {
+    pickup.addEventListener('change', () => toggleDeliveryFields(false));
+    delivery.addEventListener('change', () => toggleDeliveryFields(true));
+    toggleDeliveryFields(delivery.checked);
+  }
+  const placeOrderBtn = document.getElementById('place-order');
+  if (placeOrderBtn) {
+    placeOrderBtn.addEventListener('click', () => {
+      const { count } = calculateCartTotals();
+      if (!count) {
+        alert('Add items to your cart before placing an order.');
+        return;
+      }
+      const fulfilment = delivery && delivery.checked ? 'Delivery' : 'Pickup';
+      alert(`Order placed for ${fulfilment}. This demo does not submit the order.`);
+    });
+  }
 });
