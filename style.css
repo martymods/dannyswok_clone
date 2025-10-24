@@ -23,6 +23,10 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+.is-hidden {
+  display: none !important;
+}
+
 header {
   background-color: #fff;
   border-bottom: 1px solid #e5e5e5;
