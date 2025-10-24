@@ -610,9 +610,9 @@ const menuData = [
   },
 ];
 
-// Cart state.  Each entry in the cart contains an item id, name, quantity and
-// price.  We track unique ids to update quantities rather than adding
-// duplicates.
+// Cart state.  Each entry in the cart contains an item id, name, quantity,
+// price and any special instructions entered during checkout.  We track
+// unique ids to update quantities rather than adding duplicates.
 const cart = {};
 
 function calculateCartTotals() {
@@ -750,6 +750,7 @@ function addToCart(item) {
       name: item.name,
       price: item.price,
       quantity: 1,
+      instructions: '',
     };
   }
   updateCart();
@@ -866,6 +867,9 @@ function updateCheckoutView() {
   }
   entries.forEach((id) => {
     const item = cart[id];
+    if (typeof item.instructions !== 'string') {
+      item.instructions = '';
+    }
     const wrapper = document.createElement('div');
     wrapper.classList.add('checkout-item');
 
@@ -881,6 +885,76 @@ function updateCheckoutView() {
     price.textContent = `$${item.price.toFixed(2)} each`;
     details.appendChild(title);
     details.appendChild(price);
+
+    const instructionsWrapper = document.createElement('div');
+    instructionsWrapper.classList.add('instructions-wrapper');
+
+    const instructionsId = `instructions-${id}`;
+    const instructionsLabel = document.createElement('label');
+    instructionsLabel.classList.add('instructions-label');
+    instructionsLabel.htmlFor = instructionsId;
+    instructionsLabel.textContent = 'Special Instructions';
+
+    const instructionsNote = document.createElement('p');
+    instructionsNote.classList.add('instructions-note');
+    instructionsNote.id = `${instructionsId}-note`;
+    instructionsNote.textContent = 'Please note: requests for additional items or special preparation may incur an extra charge that will be calculated on your online order.';
+
+    const textarea = document.createElement('textarea');
+    textarea.id = instructionsId;
+    textarea.classList.add('instructions-textarea');
+    textarea.rows = 3;
+    textarea.placeholder = 'Add a request, for example “No onions”.';
+    textarea.value = item.instructions;
+    textarea.setAttribute('aria-describedby', instructionsNote.id);
+
+    const actions = document.createElement('div');
+    actions.classList.add('instructions-actions');
+
+    const saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.classList.add('instructions-save');
+    saveBtn.textContent = 'Save request';
+
+    const status = document.createElement('span');
+    status.classList.add('instructions-status');
+    status.setAttribute('aria-live', 'polite');
+
+    let savedValue = item.instructions || '';
+
+    const refreshStatus = () => {
+      const currentValue = textarea.value.trim();
+      const hasUnsavedChanges = currentValue !== savedValue;
+      saveBtn.disabled = !hasUnsavedChanges;
+      status.textContent = hasUnsavedChanges
+        ? 'Unsaved request'
+        : savedValue
+          ? 'Request saved'
+          : '';
+      status.classList.toggle('is-pending', hasUnsavedChanges);
+      status.classList.toggle('is-saved', !hasUnsavedChanges && Boolean(savedValue));
+    };
+
+    textarea.addEventListener('input', refreshStatus);
+
+    saveBtn.addEventListener('click', () => {
+      savedValue = textarea.value.trim();
+      cart[id].instructions = savedValue;
+      item.instructions = savedValue;
+      textarea.value = savedValue;
+      refreshStatus();
+    });
+
+    actions.appendChild(saveBtn);
+    actions.appendChild(status);
+
+    instructionsWrapper.appendChild(instructionsLabel);
+    instructionsWrapper.appendChild(instructionsNote);
+    instructionsWrapper.appendChild(textarea);
+    instructionsWrapper.appendChild(actions);
+    details.appendChild(instructionsWrapper);
+
+    refreshStatus();
 
     const quantity = document.createElement('div');
     quantity.classList.add('checkout-quantity');
