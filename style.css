@@ -1,0 +1,209 @@
+/*
+ * Custom styles for the Danny's Wok clone.  The goal of this stylesheet is to
+ * provide a clean, mobile‑first layout that is easy for customers to browse
+ * and order from on their phones.  Layouts scale up gracefully to larger
+ * screens without breaking the flow of the content.  All colours and
+ * measurements have been chosen to be simple and friendly without
+ * overwhelming the food photography.
+ */
+
+/* Reset some default browser styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.5;
+  color: #333;
+  background-color: #fafafa;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+header {
+  background-color: #fff;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+header .logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #c0392b;
+}
+
+nav {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 0.5rem;
+}
+
+nav a {
+  color: #333;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
+
+nav a:hover {
+  background-color: #f0f0f0;
+}
+
+/* Hero section */
+.hero {
+  position: relative;
+  text-align: center;
+  color: #fff;
+}
+
+.hero img {
+  width: 100%;
+  height: auto;
+  max-height: 300px;
+  object-fit: cover;
+  filter: brightness(0.6);
+}
+
+.hero .hero-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+/* Main content area */
+main {
+  padding: 1rem;
+}
+
+section {
+  margin-top: 2rem;
+}
+
+/* Category headings */
+.category {
+  margin-bottom: 1rem;
+}
+
+.category h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: #c0392b;
+  border-bottom: 2px solid #c0392b;
+  display: inline-block;
+  padding-bottom: 0.25rem;
+}
+
+/* Menu items list */
+.menu-items {
+  list-style: none;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.menu-item h3 {
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+  color: #333;
+}
+
+.menu-item p {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.menu-item .price {
+  font-weight: bold;
+  color: #c0392b;
+}
+
+.menu-item button {
+  background-color: #c0392b;
+  color: #fff;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.menu-item button:hover {
+  background-color: #a93226;
+}
+
+/* Cart section */
+#cart {
+  background-color: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+#cart h2 {
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  color: #c0392b;
+}
+
+#cart-items {
+  list-style: none;
+  margin-bottom: 1rem;
+}
+
+#cart-items li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+#cart-items span {
+  font-size: 0.875rem;
+}
+
+.cart-total {
+  font-weight: bold;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+#payment-request-button {
+  margin-top: 1rem;
+}
+
+/* Responsive design */
+@media (min-width: 768px) {
+  .menu-item {
+    padding: 1rem;
+  }
+  .menu-item h3 {
+    font-size: 1.1rem;
+  }
+  .hero .hero-text {
+    font-size: 2.5rem;
+  }
+  nav {
+    justify-content: flex-start;
+    gap: 1rem;
+  }
+}
