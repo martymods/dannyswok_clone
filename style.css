@@ -1,7 +1,7 @@
 /*
  * Custom styles for the Danny's Wok clone.  The goal of this stylesheet is to
- * provide a clean, mobile‑first layout that is easy for customers to browse
- * and order from on their phones.  Layouts scale up gracefully to larger
+ * provide a clean, mobile‑first layout inspired by the requested design while
+ * keeping Danny's Wok colour palette.  Layouts scale up gracefully to larger
  * screens without breaking the flow of the content.  All colours and
  * measurements have been chosen to be simple and friendly without
  * overwhelming the food photography.
@@ -40,7 +40,8 @@ header .logo {
 
 nav {
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
+  gap: 1rem;
   margin-top: 0.5rem;
 }
 
@@ -50,6 +51,7 @@ nav a {
   padding: 0.5rem 1rem;
   border-radius: 0.25rem;
   font-weight: 500;
+  transition: background-color 0.2s ease-in-out;
 }
 
 nav a:hover {
@@ -66,7 +68,7 @@ nav a:hover {
 .hero img {
   width: 100%;
   height: auto;
-  max-height: 300px;
+  max-height: 320px;
   object-fit: cover;
   filter: brightness(0.6);
 }
@@ -76,79 +78,263 @@ nav a:hover {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: bold;
   text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
-/* Main content area */
 main {
   padding: 1rem;
 }
 
-section {
-  margin-top: 2rem;
+.pt-5 {
+  padding-top: 3rem;
 }
 
-/* Category headings */
-.category {
-  margin-bottom: 1rem;
+.pb-5 {
+  padding-bottom: 3rem;
 }
 
-.category h2 {
-  font-size: 1.25rem;
-  margin-bottom: 0.5rem;
+.container {
+  width: 100%;
+  margin: 0 auto;
+  max-width: 1100px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.col-lg-12,
+.col-md-6 {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .col-md-6 {
+    width: 50%;
+    padding: 0 1rem;
+  }
+}
+
+.page_title {
+  padding: 30px 0;
+}
+
+.page_title h1 {
   color: #c0392b;
-  border-bottom: 2px solid #c0392b;
-  display: inline-block;
-  padding-bottom: 0.25rem;
+  font-weight: 700;
+  line-height: 2;
+  margin-bottom: 0;
+  position: relative;
+  text-transform: capitalize;
 }
 
-/* Menu items list */
-.menu-items {
+.page_title h1::before {
+  background: #c0392b;
+  width: 70px;
+  height: 2px;
+  position: absolute;
+  content: '';
+  top: 90%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.page_title h1::after {
+  position: absolute;
+  content: '';
+  background: #fbc531;
+  width: 30px;
+  height: 2px;
+  top: 90%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.menu_tab {
+  margin: 0 auto 2rem auto;
+  justify-content: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   list-style: none;
+  padding: 0 1rem;
 }
 
-.menu-item {
+.nav-item {
+  display: inline-block;
+  text-align: center;
+}
+
+.nav-tabs .nav-link {
+  transition: 0.3s;
+  border: 1px solid transparent;
+  border-radius: 50px;
+  padding: 0.5rem 1.25rem;
+  background: #fff;
+  color: #000;
+  cursor: pointer;
+}
+
+.nav-tabs .nav-link.active {
+  background: #c0392b;
+  color: #fff;
+  font-weight: 700;
+  border: 1px solid #c0392b;
+  text-transform: capitalize;
+}
+
+.nav-tabs .nav-link:hover {
+  background: #c0392b;
+  color: #fff;
+  border: 1px solid #c0392b;
+}
+
+.tab-content {
+  width: 100%;
+}
+
+.tab-pane {
+  display: none;
+  width: 100%;
+}
+
+.tab-pane.active {
+  display: block;
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.single_menu {
+  position: relative;
+  margin-bottom: 75px;
+  transition: 0.3s;
+  padding-left: 200px;
+  min-height: 150px;
+}
+
+.single_menu img {
+  width: 33%;
+  position: absolute;
+  height: 140px;
+  object-fit: cover;
+  -webkit-clip-path: polygon(0% 0%, 75% 0%, 100% 50%, 75% 100%, 0% 100%);
+  clip-path: polygon(0% 0%, 75% 0%, 100% 50%, 75% 100%, 0% 100%);
+  transition: 0.3s;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  left: 0;
+  top: 0;
+}
+
+.single_menu:hover img {
+  -webkit-clip-path: polygon(0% 0%, 100% 0, 100% 50%, 100% 100%, 0% 100%);
+  clip-path: polygon(0% 0%, 100% 0, 100% 50%, 100% 100%, 0% 100%);
+}
+
+.menu_content {
+  padding-left: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 100%;
+}
+
+.menu_content h4 {
+  font-size: 1.25rem;
+  font-weight: 300;
+  border-bottom: 1px dashed #c0392b;
+  line-height: 2;
+  text-transform: capitalize;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 0.5rem;
-  padding: 0.75rem;
-  margin-bottom: 0.5rem;
 }
 
-.menu-item h3 {
-  font-size: 1rem;
-  margin-bottom: 0.25rem;
-  color: #333;
-}
-
-.menu-item p {
-  font-size: 0.875rem;
-  color: #666;
-}
-
-.menu-item .price {
-  font-weight: bold;
+.menu_content h4 span {
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-style: italic;
   color: #c0392b;
 }
 
-.menu-item button {
-  background-color: #c0392b;
-  color: #fff;
-  border: none;
-  border-radius: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
+.menu_content p {
+  font-weight: 200;
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  color: #555;
 }
 
-.menu-item button:hover {
-  background-color: #a93226;
+.menu_content .add-btn {
+  align-self: flex-start;
+  background: #c0392b;
+  border: 1px solid #c0392b;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 3px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.menu_content .add-btn:hover {
+  background: #a93226;
+  border-color: #a93226;
+}
+
+.menu_btn.btn.btn-danger {
+  margin: 0 auto;
+  display: block;
+  width: 140px;
+}
+
+.btn.btn-danger {
+  background: #c0392b;
+  border: 1px solid #c0392b;
+  transition: 0.3s;
+  position: relative;
+  z-index: 1;
+  text-transform: capitalize;
+  font-weight: 700;
+  overflow: hidden;
+  padding: 15px 25px;
+  color: #fff;
+  text-align: center;
+}
+
+.btn.btn-danger::before {
+  position: absolute;
+  content: '';
+  background: #e74c3c;
+  width: 100%;
+  height: 100%;
+  left: -100%;
+  top: 100%;
+  transition: 0.3s;
+  z-index: -1;
+}
+
+.btn.btn-danger:hover::before {
+  top: 0;
+  left: 0;
 }
 
 /* Cart section */
@@ -156,13 +342,15 @@ section {
   background-color: #fff;
   border: 1px solid #e5e5e5;
   border-radius: 0.5rem;
-  padding: 1rem;
+  padding: 1.5rem;
+  margin-top: 2rem;
 }
 
 #cart h2 {
   margin-bottom: 1rem;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   color: #c0392b;
+  text-transform: uppercase;
 }
 
 #cart-items {
@@ -175,35 +363,56 @@ section {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
+  gap: 0.5rem;
 }
 
 #cart-items span {
-  font-size: 0.875rem;
+  font-size: 0.95rem;
+}
+
+#cart-items button {
+  background-color: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
 }
 
 .cart-total {
   font-weight: bold;
   margin-bottom: 1rem;
-  font-size: 1rem;
+  font-size: 1.1rem;
 }
 
 #payment-request-button {
   margin-top: 1rem;
 }
 
-/* Responsive design */
-@media (min-width: 768px) {
-  .menu-item {
-    padding: 1rem;
-  }
-  .menu-item h3 {
-    font-size: 1.1rem;
-  }
+.payment-hint {
+  font-size: 0.85rem;
+  color: #777;
+  margin-top: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (min-width: 992px) {
   .hero .hero-text {
-    font-size: 2.5rem;
+    font-size: 2.8rem;
   }
-  nav {
-    justify-content: flex-start;
-    gap: 1rem;
+}
+
+@media (max-width: 767px) {
+  .single_menu {
+    padding-left: 0;
+    padding-top: 160px;
+  }
+
+  .single_menu img {
+    width: 100%;
+  }
+
+  .menu_content {
+    padding-left: 0;
   }
 }
