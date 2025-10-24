@@ -9,16 +9,24 @@
 </head>
 <body>
   <header>
-    <div class="logo">Danny's Wok</div>
+    <a href="#our_menu" class="site-logo" aria-label="Danny's Wok home">
+      <img src="images/logos_icon.png" alt="Danny's Wok chef mascot" class="site-logo__icon">
+      <img src="images/logos_font.png" alt="Danny's Wok wordmark" class="site-logo__wordmark">
+    </a>
     <nav>
       <a href="#our_menu">Menu</a>
       <a href="#cart" class="cart-link">Cart <span id="cart-count" class="cart-count">0</span></a>
     </nav>
   </header>
-  <div class="hero">
-    <img src="images/feature.jpg" alt="Seafood combination &amp; Happy Family dishes">
-    <div class="hero-text">Delicious Chinese Cuisine</div>
-  </div>
+  <section class="hero" aria-label="Browse the Danny's Wok menu">
+    <div class="hero-heading">
+      <h1>Slide through the menu</h1>
+      <p>Tap any dish to add it to your cart instantly.</p>
+    </div>
+    <div class="hero-carousel" id="hero-carousel">
+      <div class="hero-track" id="hero-track" aria-hidden="false"></div>
+    </div>
+  </section>
   <main>
     <section id="our_menu" class="pt-5 pb-5">
       <div class="container">

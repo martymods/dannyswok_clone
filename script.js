@@ -610,6 +610,19 @@ const menuData = [
   },
 ];
 
+const menuItemsById = new Map();
+menuData.forEach((category) => {
+  category.items.forEach((item) => {
+    if (!menuItemsById.has(item.id)) {
+      menuItemsById.set(item.id, item);
+    }
+  });
+});
+
+function findMenuItemById(id) {
+  return menuItemsById.get(id) || null;
+}
+
 // Cart state.  Each entry in the cart contains an item id, name, quantity,
 // price and any special instructions entered during checkout.  We track
 // unique ids to update quantities rather than adding duplicates.
@@ -739,6 +752,81 @@ function renderMenu() {
     pane.appendChild(row);
     tabContent.appendChild(pane);
   });
+}
+
+function buildHeroCarousel() {
+  const track = document.getElementById('hero-track');
+  const carousel = document.getElementById('hero-carousel');
+  if (!track || !carousel) {
+    return;
+  }
+
+  track.innerHTML = '';
+  carousel.classList.remove('is-hidden');
+
+  const items = Array.from(menuItemsById.values());
+  if (!items.length) {
+    carousel.classList.add('is-hidden');
+    return;
+  }
+
+  const slides = items.map((item) => ({
+    item,
+    image: findImageForItem(item.name) || fallbackImage,
+  }));
+
+  const duplicatedSlides = slides.concat(slides);
+
+  duplicatedSlides.forEach(({ item, image }) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.classList.add('hero-card');
+    button.dataset.itemId = item.id;
+    button.title = `Add ${item.name} to cart`;
+    button.setAttribute('aria-label', `Add ${item.name} to cart`);
+
+    const img = document.createElement('img');
+    img.src = image;
+    img.alt = item.name;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+
+    const info = document.createElement('div');
+    info.classList.add('hero-card-info');
+
+    const nameSpan = document.createElement('span');
+    nameSpan.classList.add('hero-card-name');
+    nameSpan.textContent = item.name;
+
+    const priceSpan = document.createElement('span');
+    priceSpan.classList.add('hero-card-price');
+    priceSpan.textContent = `$${item.price.toFixed(2)}`;
+
+    info.appendChild(nameSpan);
+    info.appendChild(priceSpan);
+
+    button.appendChild(img);
+    button.appendChild(info);
+    track.appendChild(button);
+  });
+
+  const duration = Math.min(140, Math.max(45, items.length * 1.2));
+  track.style.setProperty('--hero-duration', `${duration}s`);
+
+  if (!track.dataset.boundClick) {
+    track.addEventListener('click', (event) => {
+      const card = event.target.closest('.hero-card');
+      if (!card) {
+        return;
+      }
+      const { itemId } = card.dataset;
+      const menuItem = findMenuItemById(itemId);
+      if (menuItem) {
+        addToCart(menuItem);
+      }
+    });
+    track.dataset.boundClick = 'true';
+  }
 }
 
 // Add an item to the cart.  If the item already exists, increment the quantity.
@@ -1003,6 +1091,7 @@ function updateCheckoutView() {
 
 // Kick off the rendering once the DOM has loaded
 document.addEventListener('DOMContentLoaded', () => {
+  buildHeroCarousel();
   renderMenu();
   updateCart();
   const cartLink = document.querySelector('.cart-link');
