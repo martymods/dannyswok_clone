@@ -539,9 +539,9 @@ main {
 
 .checkout-item {
   display: grid;
-  grid-template-columns: 72px 1fr auto;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
   gap: 0.75rem;
-  align-items: center;
+  align-items: flex-start;
   padding: 0.75rem;
   border-radius: 0.75rem;
   background-color: #fff;
@@ -558,7 +558,7 @@ main {
 .checkout-item-details {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.5rem;
 }
 
 .checkout-item-details h4 {
@@ -611,6 +611,77 @@ main {
 .checkout-item-total {
   font-weight: 600;
   color: #333;
+}
+
+.instructions-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.instructions-label {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.instructions-note {
+  font-size: 0.8rem;
+  color: #7f8c8d;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.instructions-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 0.6rem;
+  border: 1px solid #dcdcdc;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  resize: vertical;
+}
+
+.instructions-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.instructions-save {
+  padding: 0.4rem 0.9rem;
+  background-color: #c0392b;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.instructions-save:hover:not(:disabled) {
+  background-color: #a93226;
+  transform: translateY(-1px);
+}
+
+.instructions-save:disabled {
+  background-color: #e5e5e5;
+  color: #888;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.instructions-status {
+  font-size: 0.85rem;
+  color: #7f8c8d;
+}
+
+.instructions-status.is-pending {
+  color: #c0392b;
+}
+
+.instructions-status.is-saved {
+  color: #27ae60;
 }
 
 .checkout-total-row {
