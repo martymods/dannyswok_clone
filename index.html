@@ -13,24 +13,44 @@
   <header>
     <div class="logo">Danny's Wok</div>
     <nav>
-      <a href="#menu">Menu</a>
+      <a href="#our_menu">Menu</a>
       <a href="#cart">Cart</a>
     </nav>
   </header>
   <div class="hero">
-    <img src="images/feature.jpg" alt="Seafood combination & Happy Family dishes">
+    <img src="images/feature.jpg" alt="Seafood combination &amp; Happy Family dishes">
     <div class="hero-text">Delicious Chinese Cuisine</div>
   </div>
   <main>
-    <section id="menu">
-      <!-- Menu will be dynamically injected here by script.js -->
+    <section id="our_menu" class="pt-5 pb-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-12">
+            <div class="page_title text-center mb-4">
+              <h1>our menu</h1>
+              <div class="single_line"></div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <ul class="nav nav-tabs menu_tab mb-4" id="menuTab" role="tablist">
+            <!-- Tabs will be injected here -->
+          </ul>
+        </div>
+        <div class="row">
+          <div class="tab-content col-lg-12" id="menuTabContent">
+            <!-- Tab panes will be injected here -->
+          </div>
+          <a href="#our_menu" class="menu_btn btn btn-danger">view more</a>
+        </div>
+      </div>
     </section>
     <section id="cart">
       <h2>Your Cart</h2>
       <ul id="cart-items"></ul>
       <div id="cart-total" class="cart-total">Total: $0.00</div>
       <div id="payment-request-button"></div>
-      <p style="font-size:0.85rem;color:#777;margin-top:0.5rem;">Use Apple Pay, Google Pay or your saved cards with the button above.  This is a demo integration – replace the publishable key in <code>script.js</code> and implement the backend to process payments.</p>
+      <p class="payment-hint">Use Apple&nbsp;Pay, Google&nbsp;Pay or your saved cards with the button above. This is a demo integration – replace the publishable key in <code>script.js</code> and implement the backend to process payments.</p>
     </section>
   </main>
   <script src="script.js"></script>

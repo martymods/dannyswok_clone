@@ -3,14 +3,46 @@
  *
  * This file contains all of the client side logic for the Danny's Wok clone.
  * It renders the menu on the page, manages a simple shopping cart and
- * integrates with Stripe's Payment Request API to offer Apple Pay and other
+ * integrates with Stripe's Payment Request API to offer Apple Pay and other
  * express checkout options.  To use this integration you will need to
  * replace the placeholder publishable key with your own and implement
  * server‑side code to create PaymentIntent objects.  Without a backend the
  * payment button will not complete a transaction but it will still display
- * the Apple Pay / Google Pay sheet on supported devices for demonstration
+ * the Apple Pay / Google Pay sheet on supported devices for demonstration
  * purposes.
  */
+
+// Define placeholder imagery to match the requested layout
+const placeholderImages = [
+  'https://i.imgur.com/kbpceNv.jpg',
+  'https://i.imgur.com/lYKUORL.jpg',
+  'https://i.imgur.com/AXAHrf6.jpg',
+  'https://i.imgur.com/YkDi8Nb.jpg',
+  'https://i.imgur.com/TAq7lDR.jpg',
+  'https://i.imgur.com/Aowufa1.jpg',
+  'https://i.imgur.com/DJlmZDJ.jpg',
+  'https://i.imgur.com/knnQm7e.jpg',
+];
+
+const categoryDescriptions = {
+  american: 'Golden fried favourites, wings and ribs cooked the Danny\'s way.',
+  appetizer: 'Shareable bites that kick off every meal with bold flavour.',
+  soup: 'Comforting soups simmered with fresh vegetables and savoury broths.',
+  'fried-rice': 'Classic wok-fried rice with your choice of protein or veggies.',
+  'yat-gaw-mein': 'Noodle bowls loaded with protein and savoury broth.',
+  seafood: 'Ocean-fresh shrimp and seafood sautéed with crisp vegetables.',
+  beef: 'Tender beef stir fried with signature sauces and vegetables.',
+  poultry: 'Chicken classics finished with our signature sauces.',
+  'lo-mein': 'Soft noodles tossed in house sauce with fresh vegetables.',
+  'mei-fun-ho-fun': 'Rice or flat noodles wok-seared with aromatics and spice.',
+  'egg-foo-young': 'Fluffy egg patties smothered in rich brown gravy.',
+  'vegetables-tofu': 'Vegetable-forward plates and tofu cooked to perfection.',
+  'chef-signatures': 'Danny\'s specialities featuring bold flavours and combos.',
+  'whole-wings': 'Whole wings fried until crispy on the outside and juicy inside.',
+  'party-wing-dings': 'Party-sized wing dings, perfect for sharing.',
+  'lunch-special': 'Midday value plates served with rice and classic sides.',
+  'dinner-combo': 'Evening combos paired with rice and egg rolls.',
+};
 
 // Define the menu data.  Each category has a unique id, a name and a list
 // of items.  Each item contains an id, a name, an optional description and
@@ -320,37 +352,104 @@ const menuData = [
 // duplicates.
 const cart = {};
 
+// Utility: activate a tab by id
+function activateTab(targetId) {
+  const links = document.querySelectorAll('#menuTab .nav-link');
+  const panes = document.querySelectorAll('#menuTabContent .tab-pane');
+  links.forEach((link) => {
+    if (link.dataset.target === targetId) {
+      link.classList.add('active');
+    } else {
+      link.classList.remove('active');
+    }
+  });
+  panes.forEach((pane) => {
+    if (pane.id === targetId) {
+      pane.classList.add('active');
+    } else {
+      pane.classList.remove('active');
+    }
+  });
+}
+
 // Render the menu on the page.
 function renderMenu() {
-  const menuContainer = document.getElementById('menu');
-  menuData.forEach((category) => {
-    const section = document.createElement('section');
-    section.classList.add('category');
-    const header = document.createElement('h2');
-    header.textContent = category.name;
-    section.appendChild(header);
-    const list = document.createElement('ul');
-    list.classList.add('menu-items');
-    category.items.forEach((item) => {
-      const li = document.createElement('li');
-      li.classList.add('menu-item');
-      const info = document.createElement('div');
-      const nameEl = document.createElement('h3');
-      nameEl.textContent = item.name;
+  const tabList = document.getElementById('menuTab');
+  const tabContent = document.getElementById('menuTabContent');
+  if (!tabList || !tabContent) {
+    return;
+  }
+  tabList.innerHTML = '';
+  tabContent.innerHTML = '';
+
+  menuData.forEach((category, catIndex) => {
+    const navItem = document.createElement('li');
+    navItem.classList.add('nav-item');
+
+    const navLink = document.createElement('button');
+    navLink.type = 'button';
+    navLink.classList.add('nav-link');
+    navLink.textContent = category.name;
+    navLink.dataset.target = category.id;
+    if (catIndex === 0) {
+      navLink.classList.add('active');
+    }
+    navLink.addEventListener('click', () => activateTab(category.id));
+
+    navItem.appendChild(navLink);
+    tabList.appendChild(navItem);
+
+    const pane = document.createElement('div');
+    pane.classList.add('tab-pane');
+    if (catIndex === 0) {
+      pane.classList.add('active');
+    }
+    pane.id = category.id;
+
+    const row = document.createElement('div');
+    row.classList.add('row');
+
+    category.items.forEach((item, itemIndex) => {
+      const col = document.createElement('div');
+      col.classList.add('col-md-6');
+
+      const singleMenu = document.createElement('div');
+      singleMenu.classList.add('single_menu');
+
+      const img = document.createElement('img');
+      const imageIndex = (catIndex + itemIndex) % placeholderImages.length;
+      img.src = placeholderImages[imageIndex];
+      img.alt = item.name;
+
+      const content = document.createElement('div');
+      content.classList.add('menu_content');
+
+      const title = document.createElement('h4');
+      title.textContent = item.name;
       const priceEl = document.createElement('span');
-      priceEl.classList.add('price');
       priceEl.textContent = `$${item.price.toFixed(2)}`;
-      info.appendChild(nameEl);
-      info.appendChild(priceEl);
+      title.appendChild(priceEl);
+
+      const description = document.createElement('p');
+      description.textContent = categoryDescriptions[category.id] || 'Freshly prepared and served hot.';
+
       const addBtn = document.createElement('button');
-      addBtn.textContent = 'Add';
+      addBtn.classList.add('add-btn');
+      addBtn.textContent = 'Add to cart';
       addBtn.addEventListener('click', () => addToCart(item));
-      li.appendChild(info);
-      li.appendChild(addBtn);
-      list.appendChild(li);
+
+      content.appendChild(title);
+      content.appendChild(description);
+      content.appendChild(addBtn);
+
+      singleMenu.appendChild(img);
+      singleMenu.appendChild(content);
+      col.appendChild(singleMenu);
+      row.appendChild(col);
     });
-    section.appendChild(list);
-    menuContainer.appendChild(section);
+
+    pane.appendChild(row);
+    tabContent.appendChild(pane);
   });
 }
 
@@ -377,6 +476,9 @@ function removeFromCart(id) {
 // Update the cart display and totals
 function updateCart() {
   const cartItemsContainer = document.getElementById('cart-items');
+  if (!cartItemsContainer) {
+    return;
+  }
   cartItemsContainer.innerHTML = '';
   let total = 0;
   Object.keys(cart).forEach((id) => {
@@ -390,21 +492,16 @@ function updateCart() {
     priceSpan.textContent = `$${itemTotal.toFixed(2)}`;
     li.appendChild(nameSpan);
     li.appendChild(priceSpan);
-    // Add a remove button
     const removeBtn = document.createElement('button');
     removeBtn.textContent = 'Remove';
-    removeBtn.style.marginLeft = '0.5rem';
-    removeBtn.style.backgroundColor = '#e74c3c';
-    removeBtn.style.color = '#fff';
-    removeBtn.style.border = 'none';
-    removeBtn.style.borderRadius = '0.25rem';
-    removeBtn.style.padding = '0.25rem 0.5rem';
     removeBtn.addEventListener('click', () => removeFromCart(id));
     li.appendChild(removeBtn);
     cartItemsContainer.appendChild(li);
   });
   const totalEl = document.getElementById('cart-total');
-  totalEl.textContent = `Total: $${total.toFixed(2)}`;
+  if (totalEl) {
+    totalEl.textContent = `Total: $${total.toFixed(2)}`;
+  }
 
   // Update the payment request total if the paymentRequest exists
   if (window.paymentRequest) {
