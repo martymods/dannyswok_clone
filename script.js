@@ -1078,7 +1078,7 @@ function renderMenu() {
       const addBtn = document.createElement('button');
       addBtn.classList.add('add-btn');
       addBtn.textContent = 'Add to cart';
-      addBtn.addEventListener('click', () => addToCart(item));
+      addBtn.addEventListener('click', () => addToCart(item, { imageElement: img }));
 
       content.appendChild(title);
       content.appendChild(description);
@@ -1116,13 +1116,15 @@ function buildHeroCarousel() {
     image: findImageForItem(item.name) || fallbackImage,
   }));
 
-  const duplicatedSlides = slides.concat(slides);
+  const pointerCoarse = window.matchMedia('(pointer: coarse)');
+  const compactWidth = window.matchMedia('(max-width: 768px)');
+  const useSwipeMode = pointerCoarse.matches || compactWidth.matches;
+  const slidesToRender = useSwipeMode ? slides : slides.concat(slides);
 
-  duplicatedSlides.forEach(({ item, image }) => {
+  slidesToRender.forEach(({ item, image }) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.classList.add('hero-card');
-    button.dataset.itemId = item.id;
     button.title = `Add ${item.name} to cart`;
     button.setAttribute('aria-label', `Add ${item.name} to cart`);
 
@@ -1148,30 +1150,30 @@ function buildHeroCarousel() {
 
     button.appendChild(img);
     button.appendChild(info);
+    button.addEventListener('click', () => addToCart(item, { imageElement: img }));
     track.appendChild(button);
   });
 
   const duration = Math.min(140, Math.max(45, items.length * 1.2));
   track.style.setProperty('--hero-duration', `${duration}s`);
 
-  if (!track.dataset.boundClick) {
-    track.addEventListener('click', (event) => {
-      const card = event.target.closest('.hero-card');
-      if (!card) {
-        return;
-      }
-      const { itemId } = card.dataset;
-      const menuItem = findMenuItemById(itemId);
-      if (menuItem) {
-        addToCart(menuItem);
-      }
-    });
-    track.dataset.boundClick = 'true';
+  if (useSwipeMode) {
+    track.dataset.mode = 'swipe';
+    carousel.classList.add('is-touch');
+    if (typeof carousel.scrollTo === 'function') {
+      carousel.scrollTo({ left: 0, behavior: 'auto' });
+    } else {
+      carousel.scrollLeft = 0;
+    }
+  } else {
+    track.removeAttribute('data-mode');
+    carousel.classList.remove('is-touch');
+    track.style.removeProperty('transform');
   }
 }
 
 // Add an item to the cart.  If the item already exists, increment the quantity.
-function addToCart(item) {
+function addToCart(item, options = {}) {
   if (cart[item.id]) {
     cart[item.id].quantity += 1;
   } else {
@@ -1183,6 +1185,24 @@ function addToCart(item) {
     };
   }
   updateCart();
+  animateItemImage(options.imageElement);
+}
+
+function animateItemImage(imageElement) {
+  if (!imageElement) {
+    return;
+  }
+  imageElement.classList.remove('photo-press');
+  // Force a reflow so the animation can replay if the user taps repeatedly.
+  void imageElement.offsetWidth;
+  imageElement.classList.add('photo-press');
+  imageElement.addEventListener(
+    'animationend',
+    () => {
+      imageElement.classList.remove('photo-press');
+    },
+    { once: true }
+  );
 }
 
 // Remove an item from the cart entirely
@@ -1520,6 +1540,19 @@ document.addEventListener('DOMContentLoaded', () => {
   buildHeroCarousel();
   renderMenu();
   updateCart();
+  const rebuildHeroForViewport = () => buildHeroCarousel();
+  const heroMediaQueries = [
+    window.matchMedia('(pointer: coarse)'),
+    window.matchMedia('(max-width: 768px)'),
+  ];
+  heroMediaQueries.forEach((media) => {
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', rebuildHeroForViewport);
+    } else if (typeof media.addListener === 'function') {
+      media.addListener(rebuildHeroForViewport);
+    }
+  });
+  window.addEventListener('orientationchange', rebuildHeroForViewport);
   const cartLink = document.querySelector('.cart-link');
   if (cartLink) {
     cartLink.addEventListener('click', (event) => {

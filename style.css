@@ -183,6 +183,27 @@ nav a:focus-visible {
   animation-play-state: paused;
 }
 
+.hero-track[data-mode='swipe'] {
+  animation: none;
+  width: max-content;
+}
+
+.hero-carousel.is-touch {
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.hero-carousel.is-touch::-webkit-scrollbar {
+  display: none;
+}
+
+.hero-track[data-mode='swipe'] .hero-card {
+  scroll-snap-align: center;
+}
+
 .hero-card {
   flex: 0 0 auto;
   width: clamp(180px, 20vw, 240px);
@@ -202,6 +223,26 @@ nav a:focus-visible {
   width: 100%;
   height: clamp(140px, 16vw, 190px);
   object-fit: cover;
+}
+
+.hero-card img.photo-press,
+.single_menu img.photo-press {
+  animation: photoPress 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes photoPress {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(0.92);
+  }
+  65% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .hero-card-info {
@@ -431,6 +472,61 @@ main {
 .single_menu:hover img {
   -webkit-clip-path: polygon(0% 0%, 100% 0, 100% 50%, 100% 100%, 0% 100%);
   clip-path: polygon(0% 0%, 100% 0, 100% 50%, 100% 100%, 0% 100%);
+}
+
+@media (max-width: 768px) {
+  .hero-track[data-mode='swipe'] .hero-card {
+    scroll-snap-align: start;
+  }
+
+  .hero-card {
+    width: clamp(170px, 62vw, 220px);
+  }
+
+  .single_menu {
+    padding-left: min(58vw, 260px);
+    min-height: 190px;
+  }
+
+  .single_menu img {
+    width: min(58vw, 260px);
+    height: 190px;
+    object-position: center 35%;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero-card {
+    width: clamp(180px, 78vw, 240px);
+  }
+
+  .single_menu {
+    display: flex;
+    flex-direction: column;
+    padding-left: 0;
+    min-height: unset;
+    gap: 1rem;
+  }
+
+  .single_menu img {
+    position: relative;
+    width: 100%;
+    max-height: 240px;
+    height: auto;
+    object-position: center 30%;
+    -webkit-clip-path: polygon(0% 0%, 100% 0%, 100% 88%, 0% 100%);
+    clip-path: polygon(0% 0%, 100% 0%, 100% 88%, 0% 100%);
+  }
+
+  .menu_content {
+    padding-left: 0;
+  }
+
+  .single_menu:hover img,
+  .single_menu:focus-within img {
+    -webkit-clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+  }
 }
 
 .menu_content {
