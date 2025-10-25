@@ -71,6 +71,44 @@ const menuImageSources = [
   'images/chinesemenu/vegetable_lo_mein_Pork_Lo_Mein.jpg',
 ];
 
+function createAvatarDataUri(initials, background, textColor = '#fff') {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect width="96" height="96" rx="48" fill="${background}"/><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" font-family="'Google Sans', 'Product Sans', Arial, sans-serif" font-size="42" fill="${textColor}" font-weight="600">${initials}</text></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+const googleReviews = [
+  {
+    name: 'Amanda Lopez',
+    profileImage: createAvatarDataUri('AL', '#1a73e8'),
+    rating: 5,
+    comment:
+      '“The General Tso\'s Chicken was crispy with just the right kick. Their fried rice is my go-to comfort order and it never disappoints.”',
+    foodImage: 'images/chinesemenu/beef_w_scallop_General_Tso_Chicken.jpg',
+    foodAlt: 'General Tso\'s Chicken shared by Amanda Lopez',
+    highlightDish: 'General Tso\'s Chicken',
+  },
+  {
+    name: 'Marcus Green',
+    profileImage: createAvatarDataUri('MG', '#ea4335'),
+    rating: 5,
+    comment:
+      '“Picked up sesame chicken after a long shift—still piping hot when I got home. Portions are huge and the lo mein is full of veggies.”',
+    foodImage: 'images/chinesemenu/orange_chicken_Sesame_Chicken.jpg',
+    foodAlt: 'Sesame chicken and lo mein shared by Marcus Green',
+    highlightDish: 'Sesame Chicken Combo',
+  },
+  {
+    name: 'Priya Patel',
+    profileImage: createAvatarDataUri('PP', '#34a853'),
+    rating: 4,
+    comment:
+      '“Loved the vegetable lo mein—fresh, light, and packed with broccoli. Staff was super friendly even during the dinner rush.”',
+    foodImage: 'images/chinesemenu/vegetable_lo_mein_Pork_Lo_Mein.jpg',
+    foodAlt: 'Vegetable lo mein shared by Priya Patel',
+    highlightDish: 'Vegetable Lo Mein',
+  },
+];
+
 const TOKEN_STOP_WORDS = new Set([
   'w',
   'with',
@@ -1115,17 +1153,33 @@ function buildHeroCarousel() {
     return;
   }
 
-  const slides = items.map((item) => ({
+  const menuSlides = items.map((item) => ({
+    type: 'menu',
     item,
     image: findImageForItem(item.name) || fallbackImage,
   }));
 
+  const reviewSlides = googleReviews.map((review) => ({
+    type: 'review',
+    review,
+  }));
+
+  const combinedSlides = insertReviewSlides(menuSlides, reviewSlides);
+
   const pointerCoarse = window.matchMedia('(pointer: coarse)');
   const compactWidth = window.matchMedia('(max-width: 768px)');
   const useSwipeMode = pointerCoarse.matches || compactWidth.matches;
-  const slidesToRender = useSwipeMode ? slides : slides.concat(slides);
+  const slidesToRender = useSwipeMode
+    ? combinedSlides
+    : combinedSlides.concat(combinedSlides);
 
-  slidesToRender.forEach(({ item, image }) => {
+  slidesToRender.forEach((slide) => {
+    if (slide.type === 'review') {
+      track.appendChild(createReviewCard(slide.review));
+      return;
+    }
+
+    const { item, image } = slide;
     const button = document.createElement('button');
     button.type = 'button';
     button.classList.add('hero-card');
@@ -1174,6 +1228,92 @@ function buildHeroCarousel() {
     carousel.classList.remove('is-touch');
     track.style.removeProperty('transform');
   }
+}
+
+function insertReviewSlides(menuSlides, reviewSlides) {
+  const workingSlides = menuSlides.slice();
+  reviewSlides.forEach((reviewSlide) => {
+    const insertAt = Math.floor(Math.random() * (workingSlides.length + 1));
+    workingSlides.splice(insertAt, 0, reviewSlide);
+  });
+  return workingSlides;
+}
+
+function createStarRatingElement(rating) {
+  const wrapper = document.createElement('div');
+  wrapper.classList.add('hero-review-stars');
+  wrapper.setAttribute('aria-label', `${rating} star rating on Google`);
+  for (let i = 1; i <= 5; i += 1) {
+    const star = document.createElement('span');
+    star.classList.add('hero-review-star');
+    star.textContent = i <= rating ? '★' : '☆';
+    wrapper.appendChild(star);
+  }
+  return wrapper;
+}
+
+function createReviewCard(review) {
+  const card = document.createElement('article');
+  card.classList.add('hero-card', 'hero-card--review');
+  card.setAttribute('aria-label', `Google review from ${review.name}`);
+
+  const foodImage = document.createElement('img');
+  foodImage.src = review.foodImage;
+  foodImage.alt = review.foodAlt || `Dish shared by ${review.name}`;
+  foodImage.loading = 'lazy';
+  foodImage.decoding = 'async';
+
+  const info = document.createElement('div');
+  info.classList.add('hero-card-info', 'hero-card-info--review');
+
+  const header = document.createElement('div');
+  header.classList.add('hero-review-header');
+
+  const avatar = document.createElement('img');
+  avatar.src = review.profileImage;
+  avatar.alt = `${review.name}'s Google profile photo`;
+  avatar.classList.add('hero-review-avatar');
+  avatar.loading = 'lazy';
+  avatar.decoding = 'async';
+
+  const meta = document.createElement('div');
+  meta.classList.add('hero-review-meta');
+
+  const name = document.createElement('span');
+  name.classList.add('hero-review-name');
+  name.textContent = review.name;
+
+  const source = document.createElement('span');
+  source.classList.add('hero-review-source');
+  source.textContent = 'Google Reviews';
+
+  const stars = createStarRatingElement(review.rating);
+
+  meta.appendChild(name);
+  meta.appendChild(source);
+  meta.appendChild(stars);
+
+  header.appendChild(avatar);
+  header.appendChild(meta);
+
+  const body = document.createElement('p');
+  body.classList.add('hero-review-text');
+  body.textContent = review.comment;
+
+  info.appendChild(header);
+  info.appendChild(body);
+
+  if (review.highlightDish) {
+    const dish = document.createElement('span');
+    dish.classList.add('hero-review-dish');
+    dish.textContent = `⭐ ${review.highlightDish}`;
+    info.appendChild(dish);
+  }
+
+  card.appendChild(foodImage);
+  card.appendChild(info);
+
+  return card;
 }
 
 // Add an item to the cart.  If the item already exists, increment the quantity.
