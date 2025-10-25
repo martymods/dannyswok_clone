@@ -691,6 +691,14 @@ main {
   display: none;
 }
 
+.fulfilment-time-wrapper {
+  margin-bottom: 1.5rem;
+}
+
+.fulfilment-time-wrapper.hidden {
+  display: none;
+}
+
 .delivery-fields .field {
   display: flex;
   flex-direction: column;
@@ -714,7 +722,8 @@ main {
 }
 
 .dropoff-options,
-.delivery-time-options {
+.delivery-time-options,
+.pickup-time-options {
   border: none;
   display: flex;
   flex-direction: column;
@@ -724,13 +733,15 @@ main {
 }
 
 .dropoff-options legend,
-.delivery-time-options legend {
+.delivery-time-options legend,
+.pickup-time-options legend {
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
 
 .dropoff-options label,
-.delivery-time-options label {
+.delivery-time-options label,
+.pickup-time-options label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1018,6 +1029,63 @@ main {
 .tip-button.is-active {
   background-color: #c0392b;
   color: #fff;
+}
+
+.custom-tip-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.custom-tip-container.hidden {
+  display: none;
+}
+
+.custom-tip-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #8a4d0f;
+}
+
+.custom-tip-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid rgba(192, 57, 43, 0.3);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  background-color: #fffaf0;
+  max-width: 220px;
+}
+
+.currency-symbol {
+  font-weight: 600;
+  color: #c0392b;
+}
+
+#custom-tip-input {
+  border: none;
+  flex: 1 1 auto;
+  font-size: 0.95rem;
+  background: transparent;
+  outline: none;
+  padding: 0;
+}
+
+#custom-tip-input::-webkit-outer-spin-button,
+#custom-tip-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+#custom-tip-input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.custom-tip-help {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #a9711b;
 }
 
 .tip-summary {
