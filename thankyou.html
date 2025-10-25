@@ -100,14 +100,14 @@
     .fortune-message {
       display: inline-block;
       position: absolute;
-      left: -150px;
-      right: 180px;
+      left: -220px;
+      right: -40px;
       font-family: 'Courier Prime', 'Courier New', Courier, monospace;
       top: 50px;
       bottom: 80px;
       font-style: italic;
       z-index: 2;
-      overflow: hidden;
+      overflow: visible;
       -webkit-transform: rotateZ(8deg);
       transform: rotateZ(8deg);
     }
@@ -117,6 +117,7 @@
       background-color: #ffffff;
       padding: 8px 65px 7px 15px;
       white-space: nowrap;
+      max-width: max-content;
       box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.3);
       transform-origin: right bottom;
       position: absolute;
