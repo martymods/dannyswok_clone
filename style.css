@@ -415,6 +415,11 @@ button:disabled {
   animation-play-state: paused;
 }
 
+.hero-track[data-mode='swipe'] {
+  animation: none;
+  width: max-content;
+}
+
 .hero-carousel.is-touch {
   overflow-x: auto;
   scrollbar-width: none;
@@ -427,7 +432,7 @@ button:disabled {
   display: none;
 }
 
-.hero-carousel.is-touch .hero-card {
+.hero-track[data-mode='swipe'] .hero-card {
   scroll-snap-align: center;
 }
 
@@ -715,7 +720,7 @@ main {
 }
 
 @media (max-width: 768px) {
-  .hero-carousel.is-touch .hero-card {
+  .hero-track[data-mode='swipe'] .hero-card {
     scroll-snap-align: start;
   }
 
