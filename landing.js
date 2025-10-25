@@ -1,4 +1,46 @@
 (function () {
+  const hoverSound = typeof Audio === 'function' ? new Audio('audio/scroll_hover_over_sound.mp3') : null;
+  const storeSelectSound = typeof Audio === 'function' ? new Audio('audio/ui_map_nav.mp3') : null;
+
+  if (hoverSound) {
+    hoverSound.preload = 'auto';
+  }
+
+  if (storeSelectSound) {
+    storeSelectSound.preload = 'auto';
+  }
+
+  function playSoundEffect(audioElement) {
+    if (!audioElement) {
+      return;
+    }
+
+    try {
+      audioElement.currentTime = 0;
+      const playPromise = audioElement.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {});
+      }
+    } catch (error) {
+      // Ignore playback errors (e.g. browser autoplay policies).
+    }
+  }
+
+  function handleButtonHover(event) {
+    const button = event.target.closest('button');
+    if (!button || !document.contains(button)) {
+      return;
+    }
+
+    if (event.relatedTarget && button.contains(event.relatedTarget)) {
+      return;
+    }
+
+    playSoundEffect(hoverSound);
+  }
+
+  document.addEventListener('mouseover', handleButtonHover);
+
   const pageBody = document.body;
   if (pageBody) {
     pageBody.classList.remove('is-map-ready');
@@ -367,6 +409,8 @@
 
     selectedButton = button;
     selectedButton.classList.add('is-selected');
+
+    playSoundEffect(storeSelectSound);
 
     const target = [lat, lng];
 
