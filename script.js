@@ -1278,6 +1278,14 @@ function toggleDeliveryFields(isDelivery) {
   if (pickupWrapper) {
     pickupWrapper.classList.toggle('hidden', isDelivery);
   }
+  const tipSection = document.querySelector('.tip-section');
+  if (tipSection) {
+    tipSection.classList.toggle('hidden', !isDelivery);
+  }
+  const tipTotalRow = document.getElementById('tip-total-row');
+  if (tipTotalRow) {
+    tipTotalRow.classList.toggle('hidden', !isDelivery);
+  }
   const scheduleContainer = document.getElementById('schedule-container');
   if (isDelivery) {
     if (scheduleContainer && !scheduleContainer.classList.contains('hidden') && activeScheduleContext !== 'delivery') {
@@ -1501,8 +1509,10 @@ function updateCheckoutView() {
   if (subtotalEl) {
     subtotalEl.textContent = formatCurrency(subtotal);
   }
+  const delivery = document.getElementById('fulfilment-delivery');
+  const isDelivery = Boolean(delivery && delivery.checked);
   let tipAmount = 0;
-  if (entries.length) {
+  if (entries.length && isDelivery) {
     if (selectedTipType === 'custom') {
       tipAmount = roundCurrency(Math.max(customTipAmount, 0));
     } else {
@@ -1518,8 +1528,6 @@ function updateCheckoutView() {
   if (tipAmountEl) {
     tipAmountEl.textContent = formatCurrency(tipAmount);
   }
-  const delivery = document.getElementById('fulfilment-delivery');
-  const isDelivery = Boolean(delivery && delivery.checked);
   const deliveryFeeRow = document.getElementById('delivery-fee-row');
   const deliveryFeeAmount = document.getElementById('delivery-fee-amount');
   const expressFee = isDelivery && selectedDeliverySpeed === 'express' ? EXPRESS_DELIVERY_FEE : 0;
@@ -1709,14 +1717,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       const fulfilment = delivery && delivery.checked ? 'Delivery' : 'Pickup';
+      const isDelivery = fulfilment === 'Delivery';
       const { total: subtotal } = calculateCartTotals();
       let tipAmount = 0;
-      if (selectedTipType === 'custom') {
-        tipAmount = roundCurrency(Math.max(customTipAmount, 0));
-      } else {
-        tipAmount = roundCurrency(subtotal * (Number.isFinite(selectedTipPercent) ? selectedTipPercent : 0));
+      if (isDelivery) {
+        if (selectedTipType === 'custom') {
+          tipAmount = roundCurrency(Math.max(customTipAmount, 0));
+        } else {
+          tipAmount = roundCurrency(subtotal * (Number.isFinite(selectedTipPercent) ? selectedTipPercent : 0));
+        }
       }
-      const expressFee = fulfilment === 'Delivery' && selectedDeliverySpeed === 'express' ? EXPRESS_DELIVERY_FEE : 0;
+      const expressFee = isDelivery && selectedDeliverySpeed === 'express' ? EXPRESS_DELIVERY_FEE : 0;
       const notes = [];
       if (fulfilment === 'Delivery') {
         const dropoff = document.querySelector('input[name="dropoff"]:checked');
@@ -1749,7 +1760,9 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         notes.push('Pickup: Standard window (10 – 15 mins).');
       }
-      notes.push(`Tip: ${formatCurrency(tipAmount)} (100% to drivers).`);
+      if (isDelivery) {
+        notes.push(`Tip: ${formatCurrency(tipAmount)} (100% to drivers).`);
+      }
       const grandTotal = roundCurrency(subtotal + tipAmount + expressFee);
       notes.push(`Total due: ${formatCurrency(grandTotal)}.`);
       notes.push('This demo does not submit the order.');
