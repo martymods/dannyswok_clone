@@ -105,6 +105,183 @@ nav a:focus-visible {
   box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.25);
 }
 
+.cart-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cart-link {
+  position: relative;
+  z-index: 1;
+}
+
+.cart-icon-button {
+  --glow-strength: 0;
+  --glow-alpha: 0;
+  --shimmer-angle: 0deg;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 0 calc(34px * var(--glow-strength))
+      calc(6px * var(--glow-strength))
+      rgba(255, 215, 128, var(--glow-alpha));
+}
+
+.cart-icon-button,
+.cart-icon-button:hover,
+.cart-icon-button:focus-visible {
+  background-color: transparent;
+}
+
+.cart-icon-button:hover,
+.cart-icon-button:focus-visible {
+  transform: translateY(-2px) scale(1.03);
+  outline: none;
+}
+
+.cart-icon-button:focus-visible {
+  box-shadow: 0 0 calc(34px * var(--glow-strength))
+      calc(6px * var(--glow-strength))
+      rgba(255, 215, 128, var(--glow-alpha)),
+    0 0 0 3px rgba(192, 57, 43, 0.35);
+}
+
+.cart-icon-button .shimmer-layer {
+  inset: -12px;
+}
+
+.cart-icon-image {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  display: block;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7);
+}
+
+@property --shimmer-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes shimmer-loop {
+  from {
+    --shimmer-angle: 0deg;
+  }
+  to {
+    --shimmer-angle: 360deg;
+  }
+}
+
+.shimmer-layer {
+  position: absolute;
+  inset: -16px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  mask-image: conic-gradient(
+    from var(--shimmer-angle),
+    transparent 0%,
+    transparent 18%,
+    black 35%,
+    rgba(0, 0, 0, 0.85) 48%,
+    transparent 68%,
+    transparent 100%
+  );
+  mix-blend-mode: plus-lighter;
+  animation: shimmer-loop 1.4s linear infinite;
+  background: radial-gradient(
+      circle at center,
+      rgba(255, 223, 128, 0.35) 0%,
+      rgba(255, 196, 92, 0.15) 55%,
+      transparent 72%
+    ),
+    conic-gradient(
+      from calc(var(--shimmer-angle) - 30deg),
+      rgba(255, 248, 224, 0.1),
+      rgba(255, 215, 128, 0.55),
+      rgba(255, 248, 224, 0.1)
+    );
+}
+
+.cart-icon-button.is-glowing .shimmer-layer,
+.shimmer-action.is-glowing .shimmer-layer {
+  opacity: calc(0.18 + 0.6 * var(--glow-strength));
+}
+
+.shimmer-action {
+  --glow-strength: 0;
+  --glow-alpha: 0;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 10px calc(26px * var(--glow-strength))
+      calc(-8px * var(--glow-strength))
+      rgba(160, 45, 18, 0.35);
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 226, 179, 0.85) 0%,
+      rgba(255, 203, 128, 0.92) 45%,
+      rgba(240, 160, 64, 0.95) 100%
+  );
+  background-color: transparent;
+  color: #4d1f00;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.55);
+  transition: transform 0.25s ease, box-shadow 0.35s ease;
+}
+
+.shimmer-action:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.shimmer-action .shimmer-layer {
+  inset: -24px;
+}
+
+.shimmer-action .button-text {
+  position: relative;
+  z-index: 1;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.shimmer-action.is-glowing {
+  box-shadow: 0 12px calc(32px * var(--glow-strength))
+      calc(-6px * var(--glow-strength))
+      rgba(255, 196, 128, var(--glow-alpha));
+}
+
+@keyframes cartScorePop {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  45% {
+    transform: translateY(-6px) scale(1.12);
+  }
+  70% {
+    transform: translateY(2px) scale(0.96);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.cart-icon-button.score-pop {
+  animation: cartScorePop 0.48s ease-out;
+}
+
 @keyframes logoReveal {
   from {
     opacity: 0;
@@ -309,6 +486,19 @@ nav a:focus-visible {
 
   .hero-track {
     animation: none;
+  }
+
+  .shimmer-layer {
+    animation: none;
+  }
+
+  .cart-icon-button.score-pop {
+    animation: none;
+    transform: scale(1.04);
+    box-shadow: 0 0 calc(34px * var(--glow-strength))
+        calc(6px * var(--glow-strength))
+        rgba(255, 215, 128, var(--glow-alpha)),
+      0 0 0 3px rgba(255, 215, 128, 0.45);
   }
 }
 
@@ -727,7 +917,6 @@ main {
 }
 
 .checkout-btn:not(:disabled):hover,
-.place-order-btn:hover,
 .close-checkout:hover {
   background-color: #a93226;
 }
@@ -1223,7 +1412,23 @@ main {
 
 .place-order-btn:disabled {
   background-color: #ccc;
+  background-image: none;
   cursor: not-allowed;
+  color: #666;
+}
+
+.place-order-btn.shimmer-action {
+  color: #4d1f00;
+}
+
+.flying-cart-image {
+  position: fixed;
+  z-index: 1200;
+  border-radius: 18px;
+  pointer-events: none;
+  object-fit: cover;
+  will-change: transform, opacity;
+  transform-origin: center;
 }
 
 #calendar {
