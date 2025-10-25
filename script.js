@@ -628,6 +628,19 @@ function findMenuItemById(id) {
 // unique ids to update quantities rather than adding duplicates.
 const cart = {};
 
+const EXPRESS_DELIVERY_FEE = 3;
+let selectedTipPercent = 0.15;
+let selectedDeliverySpeed = 'standard';
+let scheduledDate = null;
+let scheduledTime = '';
+let scheduleConfirmed = false;
+let pendingScheduleTime = '';
+
+const calendarState = {
+  current: startOfMonth(new Date()),
+  selected: null,
+};
+
 function calculateCartTotals() {
   let total = 0;
   let count = 0;
@@ -636,6 +649,268 @@ function calculateCartTotals() {
     count += item.quantity;
   });
   return { total, count };
+}
+
+function roundCurrency(value) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+function formatCurrency(amount) {
+  return `$${amount.toFixed(2)}`;
+}
+
+function startOfDay(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function startOfMonth(date) {
+  const first = startOfDay(date);
+  first.setDate(1);
+  return first;
+}
+
+function sameDay(a, b) {
+  return Boolean(a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate());
+}
+
+const scheduleDateFormatter = new Intl.DateTimeFormat('en-US', {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+});
+
+function formatScheduleDate(date) {
+  return scheduleDateFormatter.format(date);
+}
+
+function formatDisplayTime(timeValue) {
+  if (timeValue instanceof Date) {
+    return timeValue.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  }
+  if (typeof timeValue !== 'string') {
+    return '';
+  }
+  const [hours, minutes] = timeValue.split(':').map(Number);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) {
+    return timeValue;
+  }
+  const temp = new Date();
+  temp.setHours(hours, minutes, 0, 0);
+  return temp.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+const calendarDayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+function setScheduleSummary(text, variant = 'info') {
+  const summary = document.getElementById('schedule-summary');
+  if (!summary) {
+    return;
+  }
+  summary.textContent = text || '';
+  summary.classList.remove('is-warning', 'is-confirmed');
+  if (variant === 'warning') {
+    summary.classList.add('is-warning');
+  } else if (variant === 'success') {
+    summary.classList.add('is-confirmed');
+  }
+}
+
+function updateScheduleSummary() {
+  const scheduleContainer = document.getElementById('schedule-container');
+  if (!scheduleContainer || scheduleContainer.classList.contains('hidden')) {
+    return;
+  }
+  if (!calendarState.selected) {
+    setScheduleSummary('Select a delivery date to begin.', 'info');
+    return;
+  }
+  if (!pendingScheduleTime) {
+    setScheduleSummary(`Delivery date set to ${formatScheduleDate(calendarState.selected)}. Choose a delivery time.`, 'info');
+    return;
+  }
+  if (scheduleConfirmed && scheduledDate && scheduledTime) {
+    setScheduleSummary(`Delivery scheduled for ${formatScheduleDate(scheduledDate)} at ${formatDisplayTime(scheduledTime)}.`, 'success');
+    return;
+  }
+  setScheduleSummary(`Selected ${formatScheduleDate(calendarState.selected)} at ${formatDisplayTime(pendingScheduleTime)}. Save to confirm.`, 'warning');
+}
+
+function selectCalendarDate(date) {
+  const normalized = startOfDay(date);
+  calendarState.selected = normalized;
+  scheduleConfirmed = false;
+  if (
+    normalized.getFullYear() !== calendarState.current.getFullYear() ||
+    normalized.getMonth() !== calendarState.current.getMonth()
+  ) {
+    calendarState.current = startOfMonth(normalized);
+  }
+  updateScheduleSummary();
+  renderCalendar();
+}
+
+function changeCalendarMonth(offset) {
+  const base = calendarState.current || startOfMonth(new Date());
+  calendarState.current = startOfMonth(new Date(base.getFullYear(), base.getMonth() + offset, 1));
+  renderCalendar();
+}
+
+function resetCalendarMonth() {
+  calendarState.current = startOfMonth(new Date());
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const mount = document.getElementById('calendar');
+  if (!mount) {
+    return;
+  }
+  const monthDate = calendarState.current || startOfMonth(new Date());
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const previousMonthDays = new Date(year, month, 0).getDate();
+  const startIndex = (firstDay.getDay() + 6) % 7; // Monday-first
+  const totalCells = 42;
+  const today = startOfDay(new Date());
+
+  const calendar = document.createElement('div');
+  calendar.className = 'calendar';
+
+  const nav = document.createElement('nav');
+  nav.className = 'calendar--nav';
+
+  const prev = document.createElement('a');
+  prev.innerHTML = '&#8249;';
+  prev.setAttribute('aria-label', 'Previous month');
+  prev.addEventListener('click', () => changeCalendarMonth(-1));
+
+  const next = document.createElement('a');
+  next.innerHTML = '&#8250;';
+  next.setAttribute('aria-label', 'Next month');
+  next.addEventListener('click', () => changeCalendarMonth(1));
+
+  const heading = document.createElement('h1');
+  heading.innerHTML = `${monthDate.toLocaleString('default', { month: 'long' })} <small>${year}</small>`;
+  heading.addEventListener('click', () => resetCalendarMonth());
+
+  nav.appendChild(prev);
+  nav.appendChild(heading);
+  nav.appendChild(next);
+
+  const daysNav = document.createElement('nav');
+  daysNav.className = 'calendar--days';
+
+  calendarDayLabels.forEach((label) => {
+    const span = document.createElement('span');
+    span.className = 'label';
+    span.textContent = label;
+    daysNav.appendChild(span);
+  });
+
+  const appendDay = (date, muted = false) => {
+    const span = document.createElement('span');
+    span.textContent = String(date.getDate());
+    if (muted) {
+      span.classList.add('muted');
+    }
+    if (sameDay(date, today)) {
+      span.classList.add('today');
+    }
+    if (calendarState.selected && sameDay(date, calendarState.selected)) {
+      span.classList.add('selected');
+    }
+    span.addEventListener('click', () => selectCalendarDate(date));
+    daysNav.appendChild(span);
+  };
+
+  for (let i = 0; i < startIndex; i += 1) {
+    const dayNumber = previousMonthDays - startIndex + 1 + i;
+    appendDay(new Date(year, month - 1, dayNumber), true);
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    appendDay(new Date(year, month, day));
+  }
+
+  const filledCells = startIndex + daysInMonth;
+  const trailing = totalCells - filledCells;
+  for (let i = 1; i <= trailing; i += 1) {
+    appendDay(new Date(year, month + 1, i), true);
+  }
+
+  calendar.appendChild(nav);
+  calendar.appendChild(daysNav);
+
+  mount.innerHTML = '';
+  mount.appendChild(calendar);
+}
+
+function handleScheduleSave() {
+  if (!calendarState.selected) {
+    setScheduleSummary('Select a delivery date before saving.', 'warning');
+    return;
+  }
+  if (!pendingScheduleTime) {
+    setScheduleSummary('Choose a delivery time before saving.', 'warning');
+    return;
+  }
+  const [hours, minutes] = pendingScheduleTime.split(':').map(Number);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) {
+    setScheduleSummary('Enter a valid delivery time.', 'warning');
+    return;
+  }
+  const selection = new Date(calendarState.selected);
+  selection.setHours(hours, minutes, 0, 0);
+  if (selection < new Date()) {
+    setScheduleSummary('Please pick a delivery time in the future.', 'warning');
+    return;
+  }
+  scheduledDate = selection;
+  scheduledTime = pendingScheduleTime;
+  scheduleConfirmed = true;
+  updateScheduleSummary();
+}
+
+function setDeliverySpeed(value) {
+  selectedDeliverySpeed = value;
+  const scheduleContainer = document.getElementById('schedule-container');
+  const timeInput = document.getElementById('schedule-time');
+  if (scheduleContainer) {
+    const shouldShow = value === 'schedule';
+    scheduleContainer.classList.toggle('hidden', !shouldShow);
+    scheduleContainer.setAttribute('aria-hidden', String(!shouldShow));
+    if (shouldShow) {
+      if (scheduleConfirmed && scheduledDate) {
+        calendarState.selected = startOfDay(scheduledDate);
+        calendarState.current = startOfMonth(scheduledDate);
+        pendingScheduleTime = scheduledTime;
+        if (timeInput) {
+          timeInput.value = scheduledTime;
+        }
+      } else if (timeInput) {
+        if (pendingScheduleTime) {
+          timeInput.value = pendingScheduleTime;
+        } else {
+          timeInput.value = '';
+        }
+      }
+      renderCalendar();
+      updateScheduleSummary();
+    } else {
+      if (!scheduleConfirmed) {
+        pendingScheduleTime = '';
+      }
+      if (timeInput && !scheduleConfirmed) {
+        timeInput.value = '';
+      }
+      setScheduleSummary('', 'info');
+    }
+  }
+  updateCheckoutView();
 }
 
 function updateItemQuantity(id, quantity) {
@@ -910,10 +1185,23 @@ function updateCart() {
 
 function toggleDeliveryFields(isDelivery) {
   const deliveryFields = document.getElementById('delivery-fields');
-  if (!deliveryFields) {
-    return;
+  if (deliveryFields) {
+    deliveryFields.classList.toggle('hidden', !isDelivery);
   }
-  deliveryFields.classList.toggle('hidden', !isDelivery);
+  if (!isDelivery) {
+    setScheduleSummary('', 'info');
+    const scheduleContainer = document.getElementById('schedule-container');
+    if (scheduleContainer) {
+      scheduleContainer.classList.add('hidden');
+      scheduleContainer.setAttribute('aria-hidden', 'true');
+    }
+  } else {
+    const selected = document.querySelector('input[name="delivery-time"]:checked');
+    if (selected) {
+      setDeliverySpeed(selected.value);
+    }
+  }
+  updateCheckoutView();
 }
 
 function toggleCheckoutPanel(open) {
@@ -945,6 +1233,26 @@ function updateCheckoutView() {
     empty.textContent = 'Add a few dishes to begin your order.';
     checkoutItems.appendChild(empty);
     checkoutTotal.textContent = '$0.00';
+    const subtotalEl = document.getElementById('checkout-subtotal-amount');
+    const tipSummaryEl = document.getElementById('tip-amount');
+    const tipAmountEl = document.getElementById('checkout-tip-amount');
+    const deliveryFeeRow = document.getElementById('delivery-fee-row');
+    const deliveryFeeAmount = document.getElementById('delivery-fee-amount');
+    if (subtotalEl) {
+      subtotalEl.textContent = '$0.00';
+    }
+    if (tipSummaryEl) {
+      tipSummaryEl.textContent = '$0.00';
+    }
+    if (tipAmountEl) {
+      tipAmountEl.textContent = '$0.00';
+    }
+    if (deliveryFeeRow) {
+      deliveryFeeRow.classList.add('hidden');
+    }
+    if (deliveryFeeAmount) {
+      deliveryFeeAmount.textContent = formatCurrency(EXPRESS_DELIVERY_FEE);
+    }
     if (placeOrderBtn) {
       placeOrderBtn.disabled = true;
     }
@@ -1086,7 +1394,36 @@ function updateCheckoutView() {
   });
 
   const { total } = calculateCartTotals();
-  checkoutTotal.textContent = `$${total.toFixed(2)}`;
+  const subtotal = roundCurrency(total);
+  const subtotalEl = document.getElementById('checkout-subtotal-amount');
+  if (subtotalEl) {
+    subtotalEl.textContent = formatCurrency(subtotal);
+  }
+  const rawTip = Number.isFinite(selectedTipPercent) ? selectedTipPercent : 0;
+  const tipAmount = entries.length ? roundCurrency(subtotal * rawTip) : 0;
+  const tipSummaryEl = document.getElementById('tip-amount');
+  if (tipSummaryEl) {
+    tipSummaryEl.textContent = formatCurrency(tipAmount);
+  }
+  const tipAmountEl = document.getElementById('checkout-tip-amount');
+  if (tipAmountEl) {
+    tipAmountEl.textContent = formatCurrency(tipAmount);
+  }
+  const delivery = document.getElementById('fulfilment-delivery');
+  const isDelivery = Boolean(delivery && delivery.checked);
+  const deliveryFeeRow = document.getElementById('delivery-fee-row');
+  const deliveryFeeAmount = document.getElementById('delivery-fee-amount');
+  const expressFee = isDelivery && selectedDeliverySpeed === 'express' ? EXPRESS_DELIVERY_FEE : 0;
+  if (deliveryFeeRow && deliveryFeeAmount) {
+    if (expressFee > 0) {
+      deliveryFeeRow.classList.remove('hidden');
+      deliveryFeeAmount.textContent = formatCurrency(expressFee);
+    } else {
+      deliveryFeeRow.classList.add('hidden');
+    }
+  }
+  const grandTotal = roundCurrency(subtotal + tipAmount + expressFee);
+  checkoutTotal.textContent = formatCurrency(grandTotal);
 }
 
 // Kick off the rendering once the DOM has loaded
@@ -1118,6 +1455,59 @@ document.addEventListener('DOMContentLoaded', () => {
     delivery.addEventListener('change', () => toggleDeliveryFields(true));
     toggleDeliveryFields(delivery.checked);
   }
+  const tipButtons = Array.from(document.querySelectorAll('.tip-button'));
+  if (tipButtons.length) {
+    let defaultButton = tipButtons.find((button) => {
+      const value = parseFloat(button.dataset.tip);
+      return Number.isFinite(value) && Math.abs(value - selectedTipPercent) < 0.0001;
+    });
+    if (!defaultButton) {
+      defaultButton = tipButtons[0];
+    }
+    const defaultPercent = defaultButton ? parseFloat(defaultButton.dataset.tip) : NaN;
+    selectedTipPercent = Number.isFinite(defaultPercent) ? defaultPercent : 0;
+    tipButtons.forEach((button) => {
+      const percent = parseFloat(button.dataset.tip);
+      if (button === defaultButton) {
+        button.classList.add('is-active');
+      }
+      button.addEventListener('click', () => {
+        selectedTipPercent = Number.isFinite(percent) ? percent : 0;
+        tipButtons.forEach((btn) => btn.classList.toggle('is-active', btn === button));
+        updateCheckoutView();
+      });
+    });
+  }
+  const deliveryTimeRadios = document.querySelectorAll('input[name="delivery-time"]');
+  deliveryTimeRadios.forEach((radio) => {
+    if (radio.checked) {
+      selectedDeliverySpeed = radio.value;
+    }
+    radio.addEventListener('change', () => {
+      if (radio.checked) {
+        setDeliverySpeed(radio.value);
+      }
+    });
+  });
+  if (deliveryTimeRadios.length) {
+    setDeliverySpeed(selectedDeliverySpeed);
+  }
+  const scheduleTimeInput = document.getElementById('schedule-time');
+  if (scheduleTimeInput) {
+    scheduleTimeInput.addEventListener('input', (event) => {
+      pendingScheduleTime = event.target.value;
+      scheduleConfirmed = false;
+    });
+    scheduleTimeInput.addEventListener('change', (event) => {
+      pendingScheduleTime = event.target.value;
+      scheduleConfirmed = false;
+      updateScheduleSummary();
+    });
+  }
+  const saveScheduleBtn = document.getElementById('save-schedule');
+  if (saveScheduleBtn) {
+    saveScheduleBtn.addEventListener('click', handleScheduleSave);
+  }
   const placeOrderBtn = document.getElementById('place-order');
   if (placeOrderBtn) {
     placeOrderBtn.addEventListener('click', () => {
@@ -1127,7 +1517,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       const fulfilment = delivery && delivery.checked ? 'Delivery' : 'Pickup';
-      alert(`Order placed for ${fulfilment}. This demo does not submit the order.`);
+      const { total: subtotal } = calculateCartTotals();
+      const tipAmount = roundCurrency(subtotal * (Number.isFinite(selectedTipPercent) ? selectedTipPercent : 0));
+      const expressFee = fulfilment === 'Delivery' && selectedDeliverySpeed === 'express' ? EXPRESS_DELIVERY_FEE : 0;
+      const notes = [];
+      if (fulfilment === 'Delivery') {
+        const dropoff = document.querySelector('input[name="dropoff"]:checked');
+        if (dropoff) {
+          notes.push(`Drop-off: ${dropoff.value === 'door' ? 'Leave it at the door' : 'Hand it to me'}.`);
+        }
+        const dropoffNotes = document.getElementById('dropoff-notes');
+        if (dropoffNotes && dropoffNotes.value.trim()) {
+          notes.push(`Instructions: ${dropoffNotes.value.trim()}`);
+        }
+        if (selectedDeliverySpeed === 'express') {
+          notes.push('Express delivery (ETA 15 mins) selected.');
+        } else if (selectedDeliverySpeed === 'schedule' && scheduleConfirmed && scheduledDate && scheduledTime) {
+          notes.push(`Scheduled for ${formatScheduleDate(scheduledDate)} at ${formatDisplayTime(scheduledTime)}.`);
+        }
+      }
+      notes.push(`Tip: ${formatCurrency(tipAmount)} (100% to drivers).`);
+      const grandTotal = roundCurrency(subtotal + tipAmount + expressFee);
+      notes.push(`Total due: ${formatCurrency(grandTotal)}.`);
+      notes.push('This demo does not submit the order.');
+      alert(`Order placed for ${fulfilment}.\n${notes.join('\n')}`);
     });
   }
 });

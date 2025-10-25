@@ -100,9 +100,74 @@
               <input type="text" id="delivery-zip" name="delivery-zip" autocomplete="postal-code" placeholder="ZIP code">
             </div>
           </div>
+          <fieldset class="dropoff-options">
+            <legend>Drop-off preference</legend>
+            <label>
+              <input type="radio" name="dropoff" value="door" id="dropoff-door" checked>
+              Leave it at the door
+            </label>
+            <label>
+              <input type="radio" name="dropoff" value="hand" id="dropoff-hand">
+              Hand it to me
+            </label>
+            <div class="dropoff-instructions">
+              <label for="dropoff-notes">Drop-off instructions (optional)</label>
+              <textarea id="dropoff-notes" name="dropoff-notes" rows="2" placeholder="Add a note for your driver."></textarea>
+            </div>
+          </fieldset>
+          <fieldset class="delivery-time-options">
+            <legend>Delivery time</legend>
+            <label>
+              <input type="radio" name="delivery-time" value="express" id="delivery-time-express">
+              Express (ETA 15 mins) +$3.00
+            </label>
+            <label>
+              <input type="radio" name="delivery-time" value="standard" id="delivery-time-standard" checked>
+              Standard (35 – 50 mins)
+            </label>
+            <label>
+              <input type="radio" name="delivery-time" value="schedule" id="delivery-time-schedule">
+              Schedule ahead
+            </label>
+            <div id="schedule-container" class="schedule-container hidden" aria-hidden="true">
+              <p class="schedule-helper">Choose a delivery date and time, then save to confirm.</p>
+              <div id="calendar"></div>
+              <div class="schedule-controls">
+                <label for="schedule-time">Select a time</label>
+                <input type="time" id="schedule-time" name="schedule-time">
+                <button type="button" id="save-schedule" class="schedule-save">Save delivery time</button>
+              </div>
+              <p id="schedule-summary" class="schedule-summary" role="status" aria-live="polite"></p>
+            </div>
+          </fieldset>
         </div>
         <div id="checkout-items" class="checkout-items"></div>
+        <section class="tip-section" aria-label="Choose gratuity">
+          <h4>Tip your driver</h4>
+          <p class="tip-note">100% of gratuity goes to our delivery drivers.</p>
+          <div class="tip-buttons" role="group" aria-label="Tip options">
+            <button type="button" class="tip-button" data-tip="0.15">15%</button>
+            <button type="button" class="tip-button" data-tip="0.2">20%</button>
+            <button type="button" class="tip-button" data-tip="1">100%</button>
+          </div>
+          <div class="tip-summary">
+            <span>Tip amount</span>
+            <strong id="tip-amount">$0.00</strong>
+          </div>
+        </section>
         <div class="checkout-total-row">
+          <span>Subtotal</span>
+          <strong id="checkout-subtotal-amount">$0.00</strong>
+        </div>
+        <div class="checkout-total-row hidden" id="delivery-fee-row">
+          <span>Express delivery fee</span>
+          <strong id="delivery-fee-amount">$3.00</strong>
+        </div>
+        <div class="checkout-total-row">
+          <span>Tip</span>
+          <strong id="checkout-tip-amount">$0.00</strong>
+        </div>
+        <div class="checkout-total-row grand-total">
           <span>Total</span>
           <strong id="checkout-total-amount">$0.00</strong>
         </div>
