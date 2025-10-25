@@ -144,6 +144,19 @@
       align-items: baseline;
     }
 
+    .receipt-title {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .receipt-logo {
+      width: 160px;
+      max-width: 100%;
+      height: auto;
+    }
+
     .receipt-header h1 {
       font-size: 2rem;
       margin: 0;
@@ -262,7 +275,10 @@
   <main>
     <div class="receipt-card" aria-labelledby="thankYouTitle">
       <div class="receipt-header">
-        <h1 id="thankYouTitle">Thank you for ordering from Danny's Wok!</h1>
+        <div class="receipt-title">
+          <img src="images/logos1.png" alt="Danny's Wok logo" class="receipt-logo" />
+          <h1 id="thankYouTitle">Thank you for ordering from Danny's Wok!</h1>
+        </div>
         <span class="eta-badge" aria-live="polite">
           <span id="timerLabel">ETA</span>
           <span id="etaTimer" class="timer" aria-label="Estimated time of arrival">18:00</span>
@@ -359,8 +375,16 @@
       const right = document.querySelector('.fortune-right');
       const message = document.querySelector('.fortune-message span');
 
-      if (!fortune || !left || !right || !message) return;
-      if (typeof fortune.animate !== 'function') return;
+      if (!fortune || !left || !right || !message) return null;
+      if (
+        typeof fortune.animate !== 'function' ||
+        typeof left.animate !== 'function' ||
+        typeof right.animate !== 'function' ||
+        typeof message.animate !== 'function'
+      ) {
+        message.style.transform = 'translateX(0)';
+        return Promise.resolve();
+      }
 
       const fortuneKeyframes = [
         { transform: 'translateX(-50%) rotate(-10deg)' },
@@ -374,11 +398,11 @@
       const sharedTiming = {
         duration: 3600,
         easing: 'ease-in-out',
-        iterations: Infinity,
-        direction: 'alternate'
+        iterations: 1,
+        fill: 'forwards'
       };
 
-      fortune.animate(fortuneKeyframes, sharedTiming);
+      const fortuneAnimation = fortune.animate(fortuneKeyframes, sharedTiming);
 
       const leftKeyframes = [
         { transform: 'rotate(0deg) translate(0, 0)' },
@@ -394,8 +418,8 @@
         { transform: 'rotate(45deg) translate(70px, 70px)', offset: 1 }
       ];
 
-      left.animate(leftKeyframes, sharedTiming);
-      right.animate(rightKeyframes, sharedTiming);
+      const leftAnimation = left.animate(leftKeyframes, sharedTiming);
+      const rightAnimation = right.animate(rightKeyframes, sharedTiming);
 
       message.style.transform = 'translateX(110%)';
       const messageKeyframes = [
@@ -405,7 +429,23 @@
         { transform: 'translateX(0)', offset: 1 }
       ];
 
-      message.animate(messageKeyframes, sharedTiming);
+      const messageAnimation = message.animate(messageKeyframes, sharedTiming);
+
+      const completion = messageAnimation && messageAnimation.finished;
+      if (completion && typeof completion.then === 'function') {
+        return completion.catch(() => {});
+      }
+
+      const fallbacks = [fortuneAnimation, leftAnimation, rightAnimation]
+        .map((animation) => animation && animation.finished)
+        .filter((promise) => promise && typeof promise.then === 'function')
+        .map((promise) => promise.catch(() => {}));
+
+      if (fallbacks.length) {
+        return Promise.all(fallbacks);
+      }
+
+      return Promise.resolve();
     }
 
     function playCookieAudio() {
@@ -453,12 +493,48 @@
       const intervalId = setInterval(updateTimer, 1000);
     }
 
+    let overlayElement = null;
+    let overlayHidden = false;
+    let hideTimeoutId = null;
+    let animationStarted = false;
+    let interactionHandler = null;
+    let interactionEvents = [];
+
+    function removeInteractionListeners() {
+      if (!overlayElement || !interactionHandler) return;
+      interactionEvents.forEach((eventName) => {
+        overlayElement.removeEventListener(eventName, interactionHandler);
+      });
+      interactionEvents = [];
+      interactionHandler = null;
+    }
+
     function hideOverlay() {
-      const overlay = document.getElementById('fortuneOverlay');
+      if (overlayHidden) return;
+      const overlay = overlayElement || document.getElementById('fortuneOverlay');
+      if (!overlay) return;
+      overlayHidden = true;
+      if (hideTimeoutId) {
+        clearTimeout(hideTimeoutId);
+        hideTimeoutId = null;
+      }
+      removeInteractionListeners();
       overlay.classList.add('hidden');
       setTimeout(() => {
         overlay.style.display = 'none';
       }, 600);
+    }
+
+    function scheduleOverlayHide() {
+      if (overlayHidden) return;
+      if (hideTimeoutId) {
+        clearTimeout(hideTimeoutId);
+      }
+      hideTimeoutId = setTimeout(() => {
+        if (!overlayHidden) {
+          hideOverlay();
+        }
+      }, 5000);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -467,21 +543,47 @@
         fortuneText.textContent = selectQuote();
       }
 
-      startFortuneAnimation();
-      playCookieAudio();
       setupTimer();
 
-      const overlay = document.getElementById('fortuneOverlay');
-      if (!overlay) return;
+      overlayElement = document.getElementById('fortuneOverlay');
+      if (!overlayElement) return;
 
-      const dismiss = () => {
-        hideOverlay();
-        document.removeEventListener('click', dismiss);
-        document.removeEventListener('touchstart', dismiss);
+      interactionHandler = () => {
+        if (overlayHidden) return;
+
+        if (!animationStarted) {
+          animationStarted = true;
+          const animationPromise = startFortuneAnimation();
+          playCookieAudio();
+
+          if (animationPromise && typeof animationPromise.then === 'function') {
+            animationPromise
+              .then(() => {
+                scheduleOverlayHide();
+              })
+              .catch(() => {
+                scheduleOverlayHide();
+              });
+          } else {
+            scheduleOverlayHide();
+          }
+        } else {
+          if (hideTimeoutId) {
+            clearTimeout(hideTimeoutId);
+            hideTimeoutId = null;
+          }
+          hideOverlay();
+        }
       };
 
-      document.addEventListener('click', dismiss);
-      document.addEventListener('touchstart', dismiss);
+      if (window.PointerEvent) {
+        overlayElement.addEventListener('pointerdown', interactionHandler, { passive: true });
+        interactionEvents = ['pointerdown'];
+      } else {
+        overlayElement.addEventListener('touchstart', interactionHandler, { passive: true });
+        overlayElement.addEventListener('click', interactionHandler);
+        interactionEvents = ['touchstart', 'click'];
+      }
     });
   </script>
 </body>
