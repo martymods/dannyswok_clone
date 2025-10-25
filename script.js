@@ -1118,8 +1118,8 @@ function buildHeroCarousel() {
 
   const pointerCoarse = window.matchMedia('(pointer: coarse)');
   const compactWidth = window.matchMedia('(max-width: 768px)');
-  const useSwipeMode = pointerCoarse.matches || compactWidth.matches;
-  const slidesToRender = useSwipeMode ? slides : slides.concat(slides);
+  const enableTouchEnhancements = pointerCoarse.matches || compactWidth.matches;
+  const slidesToRender = slides.length > 0 ? slides.concat(slides) : slides;
 
   slidesToRender.forEach(({ item, image }) => {
     const button = document.createElement('button');
@@ -1157,18 +1157,19 @@ function buildHeroCarousel() {
   const duration = Math.min(140, Math.max(45, items.length * 1.2));
   track.style.setProperty('--hero-duration', `${duration}s`);
 
-  if (useSwipeMode) {
-    track.dataset.mode = 'swipe';
+  track.removeAttribute('data-mode');
+  track.style.removeProperty('transform');
+
+  if (enableTouchEnhancements) {
     carousel.classList.add('is-touch');
-    if (typeof carousel.scrollTo === 'function') {
-      carousel.scrollTo({ left: 0, behavior: 'auto' });
-    } else {
-      carousel.scrollLeft = 0;
-    }
   } else {
-    track.removeAttribute('data-mode');
     carousel.classList.remove('is-touch');
-    track.style.removeProperty('transform');
+  }
+
+  if (typeof carousel.scrollTo === 'function') {
+    carousel.scrollTo({ left: 0, behavior: 'auto' });
+  } else {
+    carousel.scrollLeft = 0;
   }
 }
 
