@@ -147,6 +147,7 @@ button:focus-visible {
   --glow-alpha: 0;
   --shimmer-angle: 0deg;
   position: relative;
+  z-index: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -179,7 +180,8 @@ button:focus-visible {
 }
 
 .cart-icon-button .shimmer-layer {
-  inset: -12px;
+  inset: -6px;
+  z-index: -1;
 }
 
 .cart-icon-image {
@@ -188,6 +190,8 @@ button:focus-visible {
   object-fit: cover;
   display: block;
   border-radius: 50%;
+  position: relative;
+  z-index: 1;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7);
 }
 
