@@ -63,6 +63,18 @@
       transform: translateX(-50%) rotate(-10deg);
     }
 
+    #drawing_canvas {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 512px;
+      height: 350px;
+      display: none;
+      pointer-events: none;
+      z-index: 4;
+    }
+
     .fortune-left {
       width: 200px;
       height: 200px;
@@ -111,6 +123,8 @@
       bottom: 20px;
       right: 10px;
       font-size: 1.1rem;
+      opacity: 0;
+      visibility: hidden;
     }
 
     .fortune-overlay p {
@@ -267,6 +281,7 @@
         <div class="fortune-right"></div>
         <div class="fortune-message"><span id="fortuneText">You will be successful and happy</span></div>
       </div>
+      <canvas id="drawing_canvas" aria-hidden="true"></canvas>
     </div>
     <p>Tap anywhere to open your virtual receipt.</p>
     <audio id="cookieAudio" src="audio/cookieOpen_Full.mp3" preload="auto"></audio>
@@ -364,6 +379,189 @@
       "Respect your journey—the world is watching with wonder."
     ];
 
+    const FORTUNE_REVEAL_DELAY = 2000;
+    const CONFETTI_DELAY = 2000;
+    const HALF_PI = Math.PI * 0.5;
+    const viewWidth = 512;
+    const viewHeight = 350;
+    const timeStep = 1 / 60;
+
+    let drawingCanvas = null;
+    let ctx = null;
+    let particles = [];
+    let confettiActive = false;
+    let confettiInitialized = false;
+    let confettiTimeoutId = null;
+    let confettiHasPlayed = false;
+
+    function initDrawingCanvas() {
+      if (confettiInitialized) return true;
+      drawingCanvas = document.getElementById('drawing_canvas');
+      if (!drawingCanvas) return false;
+      drawingCanvas.width = viewWidth;
+      drawingCanvas.height = viewHeight;
+      ctx = drawingCanvas.getContext('2d');
+      confettiInitialized = !!ctx;
+      return confettiInitialized;
+    }
+
+    class Point {
+      constructor(x = 0, y = 0) {
+        this.x = x;
+        this.y = y;
+      }
+    }
+
+    class Particle {
+      constructor(p0, p1, p2, p3) {
+        this.p0 = p0;
+        this.p1 = p1;
+        this.p2 = p2;
+        this.p3 = p3;
+
+        this.time = 0;
+        this.duration = 3 + Math.random() * 2;
+        this.color = `#${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')}`;
+
+        this.w = 8;
+        this.h = 6;
+
+        this.complete = false;
+        this.x = p0.x;
+        this.y = p0.y;
+        this.r = 0;
+        this.sy = 1;
+      }
+
+      update() {
+        this.time = Math.min(this.duration, this.time + timeStep);
+
+        const f = Ease.outCubic(this.time, 0, 1, this.duration);
+        const p = cubeBezier(this.p0, this.p1, this.p2, this.p3, f);
+
+        const dx = p.x - this.x;
+        const dy = p.y - this.y;
+
+        this.r = Math.atan2(dy, dx) + HALF_PI;
+        this.sy = Math.sin(Math.PI * f * 10);
+        this.x = p.x;
+        this.y = p.y;
+
+        this.complete = this.time === this.duration;
+      }
+
+      draw() {
+        if (!ctx) return;
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.r);
+        ctx.scale(1, this.sy);
+
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-this.w * 0.5, -this.h * 0.5, this.w, this.h);
+
+        ctx.restore();
+      }
+    }
+
+    function createParticles() {
+      particles = [];
+      for (let i = 0; i < 128; i += 1) {
+        const p0 = new Point(viewWidth * 0.5, viewHeight * 0.5);
+        const p1 = new Point(Math.random() * viewWidth, Math.random() * viewHeight);
+        const p2 = new Point(Math.random() * viewWidth, Math.random() * viewHeight);
+        const p3 = new Point(Math.random() * viewWidth, viewHeight + 64);
+
+        particles.push(new Particle(p0, p1, p2, p3));
+      }
+    }
+
+    function updateParticles() {
+      particles.forEach((particle) => particle.update());
+    }
+
+    function drawParticles() {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, viewWidth, viewHeight);
+      particles.forEach((particle) => particle.draw());
+    }
+
+    function checkParticlesComplete() {
+      return particles.every((particle) => particle.complete);
+    }
+
+    function cubeBezier(p0, c0, c1, p1, t) {
+      const p = new Point();
+      const nt = 1 - t;
+
+      p.x = nt * nt * nt * p0.x + 3 * nt * nt * t * c0.x + 3 * nt * t * t * c1.x + t * t * t * p1.x;
+      p.y = nt * nt * nt * p0.y + 3 * nt * nt * t * c0.y + 3 * nt * t * t * c1.y + t * t * t * p1.y;
+
+      return p;
+    }
+
+    const Ease = {
+      inCubic(t, b, c, d) {
+        const progress = t / d;
+        return c * progress * progress * progress + b;
+      },
+      outCubic(t, b, c, d) {
+        let progress = t / d;
+        progress -= 1;
+        return c * (progress * progress * progress + 1) + b;
+      },
+      inOutCubic(t, b, c, d) {
+        let progress = t / (d / 2);
+        if (progress < 1) return (c / 2) * progress * progress * progress + b;
+        progress -= 2;
+        return (c / 2) * (progress * progress * progress + 2) + b;
+      },
+      inBack(t, b, c, d, s) {
+        const overshoot = s || 1.70158;
+        return c * (t /= d) * t * ((overshoot + 1) * t - overshoot) + b;
+      }
+    };
+
+    function stopConfetti() {
+      if (!drawingCanvas || !ctx) return;
+      setTimeout(() => {
+        ctx.clearRect(0, 0, viewWidth, viewHeight);
+        drawingCanvas.style.display = 'none';
+      }, 300);
+    }
+
+    function confettiLoop() {
+      if (!confettiActive) return;
+      updateParticles();
+      drawParticles();
+
+      if (checkParticlesComplete()) {
+        confettiActive = false;
+        stopConfetti();
+        return;
+      }
+
+      requestAnimationFrame(confettiLoop);
+    }
+
+    function startConfetti() {
+      if (confettiHasPlayed) return;
+      if (!initDrawingCanvas() || !ctx || !drawingCanvas) return;
+      drawingCanvas.style.display = 'block';
+      createParticles();
+      confettiActive = true;
+      confettiHasPlayed = true;
+      requestAnimationFrame(confettiLoop);
+    }
+
+    function scheduleConfetti() {
+      if (confettiHasPlayed || confettiTimeoutId) return;
+      confettiTimeoutId = setTimeout(() => {
+        confettiTimeoutId = null;
+        startConfetti();
+      }, CONFETTI_DELAY);
+    }
+
     function selectQuote() {
       const index = Math.floor(Math.random() * quotes.length);
       return quotes[index];
@@ -383,6 +581,8 @@
         typeof message.animate !== 'function'
       ) {
         message.style.transform = 'translateX(0)';
+        message.style.opacity = '1';
+        message.style.visibility = 'visible';
         return Promise.resolve();
       }
 
@@ -401,6 +601,9 @@
         iterations: 1,
         fill: 'forwards'
       };
+
+      const revealOffset = Math.min(0.85, Math.max(0.1, FORTUNE_REVEAL_DELAY / sharedTiming.duration));
+      const settleOffset = Math.min(1, revealOffset + 0.25);
 
       const fortuneAnimation = fortune.animate(fortuneKeyframes, sharedTiming);
 
@@ -422,14 +625,28 @@
       const rightAnimation = right.animate(rightKeyframes, sharedTiming);
 
       message.style.transform = 'translateX(110%)';
+      message.style.opacity = '0';
+      message.style.visibility = 'visible';
       const messageKeyframes = [
-        { transform: 'translateX(110%)' },
-        { transform: 'translateX(110%)', offset: 0.55 },
-        { transform: 'translateX(0)', offset: 0.85 },
-        { transform: 'translateX(0)', offset: 1 }
+        { transform: 'translateX(110%)', opacity: 0 },
+        { transform: 'translateX(110%)', opacity: 0, offset: revealOffset },
+        { transform: 'translateX(0)', opacity: 1, offset: settleOffset },
+        { transform: 'translateX(0)', opacity: 1, offset: 1 }
       ];
 
       const messageAnimation = message.animate(messageKeyframes, sharedTiming);
+      if (messageAnimation) {
+        const handleFinish = () => {
+          message.style.opacity = '1';
+          message.style.visibility = 'visible';
+        };
+
+        if (typeof messageAnimation.addEventListener === 'function') {
+          messageAnimation.addEventListener('finish', handleFinish, { once: true });
+        } else {
+          messageAnimation.onfinish = handleFinish;
+        }
+      }
 
       const completion = messageAnimation && messageAnimation.finished;
       if (completion && typeof completion.then === 'function') {
@@ -543,6 +760,12 @@
         fortuneText.textContent = selectQuote();
       }
 
+      const messageElement = document.querySelector('.fortune-message span');
+      if (messageElement) {
+        messageElement.style.opacity = '0';
+        messageElement.style.visibility = 'hidden';
+      }
+
       setupTimer();
 
       overlayElement = document.getElementById('fortuneOverlay');
@@ -555,6 +778,7 @@
           animationStarted = true;
           const animationPromise = startFortuneAnimation();
           playCookieAudio();
+          scheduleConfetti();
 
           if (animationPromise && typeof animationPromise.then === 'function') {
             animationPromise
