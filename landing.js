@@ -323,14 +323,23 @@
 
     const photoIcon = L.divIcon({
       html: `
-        <button type="button" class="store-photo-card" data-store-id="${id}" data-store-label="${label}" aria-label="View a photo of the ${label} Danny's Wok location">
-          <img src="${info.src}" alt="${info.alt}">
+        <button
+          type="button"
+          class="store-photo-card"
+          data-store-id="${id}"
+          data-store-label="${label}"
+          aria-label="View a photo of the ${label} Danny's Wok location"
+        >
+          <span class="store-photo-card__preview" aria-hidden="true">
+            <img src="${info.src}" alt="">
+          </span>
+          <span class="store-photo-card__hint" aria-hidden="true">Photo</span>
         </button>
       `,
       className: 'store-photo-card-wrapper',
-      iconSize: [220, 160],
-      iconAnchor: [-12, 92],
-      popupAnchor: [0, -80],
+      iconSize: [132, 148],
+      iconAnchor: [66, 120],
+      popupAnchor: [0, -96],
     });
 
     photoMarker = L.marker(target, {
