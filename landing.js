@@ -13,11 +13,26 @@
   }
 
   const loadingScreen = document.getElementById('loading-screen');
+  const mapWrapper = document.querySelector('.store-map-wrapper');
   if (!loadingScreen && pageBody) {
     pageBody.classList.add('is-map-ready');
   }
   const storeButtons = Array.from(document.querySelectorAll('.store-card'));
   const enterMenuLink = document.getElementById('enter-menu-link');
+  const storePhotoData = {
+    southwest: {
+      src: 'images/baltimore_store.png',
+      alt: "Street view of Danny's Wok Southwest location.",
+    },
+    olney: {
+      src: 'images/front_store.png',
+      alt: "Front view of Danny's Wok at One & Olney Plaza.",
+    },
+    'hunting-park': {
+      src: 'images/broad_store.png',
+      alt: "Street view of Danny's Wok on North Broad Street.",
+    },
+  };
   const storeLocations = storeButtons
     .map((button) => {
       const lat = Number(button.dataset.lat);
@@ -28,6 +43,21 @@
       return [lat, lng];
     })
     .filter(Boolean);
+
+  if (mapElement) {
+    mapElement.addEventListener('click', handlePhotoCardInteraction);
+    mapElement.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        handlePhotoCardInteraction(event);
+      }
+    });
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closePhotoOverlay();
+    }
+  });
 
   const map = L.map(mapElement, {
     zoom: 12,
@@ -130,7 +160,10 @@
   });
 
   let activeMarker = null;
+  let photoMarker = null;
   let selectedButton = null;
+  let photoOverlayState = null;
+  let lastPhotoTrigger = null;
 
   function updateMenuLink(label, id) {
     if (!enterMenuLink) {
@@ -143,6 +176,170 @@
     enterMenuLink.classList.remove('is-disabled');
     enterMenuLink.setAttribute('aria-disabled', 'false');
     enterMenuLink.removeAttribute('tabindex');
+  }
+
+  function ensurePhotoOverlayElements() {
+    if (!mapWrapper) {
+      return null;
+    }
+
+    if (photoOverlayState) {
+      return photoOverlayState;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'store-photo-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-hidden', 'true');
+
+    overlay.innerHTML = `
+      <div class="store-photo-overlay__backdrop" data-overlay-dismiss="true"></div>
+      <div class="store-photo-overlay__content">
+        <img class="store-photo-overlay__image" alt="" />
+        <div class="store-photo-overlay__controls">
+          <button type="button" class="store-photo-overlay__close" aria-label="Close photo view">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <a class="store-photo-overlay__cta" href="menu.html">
+            Enter the location &raquo;&raquo;
+          </a>
+        </div>
+      </div>
+    `;
+
+    mapWrapper.appendChild(overlay);
+
+    const image = overlay.querySelector('.store-photo-overlay__image');
+    const closeButton = overlay.querySelector('.store-photo-overlay__close');
+    const ctaLink = overlay.querySelector('.store-photo-overlay__cta');
+
+    const state = {
+      element: overlay,
+      image,
+      closeButton,
+      ctaLink,
+    };
+
+    function handleOverlayClick(event) {
+      const dismissTrigger = event.target.closest('[data-overlay-dismiss]');
+      const isOutsideContent = !event.target.closest('.store-photo-overlay__content');
+      if (dismissTrigger || isOutsideContent) {
+        closePhotoOverlay();
+      }
+    }
+
+    overlay.addEventListener('click', handleOverlayClick);
+
+    if (closeButton) {
+      closeButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        closePhotoOverlay();
+      });
+    }
+
+    photoOverlayState = state;
+    return state;
+  }
+
+  function closePhotoOverlay() {
+    if (!photoOverlayState) {
+      return;
+    }
+
+    const { element } = photoOverlayState;
+    if (element) {
+      element.classList.remove('is-visible');
+      element.setAttribute('aria-hidden', 'true');
+    }
+
+    if (lastPhotoTrigger && document.body.contains(lastPhotoTrigger)) {
+      lastPhotoTrigger.focus({ preventScroll: true });
+    }
+
+    lastPhotoTrigger = null;
+  }
+
+  function openPhotoOverlay(storeId, label, info) {
+    const overlayElements = ensurePhotoOverlayElements();
+    if (!overlayElements || !info) {
+      return;
+    }
+
+    const { element, image, ctaLink, closeButton } = overlayElements;
+
+    if (image) {
+      image.src = info.src;
+      image.alt = info.alt;
+    }
+
+    if (ctaLink) {
+      ctaLink.textContent = `Enter the ${label} location >>`;
+      ctaLink.href = `menu.html?store=${encodeURIComponent(storeId)}`;
+      ctaLink.setAttribute('aria-label', `Enter the ${label} location`);
+    }
+
+    if (element) {
+      element.classList.add('is-visible');
+      element.setAttribute('aria-hidden', 'false');
+      element.setAttribute(
+        'aria-label',
+        `${label} Danny's Wok location street view photo`
+      );
+    }
+
+    if (closeButton) {
+      closeButton.focus({ preventScroll: true });
+    }
+  }
+
+  function handlePhotoCardInteraction(event) {
+    const card = event.target.closest('.store-photo-card');
+    if (!card) {
+      return;
+    }
+
+    const storeId = card.dataset.storeId;
+    const storeLabel = card.dataset.storeLabel;
+    if (!storeId || !storeLabel) {
+      return;
+    }
+
+    const info = storePhotoData[storeId];
+    if (!info) {
+      return;
+    }
+
+    event.preventDefault();
+    lastPhotoTrigger = card;
+    openPhotoOverlay(storeId, storeLabel, info);
+  }
+
+  function addPhotoMarker(target, id, label) {
+    const info = storePhotoData[id];
+    if (!info) {
+      return;
+    }
+
+    const photoIcon = L.divIcon({
+      html: `
+        <button type="button" class="store-photo-card" data-store-id="${id}" data-store-label="${label}" aria-label="View a photo of the ${label} Danny's Wok location">
+          <img src="${info.src}" alt="${info.alt}">
+        </button>
+      `,
+      className: 'store-photo-card-wrapper',
+      iconSize: [220, 160],
+      iconAnchor: [-12, 92],
+      popupAnchor: [0, -80],
+    });
+
+    photoMarker = L.marker(target, {
+      icon: photoIcon,
+      interactive: true,
+      keyboard: false,
+      riseOnHover: true,
+      zIndexOffset: 350,
+    }).addTo(map);
   }
 
   function selectStore(button) {
@@ -168,9 +365,23 @@
       duration: 1.2,
     });
 
+    const mapWidth = mapElement.clientWidth || 0;
+    const horizontalOffset = Math.min(220, Math.max(90, Math.round(mapWidth * 0.22)));
+
+    map.once('moveend', () => {
+      map.panBy([-horizontalOffset, 0], { animate: true });
+    });
+
     if (activeMarker) {
       activeMarker.remove();
     }
+
+    if (photoMarker) {
+      photoMarker.remove();
+      photoMarker = null;
+    }
+
+    closePhotoOverlay();
 
     activeMarker = L.marker(target, {
       icon: markerIcon,
@@ -180,6 +391,8 @@
     }).addTo(map);
 
     updateMenuLink(label, id);
+
+    addPhotoMarker(target, id, label);
   }
 
   storeButtons.forEach((button) => {
