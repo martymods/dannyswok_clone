@@ -11,9 +11,46 @@
 // the names encoded in the filenames to pair menu entries with imagery.
 const fallbackImage = 'images/chinesemenu/store_interior.jpg';
 const cartAddSound = typeof Audio === 'function' ? new Audio('audio/wok_register.mp3') : null;
+const hoverSound = typeof Audio === 'function' ? new Audio('audio/scroll_hover_over_sound.mp3') : null;
+
 if (cartAddSound) {
   cartAddSound.preload = 'auto';
 }
+
+if (hoverSound) {
+  hoverSound.preload = 'auto';
+}
+
+function playHoverSound() {
+  if (!hoverSound) {
+    return;
+  }
+
+  try {
+    hoverSound.currentTime = 0;
+    const playPromise = hoverSound.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {});
+    }
+  } catch (error) {
+    // Ignore playback errors triggered by autoplay policies or unsupported playback.
+  }
+}
+
+function handleGlobalButtonHover(event) {
+  const button = event.target.closest('button');
+  if (!button || !document.contains(button)) {
+    return;
+  }
+
+  if (event.relatedTarget && button.contains(event.relatedTarget)) {
+    return;
+  }
+
+  playHoverSound();
+}
+
+document.addEventListener('mouseover', handleGlobalButtonHover);
 
 const menuImageSources = [
   'images/chinesemenu/b-b-q_spare_rib_tips_w_fried_rice_Fried_Scallop_w_French_Fries.jpg',
