@@ -25,10 +25,22 @@
     attributionControl: false,
   });
 
+  const streetLayer = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    {
+      maxZoom: 19,
+      zIndex: 1,
+    }
+  );
+
+  streetLayer.addTo(map);
+
   const imageryLayer = L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     {
       maxZoom: 19,
+      opacity: 0.7,
+      zIndex: 2,
     }
   );
 
@@ -63,9 +75,13 @@
     }
   }
 
-  imageryLayer.on('load', () => {
+  streetLayer.on('load', () => {
     baseLayerLoaded = true;
     tryHideLoadingScreen();
+  });
+
+  imageryLayer.on('load', () => {
+    map.invalidateSize();
   });
 
   setTimeout(() => {
