@@ -119,8 +119,7 @@ nav a:focus-visible {
 .cart-icon-button {
   --glow-strength: 0;
   --glow-alpha: 0;
-  --cart-shimmer-angle: 0deg;
-  --cart-shimmer-inset: 18px;
+  --shimmer-angle: 0deg;
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -140,7 +139,6 @@ nav a:focus-visible {
   background-color: transparent;
 }
 
-
 .cart-icon-button:hover,
 .cart-icon-button:focus-visible {
   transform: translateY(-2px) scale(1.03);
@@ -154,14 +152,8 @@ nav a:focus-visible {
     0 0 0 3px rgba(192, 57, 43, 0.35);
 }
 
-.cart-icon-button:hover .shimmer-layer,
-.cart-icon-button:focus-visible .shimmer-layer {
-  opacity: 0.55;
-}
-
-.shimmer-action:hover .shimmer-layer,
-.shimmer-action:focus-visible .shimmer-layer {
-  opacity: 0.5;
+.cart-icon-button .shimmer-layer {
+  inset: -12px;
 }
 
 .cart-icon-image {
@@ -173,51 +165,51 @@ nav a:focus-visible {
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7);
 }
 
-@property --cart-shimmer-angle {
+@property --shimmer-angle {
   syntax: '<angle>';
   inherits: false;
   initial-value: 0deg;
 }
 
-@keyframes cartShimmerLoop {
+@keyframes shimmer-loop {
   from {
-    --cart-shimmer-angle: 0deg;
+    --shimmer-angle: 0deg;
   }
   to {
-    --cart-shimmer-angle: 360deg;
+    --shimmer-angle: 360deg;
   }
 }
 
 .shimmer-layer {
   position: absolute;
-  inset: calc(var(--cart-shimmer-inset) * -1);
+  inset: -16px;
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.35s ease;
+  transition: opacity 0.3s ease;
   mask-image: conic-gradient(
-    from var(--cart-shimmer-angle),
+    from var(--shimmer-angle),
     transparent 0%,
     transparent 18%,
-    black 36%,
-    black 45%,
-    transparent 52%,
-    transparent 72%,
-    black 86%,
-    black 95%,
+    black 35%,
+    rgba(0, 0, 0, 0.85) 48%,
+    transparent 68%,
     transparent 100%
   );
-  mask-size: cover;
   mix-blend-mode: plus-lighter;
-  animation: cartShimmerLoop 1.2s linear infinite;
-  background: conic-gradient(
-    from calc(var(--cart-shimmer-angle) - 10deg),
-    rgba(255, 236, 179, 0),
-    rgba(255, 220, 128, 0.65) 15%,
-    rgba(255, 248, 224, 0.95) 25%,
-    rgba(255, 215, 128, 0.65) 32%,
-    rgba(255, 236, 179, 0)
-  );
+  animation: shimmer-loop 1.4s linear infinite;
+  background: radial-gradient(
+      circle at center,
+      rgba(255, 223, 128, 0.35) 0%,
+      rgba(255, 196, 92, 0.15) 55%,
+      transparent 72%
+    ),
+    conic-gradient(
+      from calc(var(--shimmer-angle) - 30deg),
+      rgba(255, 248, 224, 0.1),
+      rgba(255, 215, 128, 0.55),
+      rgba(255, 248, 224, 0.1)
+    );
 }
 
 .cart-icon-button.is-glowing .shimmer-layer,
@@ -225,61 +217,9 @@ nav a:focus-visible {
   opacity: calc(0.18 + 0.6 * var(--glow-strength));
 }
 
-@keyframes cartShineFlash {
-  0% {
-    opacity: 0;
-  }
-  15% {
-    opacity: 1;
-  }
-  60% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-.shimmer-layer::before,
-.shimmer-layer::after {
-  content: '';
-  position: absolute;
-  inset: var(--cart-shimmer-inset);
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  mix-blend-mode: color;
-}
-
-.shimmer-layer::before {
-  box-shadow: 0 0 calc(var(--cart-shimmer-inset) * 0.12) 2px rgba(255, 246, 224, 0.8),
-    0 0 calc(var(--cart-shimmer-inset) * 0.25) 4px rgba(255, 228, 168, 0.65),
-    0 0 calc(var(--cart-shimmer-inset) * 0.35) 5px rgba(255, 205, 112, 0.5);
-  z-index: -1;
-}
-
-.shimmer-layer::after {
-  box-shadow: inset 0 0 0 1px rgba(255, 244, 208, 0.8),
-    inset 0 0 3px 1px rgba(255, 223, 153, 0.8),
-    inset 0 0 6px 2px rgba(255, 196, 102, 0.7);
-  z-index: 2;
-}
-
-.cart-icon-button:hover .shimmer-layer::before,
-.cart-icon-button:hover .shimmer-layer::after,
-.cart-icon-button:focus-visible .shimmer-layer::before,
-.cart-icon-button:focus-visible .shimmer-layer::after,
-.cart-icon-button.is-glowing .shimmer-layer::before,
-.cart-icon-button.is-glowing .shimmer-layer::after {
-  opacity: 1;
-  animation: cartShineFlash 1.2s ease-in 1 forwards;
-}
-
 .shimmer-action {
   --glow-strength: 0;
   --glow-alpha: 0;
-  --cart-shimmer-inset: 24px;
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -303,6 +243,10 @@ nav a:focus-visible {
 
 .shimmer-action:hover:not(:disabled) {
   transform: translateY(-1px);
+}
+
+.shimmer-action .shimmer-layer {
+  inset: -24px;
 }
 
 .shimmer-action .button-text {
