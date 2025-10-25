@@ -318,8 +318,6 @@
     </div>
   </main>
 
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-3gJwYp4Z4B3FQ0TnGo9d2AE6zM9bdr6w7NQ5u+hb5wE=" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.3/TweenMax.min.js" integrity="sha512-dXQ7DY2MPfWptjyFz3BKRNpT9XyM54q9WlH0I1GtIsfRSAxEPPYUajF2/MEGLjm+rXhN3kLBXjg5eQof8I4F+Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script>
     const quotes = [
       "Radiate your strength into the world.",
@@ -356,17 +354,58 @@
     }
 
     function startFortuneAnimation() {
-      const timeline = new TimelineMax({ yoyo: true, repeat: -1, repeatDelay: 3 });
-      timeline.to($('.fortune'), 0.1, { rotation: -5, delay: 2 });
-      timeline.to($('.fortune'), 0.1, { rotation: 5 });
-      timeline.to($('.fortune'), 0.1, { rotation: -5 });
-      timeline.to($('.fortune'), 0.1, { rotation: 5 });
-      timeline.to($('.fortune'), 0.1, { rotation: -5 });
-      timeline.to($('.fortune'), 0.1, { rotation: 0 });
-      timeline.addLabel('break', '+=0.3');
-      timeline.to($('.fortune-left'), 0.5, { rotation: -45, x: -70, y: 70 }, 'break');
-      timeline.to($('.fortune-right'), 0.5, { rotation: 45, x: 70, y: 70 }, 'break');
-      timeline.from($('.fortune-message span'), 1, { x: '110%' }, 'break');
+      const fortune = document.querySelector('.fortune');
+      const left = document.querySelector('.fortune-left');
+      const right = document.querySelector('.fortune-right');
+      const message = document.querySelector('.fortune-message span');
+
+      if (!fortune || !left || !right || !message) return;
+      if (typeof fortune.animate !== 'function') return;
+
+      const fortuneKeyframes = [
+        { transform: 'translateX(-50%) rotate(-10deg)' },
+        { transform: 'translateX(-50%) rotate(-5deg)', offset: 0.2 },
+        { transform: 'translateX(-50%) rotate(5deg)', offset: 0.4 },
+        { transform: 'translateX(-50%) rotate(-5deg)', offset: 0.6 },
+        { transform: 'translateX(-50%) rotate(5deg)', offset: 0.8 },
+        { transform: 'translateX(-50%) rotate(0deg)', offset: 1 }
+      ];
+
+      const sharedTiming = {
+        duration: 3600,
+        easing: 'ease-in-out',
+        iterations: Infinity,
+        direction: 'alternate'
+      };
+
+      fortune.animate(fortuneKeyframes, sharedTiming);
+
+      const leftKeyframes = [
+        { transform: 'rotate(0deg) translate(0, 0)' },
+        { transform: 'rotate(0deg) translate(0, 0)', offset: 0.55 },
+        { transform: 'rotate(-45deg) translate(-70px, 70px)', offset: 0.85 },
+        { transform: 'rotate(-45deg) translate(-70px, 70px)', offset: 1 }
+      ];
+
+      const rightKeyframes = [
+        { transform: 'rotate(0deg) translate(0, 0)' },
+        { transform: 'rotate(0deg) translate(0, 0)', offset: 0.55 },
+        { transform: 'rotate(45deg) translate(70px, 70px)', offset: 0.85 },
+        { transform: 'rotate(45deg) translate(70px, 70px)', offset: 1 }
+      ];
+
+      left.animate(leftKeyframes, sharedTiming);
+      right.animate(rightKeyframes, sharedTiming);
+
+      message.style.transform = 'translateX(110%)';
+      const messageKeyframes = [
+        { transform: 'translateX(110%)' },
+        { transform: 'translateX(110%)', offset: 0.55 },
+        { transform: 'translateX(0)', offset: 0.85 },
+        { transform: 'translateX(0)', offset: 1 }
+      ];
+
+      message.animate(messageKeyframes, sharedTiming);
     }
 
     function playCookieAudio() {
@@ -422,18 +461,25 @@
       }, 600);
     }
 
-    $(function () {
-      $('#fortuneText').text(selectQuote());
+    document.addEventListener('DOMContentLoaded', () => {
+      const fortuneText = document.getElementById('fortuneText');
+      if (fortuneText) {
+        fortuneText.textContent = selectQuote();
+      }
+
       startFortuneAnimation();
       playCookieAudio();
       setupTimer();
 
       const overlay = document.getElementById('fortuneOverlay');
+      if (!overlay) return;
+
       const dismiss = () => {
         hideOverlay();
         document.removeEventListener('click', dismiss);
         document.removeEventListener('touchstart', dismiss);
       };
+
       document.addEventListener('click', dismiss);
       document.addEventListener('touchstart', dismiss);
     });
