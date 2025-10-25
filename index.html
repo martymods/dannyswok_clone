@@ -77,6 +77,19 @@
             Delivery
           </label>
         </fieldset>
+        <div id="pickup-time-wrapper" class="fulfilment-time-wrapper">
+          <fieldset class="pickup-time-options">
+            <legend>Pickup time</legend>
+            <label>
+              <input type="radio" name="pickup-time" value="standard" id="pickup-time-standard" checked>
+              Standard (10 – 15 mins)
+            </label>
+            <label>
+              <input type="radio" name="pickup-time" value="schedule" id="pickup-time-schedule">
+              Schedule ahead
+            </label>
+          </fieldset>
+        </div>
         <div id="delivery-fields" class="delivery-fields hidden">
           <div class="field">
             <label for="delivery-name">Name</label>
@@ -129,17 +142,17 @@
               <input type="radio" name="delivery-time" value="schedule" id="delivery-time-schedule">
               Schedule ahead
             </label>
-            <div id="schedule-container" class="schedule-container hidden" aria-hidden="true">
-              <p class="schedule-helper">Choose a delivery date and time, then save to confirm.</p>
-              <div id="calendar"></div>
-              <div class="schedule-controls">
-                <label for="schedule-time">Select a time</label>
-                <input type="time" id="schedule-time" name="schedule-time">
-                <button type="button" id="save-schedule" class="schedule-save">Save delivery time</button>
-              </div>
-              <p id="schedule-summary" class="schedule-summary" role="status" aria-live="polite"></p>
-            </div>
           </fieldset>
+        </div>
+        <div id="schedule-container" class="schedule-container hidden" aria-hidden="true">
+          <p class="schedule-helper">Choose a date and time, then save to confirm.</p>
+          <div id="calendar"></div>
+          <div class="schedule-controls">
+            <label for="schedule-time">Select a time</label>
+            <input type="time" id="schedule-time" name="schedule-time">
+            <button type="button" id="save-schedule" class="schedule-save">Save selection</button>
+          </div>
+          <p id="schedule-summary" class="schedule-summary" role="status" aria-live="polite"></p>
         </div>
         <div id="checkout-items" class="checkout-items"></div>
         <section class="tip-section" aria-label="Choose gratuity">
@@ -149,6 +162,15 @@
             <button type="button" class="tip-button" data-tip="0.15">15%</button>
             <button type="button" class="tip-button" data-tip="0.2">20%</button>
             <button type="button" class="tip-button" data-tip="1">100%</button>
+            <button type="button" class="tip-button" data-tip="custom">Custom ($0.00)</button>
+          </div>
+          <div id="custom-tip-container" class="custom-tip-container hidden" aria-hidden="true">
+            <label for="custom-tip-input" class="custom-tip-label">Enter custom tip amount</label>
+            <div class="custom-tip-input-wrapper">
+              <span class="currency-symbol" aria-hidden="true">$</span>
+              <input type="number" id="custom-tip-input" name="custom-tip" min="0" step="0.01" inputmode="decimal" value="0">
+            </div>
+            <p class="custom-tip-help">Leave at $0.00 to skip tipping or enter any amount you prefer.</p>
           </div>
           <div class="tip-summary">
             <span>Tip amount</span>

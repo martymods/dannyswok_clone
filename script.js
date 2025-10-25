@@ -630,16 +630,63 @@ const cart = {};
 
 const EXPRESS_DELIVERY_FEE = 3;
 let selectedTipPercent = 0.15;
+let selectedTipType = 'percent';
+let customTipAmount = 0;
 let selectedDeliverySpeed = 'standard';
-let scheduledDate = null;
-let scheduledTime = '';
-let scheduleConfirmed = false;
-let pendingScheduleTime = '';
+let selectedPickupTimeOption = 'standard';
+
+function createScheduleState() {
+  return {
+    date: null,
+    time: '',
+    pendingTime: '',
+    confirmed: false,
+  };
+}
+
+const scheduleStates = {
+  pickup: createScheduleState(),
+  delivery: createScheduleState(),
+};
+
+let activeScheduleContext = 'delivery';
 
 const calendarState = {
   current: startOfMonth(new Date()),
   selected: null,
 };
+
+function getScheduleState(context = activeScheduleContext) {
+  return scheduleStates[context];
+}
+
+function getScheduleContextLabel(context) {
+  return context === 'pickup' ? 'pickup' : 'delivery';
+}
+
+function getScheduleContextTitle(context) {
+  return context === 'pickup' ? 'Pickup' : 'Delivery';
+}
+
+function setActiveScheduleContext(context) {
+  activeScheduleContext = context;
+  const state = getScheduleState();
+  const referenceDate = state.date ? startOfDay(state.date) : state.date;
+  if (referenceDate) {
+    calendarState.selected = startOfDay(referenceDate);
+    calendarState.current = startOfMonth(referenceDate);
+  } else {
+    calendarState.selected = null;
+    calendarState.current = startOfMonth(new Date());
+  }
+  if (!state.pendingTime && state.confirmed && state.time) {
+    state.pendingTime = state.time;
+  }
+  const timeInput = document.getElementById('schedule-time');
+  if (timeInput) {
+    timeInput.value = state.pendingTime || '';
+  }
+}
 
 function calculateCartTotals() {
   let total = 0;
@@ -722,25 +769,34 @@ function updateScheduleSummary() {
   if (!scheduleContainer || scheduleContainer.classList.contains('hidden')) {
     return;
   }
+  const context = activeScheduleContext;
+  const state = getScheduleState();
+  const label = getScheduleContextLabel(context);
+  const title = getScheduleContextTitle(context);
   if (!calendarState.selected) {
-    setScheduleSummary('Select a delivery date to begin.', 'info');
+    setScheduleSummary(`Select a ${label} date to begin.`, 'info');
     return;
   }
-  if (!pendingScheduleTime) {
-    setScheduleSummary(`Delivery date set to ${formatScheduleDate(calendarState.selected)}. Choose a delivery time.`, 'info');
+  if (!state.pendingTime) {
+    setScheduleSummary(`${title} date set to ${formatScheduleDate(calendarState.selected)}. Choose a ${label} time.`, 'info');
     return;
   }
-  if (scheduleConfirmed && scheduledDate && scheduledTime) {
-    setScheduleSummary(`Delivery scheduled for ${formatScheduleDate(scheduledDate)} at ${formatDisplayTime(scheduledTime)}.`, 'success');
+  if (state.confirmed && state.date && state.time) {
+    setScheduleSummary(`${title} scheduled for ${formatScheduleDate(state.date)} at ${formatDisplayTime(state.time)}.`, 'success');
     return;
   }
-  setScheduleSummary(`Selected ${formatScheduleDate(calendarState.selected)} at ${formatDisplayTime(pendingScheduleTime)}. Save to confirm.`, 'warning');
+  setScheduleSummary(
+    `Selected ${formatScheduleDate(calendarState.selected)} at ${formatDisplayTime(state.pendingTime)}. Save to confirm.`,
+    'warning',
+  );
 }
 
 function selectCalendarDate(date) {
   const normalized = startOfDay(date);
   calendarState.selected = normalized;
-  scheduleConfirmed = false;
+  const state = getScheduleState();
+  state.confirmed = false;
+  state.date = new Date(normalized);
   if (
     normalized.getFullYear() !== calendarState.current.getFullYear() ||
     normalized.getMonth() !== calendarState.current.getMonth()
@@ -850,67 +906,77 @@ function renderCalendar() {
 }
 
 function handleScheduleSave() {
+  const context = activeScheduleContext;
+  const state = getScheduleState();
+  const label = getScheduleContextLabel(context);
+  const title = getScheduleContextTitle(context);
   if (!calendarState.selected) {
-    setScheduleSummary('Select a delivery date before saving.', 'warning');
+    setScheduleSummary(`Select a ${label} date before saving.`, 'warning');
     return;
   }
-  if (!pendingScheduleTime) {
-    setScheduleSummary('Choose a delivery time before saving.', 'warning');
+  if (!state.pendingTime) {
+    setScheduleSummary(`Choose a ${label} time before saving.`, 'warning');
     return;
   }
-  const [hours, minutes] = pendingScheduleTime.split(':').map(Number);
+  const [hours, minutes] = state.pendingTime.split(':').map(Number);
   if (!Number.isInteger(hours) || !Number.isInteger(minutes)) {
-    setScheduleSummary('Enter a valid delivery time.', 'warning');
+    setScheduleSummary('Enter a valid time.', 'warning');
     return;
   }
   const selection = new Date(calendarState.selected);
   selection.setHours(hours, minutes, 0, 0);
   if (selection < new Date()) {
-    setScheduleSummary('Please pick a delivery time in the future.', 'warning');
+    setScheduleSummary(`Please pick a ${label} time in the future.`, 'warning');
     return;
   }
-  scheduledDate = selection;
-  scheduledTime = pendingScheduleTime;
-  scheduleConfirmed = true;
+  state.date = selection;
+  state.time = state.pendingTime;
+  state.confirmed = true;
+  calendarState.selected = startOfDay(selection);
+  calendarState.current = startOfMonth(selection);
+  state.pendingTime = state.time;
   updateScheduleSummary();
+  renderCalendar();
 }
 
-function setDeliverySpeed(value) {
-  selectedDeliverySpeed = value;
+function setTimePreference(context, value) {
+  if (context === 'delivery') {
+    selectedDeliverySpeed = value;
+  } else {
+    selectedPickupTimeOption = value;
+  }
   const scheduleContainer = document.getElementById('schedule-container');
-  const timeInput = document.getElementById('schedule-time');
-  if (scheduleContainer) {
-    const shouldShow = value === 'schedule';
-    scheduleContainer.classList.toggle('hidden', !shouldShow);
-    scheduleContainer.setAttribute('aria-hidden', String(!shouldShow));
-    if (shouldShow) {
-      if (scheduleConfirmed && scheduledDate) {
-        calendarState.selected = startOfDay(scheduledDate);
-        calendarState.current = startOfMonth(scheduledDate);
-        pendingScheduleTime = scheduledTime;
-        if (timeInput) {
-          timeInput.value = scheduledTime;
-        }
-      } else if (timeInput) {
-        if (pendingScheduleTime) {
-          timeInput.value = pendingScheduleTime;
-        } else {
-          timeInput.value = '';
-        }
-      }
+  const state = getScheduleState(context);
+  const shouldShow = value === 'schedule';
+  if (shouldShow) {
+    setActiveScheduleContext(context);
+    if (scheduleContainer) {
+      scheduleContainer.classList.remove('hidden');
+      scheduleContainer.setAttribute('aria-hidden', 'false');
       renderCalendar();
       updateScheduleSummary();
+    }
+  } else {
+    if (!state.confirmed) {
+      state.pendingTime = '';
     } else {
-      if (!scheduleConfirmed) {
-        pendingScheduleTime = '';
-      }
-      if (timeInput && !scheduleConfirmed) {
-        timeInput.value = '';
-      }
+      state.pendingTime = state.time;
+    }
+    if (scheduleContainer && activeScheduleContext === context) {
+      scheduleContainer.classList.add('hidden');
+      scheduleContainer.setAttribute('aria-hidden', 'true');
       setScheduleSummary('', 'info');
     }
   }
   updateCheckoutView();
+}
+
+function setDeliverySpeed(value) {
+  setTimePreference('delivery', value);
+}
+
+function setPickupTimePreference(value) {
+  setTimePreference('pickup', value);
 }
 
 function updateItemQuantity(id, quantity) {
@@ -1188,17 +1254,33 @@ function toggleDeliveryFields(isDelivery) {
   if (deliveryFields) {
     deliveryFields.classList.toggle('hidden', !isDelivery);
   }
-  if (!isDelivery) {
-    setScheduleSummary('', 'info');
-    const scheduleContainer = document.getElementById('schedule-container');
-    if (scheduleContainer) {
+  const pickupWrapper = document.getElementById('pickup-time-wrapper');
+  if (pickupWrapper) {
+    pickupWrapper.classList.toggle('hidden', isDelivery);
+  }
+  const scheduleContainer = document.getElementById('schedule-container');
+  if (isDelivery) {
+    if (scheduleContainer && !scheduleContainer.classList.contains('hidden') && activeScheduleContext !== 'delivery') {
       scheduleContainer.classList.add('hidden');
       scheduleContainer.setAttribute('aria-hidden', 'true');
     }
+    const selectedDelivery = document.querySelector('input[name="delivery-time"]:checked');
+    if (selectedDelivery) {
+      setDeliverySpeed(selectedDelivery.value);
+    } else {
+      setDeliverySpeed(selectedDeliverySpeed);
+    }
   } else {
-    const selected = document.querySelector('input[name="delivery-time"]:checked');
-    if (selected) {
-      setDeliverySpeed(selected.value);
+    if (scheduleContainer && !scheduleContainer.classList.contains('hidden') && activeScheduleContext !== 'pickup') {
+      scheduleContainer.classList.add('hidden');
+      scheduleContainer.setAttribute('aria-hidden', 'true');
+      setScheduleSummary('', 'info');
+    }
+    const selectedPickup = document.querySelector('input[name="pickup-time"]:checked');
+    if (selectedPickup) {
+      setPickupTimePreference(selectedPickup.value);
+    } else {
+      setPickupTimePreference(selectedPickupTimeOption);
     }
   }
   updateCheckoutView();
@@ -1399,8 +1481,15 @@ function updateCheckoutView() {
   if (subtotalEl) {
     subtotalEl.textContent = formatCurrency(subtotal);
   }
-  const rawTip = Number.isFinite(selectedTipPercent) ? selectedTipPercent : 0;
-  const tipAmount = entries.length ? roundCurrency(subtotal * rawTip) : 0;
+  let tipAmount = 0;
+  if (entries.length) {
+    if (selectedTipType === 'custom') {
+      tipAmount = roundCurrency(Math.max(customTipAmount, 0));
+    } else {
+      const rawTip = Number.isFinite(selectedTipPercent) ? selectedTipPercent : 0;
+      tipAmount = roundCurrency(subtotal * rawTip);
+    }
+  }
   const tipSummaryEl = document.getElementById('tip-amount');
   if (tipSummaryEl) {
     tipSummaryEl.textContent = formatCurrency(tipAmount);
@@ -1453,31 +1542,19 @@ document.addEventListener('DOMContentLoaded', () => {
   if (pickup && delivery) {
     pickup.addEventListener('change', () => toggleDeliveryFields(false));
     delivery.addEventListener('change', () => toggleDeliveryFields(true));
-    toggleDeliveryFields(delivery.checked);
   }
-  const tipButtons = Array.from(document.querySelectorAll('.tip-button'));
-  if (tipButtons.length) {
-    let defaultButton = tipButtons.find((button) => {
-      const value = parseFloat(button.dataset.tip);
-      return Number.isFinite(value) && Math.abs(value - selectedTipPercent) < 0.0001;
-    });
-    if (!defaultButton) {
-      defaultButton = tipButtons[0];
+  const pickupTimeRadios = document.querySelectorAll('input[name="pickup-time"]');
+  pickupTimeRadios.forEach((radio) => {
+    if (radio.checked) {
+      selectedPickupTimeOption = radio.value;
     }
-    const defaultPercent = defaultButton ? parseFloat(defaultButton.dataset.tip) : NaN;
-    selectedTipPercent = Number.isFinite(defaultPercent) ? defaultPercent : 0;
-    tipButtons.forEach((button) => {
-      const percent = parseFloat(button.dataset.tip);
-      if (button === defaultButton) {
-        button.classList.add('is-active');
+    radio.addEventListener('change', () => {
+      if (radio.checked) {
+        selectedPickupTimeOption = radio.value;
+        setPickupTimePreference(radio.value);
       }
-      button.addEventListener('click', () => {
-        selectedTipPercent = Number.isFinite(percent) ? percent : 0;
-        tipButtons.forEach((btn) => btn.classList.toggle('is-active', btn === button));
-        updateCheckoutView();
-      });
     });
-  }
+  });
   const deliveryTimeRadios = document.querySelectorAll('input[name="delivery-time"]');
   deliveryTimeRadios.forEach((radio) => {
     if (radio.checked) {
@@ -1485,22 +1562,104 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     radio.addEventListener('change', () => {
       if (radio.checked) {
+        selectedDeliverySpeed = radio.value;
         setDeliverySpeed(radio.value);
       }
     });
   });
-  if (deliveryTimeRadios.length) {
-    setDeliverySpeed(selectedDeliverySpeed);
+  const tipButtons = Array.from(document.querySelectorAll('.tip-button'));
+  const customTipContainer = document.getElementById('custom-tip-container');
+  const customTipInput = document.getElementById('custom-tip-input');
+  const customTipButton = tipButtons.find((button) => button.dataset.tip === 'custom');
+  const updateCustomTipLabel = () => {
+    if (customTipButton) {
+      customTipButton.textContent = `Custom (${formatCurrency(Math.max(customTipAmount, 0))})`;
+    }
+  };
+  updateCustomTipLabel();
+  if (customTipInput) {
+    customTipInput.value = customTipAmount.toFixed(2);
   }
+  if (tipButtons.length) {
+    let defaultButton = tipButtons.find(
+      (button) => button.dataset.tip !== 'custom' && Math.abs(parseFloat(button.dataset.tip) - selectedTipPercent) < 0.0001,
+    );
+    if (!defaultButton) {
+      defaultButton = tipButtons.find((button) => button.dataset.tip !== 'custom') || tipButtons[0];
+    }
+    if (defaultButton) {
+      const defaultValue = defaultButton.dataset.tip;
+      if (defaultValue === 'custom') {
+        selectedTipType = 'custom';
+      } else {
+        selectedTipType = 'percent';
+        const parsed = parseFloat(defaultValue);
+        selectedTipPercent = Number.isFinite(parsed) ? parsed : 0;
+      }
+      defaultButton.classList.add('is-active');
+      if (defaultValue === 'custom' && customTipContainer) {
+        customTipContainer.classList.remove('hidden');
+        customTipContainer.setAttribute('aria-hidden', 'false');
+      }
+    }
+    tipButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        tipButtons.forEach((btn) => btn.classList.toggle('is-active', btn === button));
+        const tipValue = button.dataset.tip;
+        if (tipValue === 'custom') {
+          selectedTipType = 'custom';
+          if (customTipContainer) {
+            customTipContainer.classList.remove('hidden');
+            customTipContainer.setAttribute('aria-hidden', 'false');
+          }
+          if (customTipInput) {
+            customTipInput.focus();
+            customTipInput.select();
+          }
+        } else {
+          const percent = parseFloat(tipValue);
+          selectedTipType = 'percent';
+          selectedTipPercent = Number.isFinite(percent) ? percent : 0;
+          if (customTipContainer) {
+            customTipContainer.classList.add('hidden');
+            customTipContainer.setAttribute('aria-hidden', 'true');
+          }
+        }
+        updateCheckoutView();
+      });
+    });
+  }
+  if (customTipInput) {
+    customTipInput.addEventListener('input', (event) => {
+      const value = parseFloat(event.target.value);
+      customTipAmount = Number.isFinite(value) && value >= 0 ? value : 0;
+      updateCustomTipLabel();
+      if (selectedTipType === 'custom') {
+        updateCheckoutView();
+      }
+    });
+    customTipInput.addEventListener('change', (event) => {
+      const value = parseFloat(event.target.value);
+      customTipAmount = Number.isFinite(value) && value >= 0 ? value : 0;
+      event.target.value = customTipAmount.toFixed(2);
+      updateCustomTipLabel();
+      if (selectedTipType === 'custom') {
+        updateCheckoutView();
+      }
+    });
+  }
+  toggleDeliveryFields(Boolean(delivery && delivery.checked));
   const scheduleTimeInput = document.getElementById('schedule-time');
   if (scheduleTimeInput) {
     scheduleTimeInput.addEventListener('input', (event) => {
-      pendingScheduleTime = event.target.value;
-      scheduleConfirmed = false;
+      const state = getScheduleState();
+      state.pendingTime = event.target.value;
+      state.confirmed = false;
     });
     scheduleTimeInput.addEventListener('change', (event) => {
-      pendingScheduleTime = event.target.value;
-      scheduleConfirmed = false;
+      const state = getScheduleState();
+      state.pendingTime = event.target.value;
+      state.confirmed = false;
       updateScheduleSummary();
     });
   }
@@ -1518,7 +1677,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       const fulfilment = delivery && delivery.checked ? 'Delivery' : 'Pickup';
       const { total: subtotal } = calculateCartTotals();
-      const tipAmount = roundCurrency(subtotal * (Number.isFinite(selectedTipPercent) ? selectedTipPercent : 0));
+      let tipAmount = 0;
+      if (selectedTipType === 'custom') {
+        tipAmount = roundCurrency(Math.max(customTipAmount, 0));
+      } else {
+        tipAmount = roundCurrency(subtotal * (Number.isFinite(selectedTipPercent) ? selectedTipPercent : 0));
+      }
       const expressFee = fulfilment === 'Delivery' && selectedDeliverySpeed === 'express' ? EXPRESS_DELIVERY_FEE : 0;
       const notes = [];
       if (fulfilment === 'Delivery') {
@@ -1532,9 +1696,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (selectedDeliverySpeed === 'express') {
           notes.push('Express delivery (ETA 15 mins) selected.');
-        } else if (selectedDeliverySpeed === 'schedule' && scheduleConfirmed && scheduledDate && scheduledTime) {
-          notes.push(`Scheduled for ${formatScheduleDate(scheduledDate)} at ${formatDisplayTime(scheduledTime)}.`);
+        } else if (selectedDeliverySpeed === 'schedule') {
+          const deliverySchedule = scheduleStates.delivery;
+          if (deliverySchedule.confirmed && deliverySchedule.date && deliverySchedule.time) {
+            notes.push(
+              `Scheduled for ${formatScheduleDate(deliverySchedule.date)} at ${formatDisplayTime(deliverySchedule.time)}.`,
+            );
+          }
         }
+      } else if (selectedPickupTimeOption === 'schedule') {
+        const pickupSchedule = scheduleStates.pickup;
+        if (pickupSchedule.confirmed && pickupSchedule.date && pickupSchedule.time) {
+          notes.push(
+            `Pickup scheduled for ${formatScheduleDate(pickupSchedule.date)} at ${formatDisplayTime(pickupSchedule.time)}.`,
+          );
+        } else {
+          notes.push('Pickup schedule pending confirmation.');
+        }
+      } else {
+        notes.push('Pickup: Standard window (10 – 15 mins).');
       }
       notes.push(`Tip: ${formatCurrency(tipAmount)} (100% to drivers).`);
       const grandTotal = roundCurrency(subtotal + tipAmount + expressFee);
