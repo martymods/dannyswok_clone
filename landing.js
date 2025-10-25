@@ -7,25 +7,39 @@
   const loadingScreen = document.getElementById('loading-screen');
   const storeButtons = Array.from(document.querySelectorAll('.store-card'));
   const enterMenuLink = document.getElementById('enter-menu-link');
-  const initialView = [39.988, -75.162];
+  const storeLocations = storeButtons
+    .map((button) => {
+      const lat = Number(button.dataset.lat);
+      const lng = Number(button.dataset.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return null;
+      }
+      return [lat, lng];
+    })
+    .filter(Boolean);
 
   const map = L.map(mapElement, {
-    center: initialView,
     zoom: 12,
     zoomControl: true,
     scrollWheelZoom: true,
+    attributionControl: false,
   });
 
   const imageryLayer = L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     {
-      attribution:
-        'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
       maxZoom: 19,
     }
   );
 
   imageryLayer.addTo(map);
+
+  if (storeLocations.length) {
+    const bounds = L.latLngBounds(storeLocations);
+    map.fitBounds(bounds, { padding: [48, 48] });
+  } else {
+    map.setView([39.988, -75.162], 12);
+  }
 
   let baseLayerLoaded = false;
   let minimumDelayMet = false;
