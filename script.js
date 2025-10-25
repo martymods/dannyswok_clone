@@ -1136,6 +1136,53 @@ function renderMenu() {
   });
 }
 
+function waitForMenuImages() {
+  const images = Array.from(document.querySelectorAll('.single_menu img'));
+  if (!images.length) {
+    return Promise.resolve();
+  }
+
+  const loaders = images.map((img) =>
+    new Promise((resolve) => {
+      if (img.complete && img.naturalWidth !== 0) {
+        resolve();
+        return;
+      }
+
+      const handleComplete = () => {
+        img.removeEventListener('load', handleComplete);
+        img.removeEventListener('error', handleComplete);
+        resolve();
+      };
+
+      img.addEventListener('load', handleComplete, { once: true });
+      img.addEventListener('error', handleComplete, { once: true });
+    })
+  );
+
+  return Promise.all(loaders);
+}
+
+function handleMenuLoadingScreen() {
+  const loadingScreen = document.getElementById('menu-loading-screen');
+  if (!loadingScreen) {
+    return;
+  }
+
+  const minimumDuration = new Promise((resolve) => {
+    window.setTimeout(resolve, 2000);
+  });
+
+  Promise.all([minimumDuration, waitForMenuImages()]).then(() => {
+    loadingScreen.classList.add('menu-loading-screen--hidden');
+    window.setTimeout(() => {
+      if (loadingScreen.parentElement) {
+        loadingScreen.parentElement.removeChild(loadingScreen);
+      }
+    }, 600);
+  });
+}
+
 function buildHeroCarousel() {
   const track = document.getElementById('hero-track');
   const carousel = document.getElementById('hero-carousel');
@@ -1649,6 +1696,7 @@ function updateCheckoutView() {
 document.addEventListener('DOMContentLoaded', () => {
   buildHeroCarousel();
   renderMenu();
+  handleMenuLoadingScreen();
   updateCart();
   const rebuildHeroForViewport = () => buildHeroCarousel();
   const heroMediaQueries = [
