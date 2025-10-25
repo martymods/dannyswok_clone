@@ -1986,7 +1986,7 @@ body.landing-page {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
-  z-index: 12;
+  z-index: 1200;
 }
 
 .store-photo-overlay.is-visible {
