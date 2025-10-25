@@ -869,6 +869,23 @@ main {
   color: #fff;
 }
 
+@media only screen and (max-width: 600px) {
+  .menu_tab {
+    gap: 0.35rem;
+    padding: 0 0.5rem;
+    margin: 0 auto 1rem auto;
+  }
+
+  .menu_tab .nav-item {
+    flex: 0 1 auto;
+  }
+
+  .nav-tabs .nav-link {
+    padding: 0.35rem 0.8rem;
+    font-size: 0.95rem;
+  }
+}
+
 /* Cart section */
 .cart-link {
   position: relative;
