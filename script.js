@@ -1302,10 +1302,12 @@ function updateCart() {
   const entries = Object.keys(cart);
   const hasItems = entries.length > 0;
   if (cartSummary) {
-    cartSummary.classList.toggle('is-hidden', hasItems);
+    cartSummary.classList.toggle('is-hidden', !hasItems);
+    cartSummary.setAttribute('aria-hidden', String(!hasItems));
   }
   if (cartHeading) {
-    cartHeading.classList.toggle('is-hidden', hasItems);
+    cartHeading.classList.toggle('is-hidden', !hasItems);
+    cartHeading.setAttribute('aria-hidden', String(!hasItems));
   }
   cartItemsContainer.style.display = entries.length ? 'block' : 'none';
   entries.forEach((id) => {
@@ -1330,7 +1332,8 @@ function updateCart() {
   }
 
   if (emptyState) {
-    emptyState.style.display = entries.length ? 'none' : 'block';
+    emptyState.classList.add('is-hidden');
+    emptyState.setAttribute('aria-hidden', 'true');
   }
 
   const cartCountEl = document.getElementById('cart-count');
@@ -1358,12 +1361,6 @@ function applyCartGlow(count, total) {
     cartIcon.classList.toggle('is-glowing', glowStrength > 0);
   }
 
-  const placeOrderButton = document.getElementById('place-order');
-  if (placeOrderButton) {
-    placeOrderButton.style.setProperty('--glow-strength', glowStrength.toFixed(3));
-    placeOrderButton.style.setProperty('--glow-alpha', glowAlpha.toFixed(3));
-    placeOrderButton.classList.toggle('is-glowing', glowStrength > 0);
-  }
 }
 
 function toggleDeliveryFields(isDelivery) {
@@ -1661,6 +1658,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const cartLink = document.querySelector('.cart-link');
   if (cartLink) {
     cartLink.addEventListener('click', (event) => {
+      if (Object.keys(cart).length) {
+        event.preventDefault();
+        toggleCheckoutPanel(true);
+      }
+    });
+  }
+  const cartIconButton = document.getElementById('cart-icon-button');
+  if (cartIconButton) {
+    cartIconButton.addEventListener('click', (event) => {
       if (Object.keys(cart).length) {
         event.preventDefault();
         toggleCheckoutPanel(true);
