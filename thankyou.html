@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thank You - Danny's Wok</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: only light;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #ffffff;
+      color: #1f1f1f;
+    }
+
+    .fortune-overlay {
+      position: fixed;
+      inset: 0;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 24px;
+      z-index: 999;
+      transition: opacity 0.5s ease;
+    }
+
+    .fortune-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .fortune-wrapper {
+      width: 600px;
+      max-width: calc(100% - 32px);
+      height: 400px;
+      max-height: calc(100% - 120px);
+      display: block;
+      background-color: #ffffff;
+      padding: 50px;
+      position: relative;
+    }
+
+    .fortune {
+      width: 500px;
+      height: 200px;
+      display: block;
+      position: absolute;
+      transform-origin: 40% 50%;
+      top: 120px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-10deg);
+    }
+
+    .fortune-left {
+      width: 200px;
+      height: 200px;
+      position: absolute;
+      left: 0;
+      background-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/77607/cookie-left.png');
+      background-repeat: no-repeat;
+      background-position: right center;
+      z-index: 1;
+    }
+
+    .fortune-right {
+      width: 200px;
+      height: 200px;
+      position: absolute;
+      left: 190px;
+      background-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/77607/cookie-right.png');
+      background-repeat: no-repeat;
+      background-position: left center;
+      z-index: 3;
+    }
+
+    .fortune-message {
+      display: inline-block;
+      position: absolute;
+      left: -150px;
+      right: 180px;
+      font-family: 'Courier Prime', 'Courier New', Courier, monospace;
+      top: 50px;
+      bottom: 80px;
+      font-style: italic;
+      z-index: 2;
+      overflow: hidden;
+      -webkit-transform: rotateZ(8deg);
+      transform: rotateZ(8deg);
+    }
+
+    .fortune-message span {
+      display: block;
+      background-color: #ffffff;
+      padding: 8px 65px 7px 15px;
+      white-space: nowrap;
+      box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.3);
+      transform-origin: right bottom;
+      position: absolute;
+      bottom: 20px;
+      right: 10px;
+      font-size: 1.1rem;
+    }
+
+    .fortune-overlay p {
+      font-size: 1rem;
+      color: #3f3f3f;
+      margin: 0;
+      text-align: center;
+    }
+
+    main {
+      padding: 48px 16px 96px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .receipt-card {
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 24px 40px rgba(31, 41, 55, 0.12);
+      padding: 32px;
+      display: grid;
+      gap: 24px;
+    }
+
+    .receipt-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+    }
+
+    .receipt-header h1 {
+      font-size: 2rem;
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .eta-badge {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: #ffffff;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .order-summary {
+      border-top: 1px dashed rgba(0, 0, 0, 0.1);
+      padding-top: 16px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .order-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .order-item span {
+      font-size: 1rem;
+    }
+
+    .totals {
+      border-top: 1px dashed rgba(0, 0, 0, 0.1);
+      padding-top: 16px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .totals div {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 600;
+    }
+
+    .status-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .status-card {
+      background: rgba(59, 130, 246, 0.08);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .status-card h2 {
+      margin: 0 0 8px;
+      font-size: 1.25rem;
+    }
+
+    .timer {
+      font-family: 'Courier Prime', 'Courier New', Courier, monospace;
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-align: center;
+      margin-top: 8px;
+      color: #0f172a;
+    }
+
+    .footnote {
+      font-size: 0.9rem;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+      .fortune-wrapper {
+        height: auto;
+        padding: 32px;
+      }
+
+      .fortune {
+        position: relative;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%) rotate(-10deg);
+      }
+
+      .receipt-card {
+        padding: 24px;
+      }
+
+      .receipt-header h1 {
+        font-size: 1.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="fortune-overlay" id="fortuneOverlay" role="dialog" aria-modal="true" aria-live="polite">
+    <div class="fortune-wrapper">
+      <div class="fortune">
+        <div class="fortune-left"></div>
+        <div class="fortune-right"></div>
+        <div class="fortune-message"><span id="fortuneText">You will be successful and happy</span></div>
+      </div>
+    </div>
+    <p>Tap anywhere to open your virtual receipt.</p>
+    <audio id="cookieAudio" src="audio/cookieOpen_Full.mp3" preload="auto"></audio>
+  </div>
+
+  <main>
+    <div class="receipt-card" aria-labelledby="thankYouTitle">
+      <div class="receipt-header">
+        <h1 id="thankYouTitle">Thank you for ordering from Danny's Wok!</h1>
+        <span class="eta-badge" aria-live="polite">
+          <span id="timerLabel">ETA</span>
+          <span id="etaTimer" class="timer" aria-label="Estimated time of arrival">18:00</span>
+        </span>
+      </div>
+
+      <div class="status-grid">
+        <div class="status-card">
+          <h2>Relax, your driver is getting ready</h2>
+          <p>We’re preparing your world-famous dishes and syncing with your driver. Keep an eye on the live countdown while we ready your order.</p>
+        </div>
+        <div class="status-card" style="background: rgba(139, 92, 246, 0.1);">
+          <h2>Delivery window</h2>
+          <p>Your meal will be ready for pickup at <span id="readyTime"></span> and on its way to you shortly after.</p>
+        </div>
+      </div>
+
+      <section class="order-summary" aria-label="Order summary">
+        <div class="order-item">
+          <span>Rainbow Pepper Wings (12 pc)</span>
+          <span>$14.50</span>
+        </div>
+        <div class="order-item">
+          <span>Royal Purple Fried Rice</span>
+          <span>$11.75</span>
+        </div>
+        <div class="order-item">
+          <span>Blue Lotus Bubble Tea</span>
+          <span>$5.25</span>
+        </div>
+      </section>
+
+      <section class="totals" aria-label="Order totals">
+        <div>
+          <span>Subtotal</span>
+          <span>$31.50</span>
+        </div>
+        <div>
+          <span>Delivery</span>
+          <span>$4.50</span>
+        </div>
+        <div>
+          <span>Taxes & Fees</span>
+          <span>$3.60</span>
+        </div>
+        <div>
+          <span>Total Paid</span>
+          <span>$39.60</span>
+        </div>
+      </section>
+
+      <p class="footnote">You’ll receive a notification when your driver leaves our kitchen. Feel free to keep this tab open and watch the countdown—your world of flavor is on the way!</p>
+    </div>
+  </main>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-3gJwYp4Z4B3FQ0TnGo9d2AE6zM9bdr6w7NQ5u+hb5wE=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.3/TweenMax.min.js" integrity="sha512-dXQ7DY2MPfWptjyFz3BKRNpT9XyM54q9WlH0I1GtIsfRSAxEPPYUajF2/MEGLjm+rXhN3kLBXjg5eQof8I4F+Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    const quotes = [
+      "Radiate your strength into the world.",
+      "Rise knowing the world is rooting for you.",
+      "Reach for blue dreams; the world will respond.",
+      "Reassure your heart—the world reflects your resilience.",
+      "Relish how the world rewards your relentless rhythm.",
+      "Remember: the world loves your brilliant purple glow.",
+      "Reignite hope—the world is ready for your return.",
+      "Rejoice, the world recognizes your 3 radiant victories.",
+      "Refresh your spirit; the blue world breathes with you.",
+      "Reframe challenges—the world reveals hidden routes.",
+      "Resonate confidence and the world will rally.",
+      "Rise boldly; a purple world awaits your reach.",
+      "Reimagine what’s possible and the world will respond.",
+      "Reset with purpose—the world rotates in your favor.",
+      "Rely on your rhythm; the world reveres your courage.",
+      "Reward yourself—world-class surprises are near.",
+      "Revel in momentum; the world is rich with support.",
+      "Reassess the 6 wins and relaunch—the world is ready for you.",
+      "Radiant progress is rewriting your world in 9 brilliant beats.",
+      "Rally your energy; the world is a blue and purple canvas.",
+      "Rejoice in today—the world is ripe with opportunity.",
+      "Regroup with calm; the world reflects your resolve.",
+      "Rise every 3 minutes to remind the world you’re unstoppable.",
+      "Resourcefulness rules—your world is ready for rewards.",
+      "Rekindle your purpose; the world revolves in your favor.",
+      "Respect your journey—the world is watching with wonder."
+    ];
+
+    function selectQuote() {
+      const index = Math.floor(Math.random() * quotes.length);
+      return quotes[index];
+    }
+
+    function startFortuneAnimation() {
+      const timeline = new TimelineMax({ yoyo: true, repeat: -1, repeatDelay: 3 });
+      timeline.to($('.fortune'), 0.1, { rotation: -5, delay: 2 });
+      timeline.to($('.fortune'), 0.1, { rotation: 5 });
+      timeline.to($('.fortune'), 0.1, { rotation: -5 });
+      timeline.to($('.fortune'), 0.1, { rotation: 5 });
+      timeline.to($('.fortune'), 0.1, { rotation: -5 });
+      timeline.to($('.fortune'), 0.1, { rotation: 0 });
+      timeline.addLabel('break', '+=0.3');
+      timeline.to($('.fortune-left'), 0.5, { rotation: -45, x: -70, y: 70 }, 'break');
+      timeline.to($('.fortune-right'), 0.5, { rotation: 45, x: 70, y: 70 }, 'break');
+      timeline.from($('.fortune-message span'), 1, { x: '110%' }, 'break');
+    }
+
+    function playCookieAudio() {
+      const audio = document.getElementById('cookieAudio');
+      if (!audio) return;
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          const resume = () => {
+            audio.play();
+            document.removeEventListener('click', resume);
+            document.removeEventListener('touchstart', resume);
+          };
+          document.addEventListener('click', resume, { once: true });
+          document.addEventListener('touchstart', resume, { once: true });
+        });
+      }
+    }
+
+    function setupTimer() {
+      const etaElement = document.getElementById('etaTimer');
+      const readyElement = document.getElementById('readyTime');
+      const start = Date.now();
+      const etaMinutes = 18;
+      const etaMs = etaMinutes * 60 * 1000;
+      const target = start + etaMs;
+
+      function updateTimer() {
+        const now = Date.now();
+        const diff = Math.max(0, target - now);
+        const minutes = Math.floor(diff / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        etaElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        if (diff <= 0) {
+          etaElement.textContent = '00:00';
+          clearInterval(intervalId);
+          document.getElementById('timerLabel').textContent = 'Ready';
+        }
+      }
+
+      const readyTime = new Date(target);
+      const readyTimeString = readyTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      readyElement.textContent = readyTimeString;
+      updateTimer();
+      const intervalId = setInterval(updateTimer, 1000);
+    }
+
+    function hideOverlay() {
+      const overlay = document.getElementById('fortuneOverlay');
+      overlay.classList.add('hidden');
+      setTimeout(() => {
+        overlay.style.display = 'none';
+      }, 600);
+    }
+
+    $(function () {
+      $('#fortuneText').text(selectQuote());
+      startFortuneAnimation();
+      playCookieAudio();
+      setupTimer();
+
+      const overlay = document.getElementById('fortuneOverlay');
+      const dismiss = () => {
+        hideOverlay();
+        document.removeEventListener('click', dismiss);
+        document.removeEventListener('touchstart', dismiss);
+      };
+      document.addEventListener('click', dismiss);
+      document.addEventListener('touchstart', dismiss);
+    });
+  </script>
+</body>
+</html>
