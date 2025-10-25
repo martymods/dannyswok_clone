@@ -927,75 +927,11 @@ main {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
 }
 
-#cart h2 {
-  margin-bottom: 1rem;
-  font-size: 1.5rem;
-  color: #c0392b;
-  text-transform: uppercase;
-}
-
-.cart-summary {
-  border-bottom: 1px solid #f0f0f0;
-  padding-bottom: 1rem;
-  margin-bottom: 1.5rem;
-}
-
 .cart-empty {
   color: #777;
   font-size: 0.95rem;
 }
 
-.cart-items {
-  list-style: none;
-  margin-bottom: 1rem;
-}
-
-.cart-items li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-  gap: 0.5rem;
-}
-
-.cart-items span {
-  font-size: 0.95rem;
-}
-
-.cart-items button {
-  --button-border-color: rgba(192, 57, 43, 0.3);
-  --button-border-color-hover: rgba(192, 57, 43, 0.4);
-  --button-border-color-active: rgba(192, 57, 43, 0.48);
-  --button-bg-color: #fff4ef;
-  --button-bg-hover: #ffe2d8;
-  --button-bg-active: #ffd4c7;
-  --button-text-color: #c0392b;
-  --button-bg-image: radial-gradient(75% 25% at 50% 95%, rgba(255, 255, 255, 0.65), transparent);
-  --button-shadow: 0 1px 4px rgba(192, 57, 43, 0.18);
-  --button-shadow-hover: 0 2px 6px rgba(192, 57, 43, 0.22);
-  --button-shadow-active: 0 1px 4px rgba(192, 57, 43, 0.16);
-  --button-scale-hover: 1.03;
-  --button-scale-active: 0.98;
-  --button-focus-decoration: none;
-  --button-radius: 0.35rem;
-  padding: 0.3rem 0.7rem;
-  font-weight: 600;
-}
-
-.cart-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.cart-total {
-  font-weight: bold;
-  font-size: 1.1rem;
-}
-
-.checkout-btn,
 .place-order-btn {
   --button-border-color: #c0392b;
   --button-border-color-hover: #d54335;
@@ -1015,7 +951,6 @@ main {
   text-transform: uppercase;
 }
 
-.checkout-btn:disabled,
 .place-order-btn:disabled {
   --button-border-color: #cccccc;
   --button-border-color-hover: #cccccc;
