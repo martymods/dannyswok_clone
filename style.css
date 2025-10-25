@@ -107,28 +107,86 @@ nav a:focus-visible {
 
 .btn,
 button {
-  position: relative;
-  transform: translateY(0);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.08), 0 12px 18px rgba(0, 0, 0, 0.12);
+  --button-border-color: #5f26e3;
+  --button-border-color-hover: #702cfb;
+  --button-border-color-active: #5329d1;
+  --button-border-color-focus: var(--button-border-color-hover);
+  --button-bg-color: #702cfb;
+  --button-bg-hover: #7a38ff;
+  --button-bg-active: #5f26e3;
+  --button-bg-focus: var(--button-bg-hover);
+  --button-bg-image: radial-gradient(75% 25% at 50% 95%, rgba(255, 255, 255, 0.2), transparent);
+  --button-bg-image-hover: var(--button-bg-image);
+  --button-bg-image-active: var(--button-bg-image-hover);
+  --button-bg-image-focus: var(--button-bg-image-hover);
+  --button-text-color: #fafafa;
+  --button-shadow-inset: inset 0 0 2px 1px rgba(255, 255, 255, 0.2);
+  --button-shadow: 0 1px 4px 1px rgba(0, 0, 0, 0.1);
+  --button-shadow-hover: var(--button-shadow);
+  --button-shadow-active: var(--button-shadow);
+  --button-shadow-focus: var(--button-shadow-hover);
+  --button-shadow-inset-hover: var(--button-shadow-inset);
+  --button-shadow-inset-active: var(--button-shadow-inset-hover);
+  --button-shadow-inset-focus: var(--button-shadow-inset-hover);
+  --button-scale-hover: 1.04;
+  --button-scale-active: 0.96;
+  --button-scale-focus: var(--button-scale-hover);
+  --button-focus-decoration: underline;
+  --button-focus-text-thickness: 0.0625em;
+  --button-focus-text-offset: 0.125em;
+  appearance: none;
+  background-color: var(--button-bg-color);
+  background-image: var(--button-bg-image);
+  border: 1px solid var(--button-border-color);
+  border-radius: var(--button-radius, 8px);
+  color: var(--button-text-color);
+  cursor: pointer;
+  text-decoration: none;
+  transition-property: border-color, transform, background-color, box-shadow;
+  transition-duration: 0.2s;
+  transition-timing-function: cubic-bezier(0.55, 1, 0.15, 1);
+  box-shadow: var(--button-shadow-inset), var(--button-shadow);
+  transform: scale(1);
+  will-change: transform;
 }
 
 .btn:hover,
 button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.08), 0 16px 24px rgba(0, 0, 0, 0.16);
-}
-
-.btn:active,
-button:active {
-  transform: translateY(1px);
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.12), 0 8px 14px rgba(0, 0, 0, 0.14);
+  border-color: var(--button-border-color-hover);
+  background-color: var(--button-bg-hover);
+  background-image: var(--button-bg-image-hover);
+  box-shadow: var(--button-shadow-inset-hover, var(--button-shadow-inset)),
+    var(--button-shadow-hover, var(--button-shadow));
+  transform: scale(var(--button-scale-hover, 1));
 }
 
 .btn:focus-visible,
 button:focus-visible {
-  outline: 3px solid rgba(192, 57, 43, 0.35);
-  outline-offset: 3px;
+  outline: none;
+  border-color: var(--button-border-color-focus, var(--button-border-color-hover));
+  background-color: var(--button-bg-focus, var(--button-bg-hover));
+  background-image: var(--button-bg-image-focus, var(--button-bg-image-hover));
+  box-shadow: var(--button-shadow-inset-focus, var(--button-shadow-inset-hover, var(--button-shadow-inset))),
+    var(--button-shadow-focus, var(--button-shadow-hover, var(--button-shadow)));
+  transform: scale(var(--button-scale-focus, var(--button-scale-hover, 1)));
+  text-decoration-line: var(--button-focus-decoration, underline);
+  text-decoration-thickness: var(--button-focus-text-thickness, 0.0625em);
+  text-underline-offset: var(--button-focus-text-offset, 0.125em);
+}
+
+.btn:active,
+button:active {
+  border-color: var(--button-border-color-active);
+  background-color: var(--button-bg-active);
+  background-image: var(--button-bg-image-active, var(--button-bg-image-hover));
+  box-shadow: var(--button-shadow-inset-active, var(--button-shadow-inset-focus, var(--button-shadow-inset))),
+    var(--button-shadow-active, var(--button-shadow-focus, var(--button-shadow)));
+  transform: scale(var(--button-scale-active, 1));
+}
+
+.btn:disabled,
+button:disabled {
+  cursor: not-allowed;
 }
 
 .cart-actions {
@@ -740,27 +798,25 @@ main {
 
 .menu_content .add-btn {
   align-self: flex-start;
-  background: #c0392b;
-  border: 1px solid #c0392b;
-  color: #fff;
+  --button-border-color: #c0392b;
+  --button-border-color-hover: #d54335;
+  --button-border-color-active: #922b21;
+  --button-bg-color: #c0392b;
+  --button-bg-hover: #d54335;
+  --button-bg-active: #a93226;
+  --button-text-color: #fff;
+  --button-bg-image: radial-gradient(75% 25% at 50% 95%, rgba(255, 255, 255, 0.22), transparent);
+  --button-shadow: 0 1px 4px rgba(146, 43, 33, 0.22);
+  --button-shadow-hover: 0 2px 6px rgba(146, 43, 33, 0.28);
+  --button-shadow-active: 0 1px 4px rgba(146, 43, 33, 0.2);
+  --button-radius: 3px;
+  --button-focus-decoration: underline;
+  --button-scale-hover: 1.04;
+  --button-scale-active: 0.97;
   padding: 0.5rem 1rem;
-  border-radius: 3px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
-  cursor: pointer;
-  box-shadow: 0 6px 0 rgba(146, 43, 33, 0.45), 0 16px 22px rgba(192, 57, 43, 0.28);
-}
-
-.menu_content .add-btn:hover {
-  background: #a93226;
-  border-color: #a93226;
-  box-shadow: 0 8px 0 rgba(130, 34, 25, 0.5), 0 20px 26px rgba(192, 57, 43, 0.32);
-}
-
-.menu_content .add-btn:active {
-  box-shadow: 0 5px 0 rgba(130, 34, 25, 0.45), 0 14px 22px rgba(192, 57, 43, 0.26);
 }
 
 .menu_btn.btn.btn-danger {
@@ -770,18 +826,25 @@ main {
 }
 
 .btn.btn-danger {
-  background: #c0392b;
-  border: 1px solid #c0392b;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
+  --button-border-color: #c0392b;
+  --button-border-color-hover: #d54335;
+  --button-border-color-active: #922b21;
+  --button-bg-color: #c0392b;
+  --button-bg-hover: #d54335;
+  --button-bg-active: #a93226;
+  --button-text-color: #fff;
+  --button-bg-image: radial-gradient(75% 25% at 50% 95%, rgba(255, 255, 255, 0.18), transparent);
+  --button-shadow: 0 1px 6px rgba(192, 57, 43, 0.28);
+  --button-shadow-hover: 0 2px 8px rgba(192, 57, 43, 0.34);
+  --button-shadow-active: 0 1px 5px rgba(130, 34, 25, 0.26);
+  --button-radius: 0.5rem;
   position: relative;
   z-index: 1;
   text-transform: capitalize;
   font-weight: 700;
   overflow: hidden;
   padding: 15px 25px;
-  color: #fff;
   text-align: center;
-  box-shadow: 0 6px 0 rgba(146, 43, 33, 0.45), 0 16px 24px rgba(192, 57, 43, 0.28);
 }
 
 .btn.btn-danger::before {
@@ -801,12 +864,9 @@ main {
   left: 0;
 }
 
-.btn.btn-danger:hover {
-  box-shadow: 0 8px 0 rgba(130, 34, 25, 0.5), 0 20px 28px rgba(192, 57, 43, 0.32);
-}
-
-.btn.btn-danger:active {
-  box-shadow: 0 5px 0 rgba(130, 34, 25, 0.45), 0 16px 24px rgba(192, 57, 43, 0.28);
+.btn.btn-danger:hover,
+.btn.btn-danger:focus-visible {
+  color: #fff;
 }
 
 /* Cart section */
@@ -871,24 +931,23 @@ main {
 }
 
 .cart-items button {
-  background-color: #fff4ef;
-  color: #c0392b;
-  border: 1px solid rgba(192, 57, 43, 0.3);
-  border-radius: 0.35rem;
+  --button-border-color: rgba(192, 57, 43, 0.3);
+  --button-border-color-hover: rgba(192, 57, 43, 0.4);
+  --button-border-color-active: rgba(192, 57, 43, 0.48);
+  --button-bg-color: #fff4ef;
+  --button-bg-hover: #ffe2d8;
+  --button-bg-active: #ffd4c7;
+  --button-text-color: #c0392b;
+  --button-bg-image: radial-gradient(75% 25% at 50% 95%, rgba(255, 255, 255, 0.65), transparent);
+  --button-shadow: 0 1px 4px rgba(192, 57, 43, 0.18);
+  --button-shadow-hover: 0 2px 6px rgba(192, 57, 43, 0.22);
+  --button-shadow-active: 0 1px 4px rgba(192, 57, 43, 0.16);
+  --button-scale-hover: 1.03;
+  --button-scale-active: 0.98;
+  --button-focus-decoration: none;
+  --button-radius: 0.35rem;
   padding: 0.3rem 0.7rem;
-  cursor: pointer;
   font-weight: 600;
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 0 rgba(192, 57, 43, 0.18), 0 12px 18px rgba(192, 57, 43, 0.16);
-}
-
-.cart-items button:hover {
-  background-color: #ffe2d8;
-  box-shadow: 0 5px 0 rgba(146, 43, 33, 0.24), 0 14px 22px rgba(192, 57, 43, 0.22);
-}
-
-.cart-items button:active {
-  box-shadow: 0 3px 0 rgba(146, 43, 33, 0.2), 0 10px 18px rgba(192, 57, 43, 0.18);
 }
 
 .cart-footer {
@@ -906,36 +965,41 @@ main {
 
 .checkout-btn,
 .place-order-btn {
-  background-color: #c0392b;
-  color: #fff;
-  border: none;
-  border-radius: 0.5rem;
+  --button-border-color: #c0392b;
+  --button-border-color-hover: #d54335;
+  --button-border-color-active: #922b21;
+  --button-bg-color: #c0392b;
+  --button-bg-hover: #d54335;
+  --button-bg-active: #a93226;
+  --button-text-color: #fff;
+  --button-bg-image: radial-gradient(75% 25% at 50% 95%, rgba(255, 255, 255, 0.2), transparent);
+  --button-shadow: 0 1px 6px rgba(192, 57, 43, 0.26);
+  --button-shadow-hover: 0 2px 8px rgba(192, 57, 43, 0.32);
+  --button-shadow-active: 0 1px 5px rgba(146, 43, 33, 0.22);
+  --button-radius: 0.5rem;
   padding: 0.6rem 1.2rem;
-  cursor: pointer;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  transition: background-color 0.2s ease-in-out, transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 6px 0 rgba(146, 43, 33, 0.55), 0 16px 24px rgba(192, 57, 43, 0.25);
 }
 
 .checkout-btn:disabled,
 .place-order-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-  color: #666;
-  box-shadow: none;
-}
-
-.checkout-btn:not(:disabled):hover,
-.place-order-btn:not(:disabled):hover {
-  background-color: #a93226;
-  box-shadow: 0 8px 0 rgba(130, 34, 25, 0.5), 0 20px 28px rgba(192, 57, 43, 0.3);
-}
-
-.checkout-btn:not(:disabled):active,
-.place-order-btn:not(:disabled):active {
-  box-shadow: 0 4px 0 rgba(130, 34, 25, 0.45), 0 14px 24px rgba(192, 57, 43, 0.26);
+  --button-border-color: #cccccc;
+  --button-border-color-hover: #cccccc;
+  --button-border-color-active: #cccccc;
+  --button-bg-color: #cccccc;
+  --button-bg-hover: #cccccc;
+  --button-bg-active: #cccccc;
+  --button-text-color: #666666;
+  --button-shadow: none;
+  --button-shadow-hover: none;
+  --button-shadow-active: none;
+  --button-bg-image: none;
+  --button-scale-hover: 1;
+  --button-scale-active: 1;
+  --button-scale-focus: 1;
+  --button-focus-decoration: none;
 }
 
 .place-order-btn .button-text {
@@ -943,25 +1007,24 @@ main {
 }
 
 .close-checkout {
+  --button-border-color: rgba(192, 57, 43, 0.25);
+  --button-border-color-hover: rgba(192, 57, 43, 0.4);
+  --button-border-color-active: rgba(192, 57, 43, 0.5);
+  --button-bg-color: #ffffff;
+  --button-bg-hover: #ffe8e4;
+  --button-bg-active: #ffd4cc;
+  --button-text-color: #c0392b;
+  --button-bg-image: radial-gradient(75% 25% at 50% 95%, rgba(255, 255, 255, 0.85), transparent);
+  --button-shadow: 0 1px 4px rgba(192, 57, 43, 0.2);
+  --button-shadow-hover: 0 2px 6px rgba(192, 57, 43, 0.24);
+  --button-shadow-active: 0 1px 3px rgba(192, 57, 43, 0.18);
+  --button-focus-decoration: none;
+  --button-radius: 999px;
+  --button-scale-hover: 1.02;
+  --button-scale-active: 0.98;
   padding: 0.35rem 0.75rem;
   font-size: 1.2rem;
   line-height: 1;
-  border-radius: 999px;
-  background-color: #ffffff;
-  color: #c0392b;
-  border: 1px solid rgba(192, 57, 43, 0.25);
-  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 0 rgba(192, 57, 43, 0.28), 0 12px 20px rgba(192, 57, 43, 0.2);
-}
-
-.close-checkout:hover {
-  background-color: #ffe8e4;
-  color: #922b21;
-  box-shadow: 0 5px 0 rgba(146, 43, 33, 0.32), 0 14px 22px rgba(192, 57, 43, 0.26);
-}
-
-.close-checkout:active {
-  box-shadow: 0 3px 0 rgba(146, 43, 33, 0.28), 0 10px 18px rgba(192, 57, 43, 0.2);
 }
 
 .checkout-panel {
@@ -1113,24 +1176,19 @@ main {
 }
 
 .schedule-save {
+  --button-border-color: #c0392b;
+  --button-border-color-hover: #d54335;
+  --button-border-color-active: #922b21;
+  --button-bg-color: #c0392b;
+  --button-bg-hover: #d54335;
+  --button-bg-active: #a93226;
+  --button-text-color: #fff;
+  --button-bg-image: radial-gradient(75% 25% at 50% 95%, rgba(255, 255, 255, 0.2), transparent);
+  --button-shadow: 0 1px 6px rgba(192, 57, 43, 0.26);
+  --button-shadow-hover: 0 2px 8px rgba(192, 57, 43, 0.32);
+  --button-shadow-active: 0 1px 5px rgba(146, 43, 33, 0.22);
+  --button-radius: 999px;
   padding: 0.5rem 1rem;
-  background-color: #c0392b;
-  color: #fff;
-  border: none;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  box-shadow: 0 5px 0 rgba(146, 43, 33, 0.45), 0 14px 22px rgba(192, 57, 43, 0.28);
-}
-
-.schedule-save:hover {
-  background-color: #a93226;
-  transform: translateY(-1px);
-  box-shadow: 0 7px 0 rgba(130, 34, 25, 0.5), 0 18px 26px rgba(192, 57, 43, 0.32);
-}
-
-.schedule-save:active {
-  box-shadow: 0 4px 0 rgba(130, 34, 25, 0.45), 0 12px 20px rgba(192, 57, 43, 0.24);
 }
 
 .schedule-summary {
@@ -1205,23 +1263,22 @@ main {
 .quantity-controls button {
   width: 28px;
   height: 28px;
-  border-radius: 999px;
-  border: 1px solid #c0392b;
-  background-color: #fff;
-  color: #c0392b;
+  --button-border-color: #c0392b;
+  --button-border-color-hover: #d54335;
+  --button-border-color-active: #922b21;
+  --button-bg-color: #ffffff;
+  --button-bg-hover: #ffe8e4;
+  --button-bg-active: #ffd2c5;
+  --button-text-color: #c0392b;
+  --button-bg-image: radial-gradient(75% 25% at 50% 95%, rgba(255, 255, 255, 0.75), transparent);
+  --button-shadow: 0 1px 3px rgba(192, 57, 43, 0.2);
+  --button-shadow-hover: 0 2px 5px rgba(192, 57, 43, 0.26);
+  --button-shadow-active: 0 1px 3px rgba(192, 57, 43, 0.18);
+  --button-scale-hover: 1.05;
+  --button-scale-active: 0.95;
+  --button-focus-decoration: none;
+  --button-radius: 999px;
   font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  box-shadow: 0 3px 0 rgba(192, 57, 43, 0.2), 0 8px 12px rgba(192, 57, 43, 0.18);
-}
-
-.quantity-controls button:hover {
-  background-color: rgba(192, 57, 43, 0.1);
-  box-shadow: 0 4px 0 rgba(146, 43, 33, 0.26), 0 10px 14px rgba(192, 57, 43, 0.24);
-}
-
-.quantity-controls button:active {
-  box-shadow: 0 2px 0 rgba(146, 43, 33, 0.24), 0 8px 12px rgba(192, 57, 43, 0.18);
 }
 
 .quantity-controls input {
@@ -1339,31 +1396,37 @@ main {
 
 .tip-button {
   flex: 1 1 90px;
-  border: 1px solid #c0392b;
-  background: #fff;
-  color: #c0392b;
+  --button-border-color: #c0392b;
+  --button-border-color-hover: #d54335;
+  --button-border-color-active: #922b21;
+  --button-bg-color: #ffffff;
+  --button-bg-hover: #ffe8e4;
+  --button-bg-active: #ffd2c5;
+  --button-text-color: #c0392b;
+  --button-bg-image: radial-gradient(75% 25% at 50% 95%, rgba(255, 255, 255, 0.75), transparent);
+  --button-shadow: 0 1px 4px rgba(192, 57, 43, 0.18);
+  --button-shadow-hover: 0 2px 6px rgba(192, 57, 43, 0.24);
+  --button-shadow-active: 0 1px 4px rgba(192, 57, 43, 0.18);
+  --button-radius: 999px;
+  --button-scale-hover: 1.05;
+  --button-scale-active: 0.96;
+  --button-focus-decoration: none;
   padding: 0.45rem 0.75rem;
-  border-radius: 999px;
   font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  box-shadow: 0 4px 0 rgba(192, 57, 43, 0.2), 0 12px 18px rgba(192, 57, 43, 0.18);
-}
-
-.tip-button:hover {
-  background-color: rgba(192, 57, 43, 0.1);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 0 rgba(146, 43, 33, 0.26), 0 16px 24px rgba(192, 57, 43, 0.24);
 }
 
 .tip-button.is-active {
-  background-color: #c0392b;
-  color: #fff;
-  box-shadow: 0 6px 0 rgba(146, 43, 33, 0.35), 0 18px 26px rgba(192, 57, 43, 0.28);
-}
-
-.tip-button:active {
-  box-shadow: 0 3px 0 rgba(146, 43, 33, 0.24), 0 12px 20px rgba(192, 57, 43, 0.22);
+  --button-border-color: #c0392b;
+  --button-border-color-hover: #c0392b;
+  --button-border-color-active: #922b21;
+  --button-bg-color: #c0392b;
+  --button-bg-hover: #d54335;
+  --button-bg-active: #a93226;
+  --button-bg-image: radial-gradient(75% 25% at 50% 95%, rgba(255, 255, 255, 0.18), transparent);
+  --button-text-color: #ffffff;
+  --button-shadow: 0 1px 6px rgba(192, 57, 43, 0.3);
+  --button-shadow-hover: 0 2px 8px rgba(192, 57, 43, 0.36);
+  --button-shadow-active: 0 1px 5px rgba(146, 43, 33, 0.24);
 }
 
 .custom-tip-container {
