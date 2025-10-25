@@ -1,10 +1,21 @@
 (function () {
+  const pageBody = document.body;
+  if (pageBody) {
+    pageBody.classList.remove('is-map-ready');
+  }
+
   const mapElement = document.getElementById('store-map');
   if (!mapElement) {
+    if (pageBody) {
+      pageBody.classList.add('is-map-ready');
+    }
     return;
   }
 
   const loadingScreen = document.getElementById('loading-screen');
+  if (!loadingScreen && pageBody) {
+    pageBody.classList.add('is-map-ready');
+  }
   const storeButtons = Array.from(document.querySelectorAll('.store-card'));
   const enterMenuLink = document.getElementById('enter-menu-link');
   const storeLocations = storeButtons
@@ -59,10 +70,16 @@
 
   function hideLoadingScreen() {
     if (loadingHidden || !loadingScreen) {
+      if (pageBody) {
+        pageBody.classList.add('is-map-ready');
+      }
       return;
     }
     loadingHidden = true;
     loadingScreen.classList.add('is-hidden');
+    if (pageBody) {
+      pageBody.classList.add('is-map-ready');
+    }
     setTimeout(() => {
       loadingScreen.remove();
       map.invalidateSize();

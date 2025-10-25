@@ -1884,6 +1884,17 @@ body.landing-page {
   min-height: clamp(360px, 50vw, 520px);
 }
 
+body.landing-page .leaflet-control-container {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+body.landing-page.is-map-ready .leaflet-control-container {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .store-map .leaflet-control-attribution,
 .store-map .leaflet-control-attribution a {
   display: none !important;
