@@ -15,7 +15,13 @@
     </a>
     <nav>
       <a href="#our_menu">Menu</a>
-      <a href="#cart" class="cart-link">Cart <span id="cart-count" class="cart-count">0</span></a>
+      <div class="cart-actions">
+        <a href="#cart" class="cart-link">Cart <span id="cart-count" class="cart-count">0</span></a>
+        <a href="#cart" id="cart-icon-button" class="cart-icon-button" aria-label="View your cart">
+          <img src="images/chinese-food-boxes2.png" alt="Chinese takeout boxes cart" class="cart-icon-image">
+          <span class="shimmer-layer" aria-hidden="true"></span>
+        </a>
+      </div>
     </nav>
   </header>
   <section class="hero" aria-label="Browse the Danny's Wok menu">
@@ -193,7 +199,10 @@
           <span>Total</span>
           <strong id="checkout-total-amount">$0.00</strong>
         </div>
-        <button id="place-order" class="place-order-btn">Place order</button>
+        <button id="place-order" class="place-order-btn shimmer-action" type="button">
+          <span class="button-text">Place order</span>
+          <span class="shimmer-layer" aria-hidden="true"></span>
+        </button>
       </div>
     </section>
   </main>
