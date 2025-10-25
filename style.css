@@ -105,6 +105,32 @@ nav a:focus-visible {
   box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.25);
 }
 
+.btn,
+button {
+  position: relative;
+  transform: translateY(0);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.08), 0 12px 18px rgba(0, 0, 0, 0.12);
+}
+
+.btn:hover,
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.08), 0 16px 24px rgba(0, 0, 0, 0.16);
+}
+
+.btn:active,
+button:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.12), 0 8px 14px rgba(0, 0, 0, 0.14);
+}
+
+.btn:focus-visible,
+button:focus-visible {
+  outline: 3px solid rgba(192, 57, 43, 0.35);
+  outline-offset: 3px;
+}
+
 .cart-actions {
   display: inline-flex;
   align-items: center;
@@ -212,55 +238,8 @@ nav a:focus-visible {
     );
 }
 
-.cart-icon-button.is-glowing .shimmer-layer,
-.shimmer-action.is-glowing .shimmer-layer {
+.cart-icon-button.is-glowing .shimmer-layer {
   opacity: calc(0.18 + 0.6 * var(--glow-strength));
-}
-
-.shimmer-action {
-  --glow-strength: 0;
-  --glow-alpha: 0;
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  overflow: hidden;
-  box-shadow: 0 10px calc(26px * var(--glow-strength))
-      calc(-8px * var(--glow-strength))
-      rgba(160, 45, 18, 0.35);
-  background-image: linear-gradient(
-    135deg,
-    rgba(255, 226, 179, 0.85) 0%,
-      rgba(255, 203, 128, 0.92) 45%,
-      rgba(240, 160, 64, 0.95) 100%
-  );
-  background-color: transparent;
-  color: #4d1f00;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.55);
-  transition: transform 0.25s ease, box-shadow 0.35s ease;
-}
-
-.shimmer-action:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-.shimmer-action .shimmer-layer {
-  inset: -24px;
-}
-
-.shimmer-action .button-text {
-  position: relative;
-  z-index: 1;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-.shimmer-action.is-glowing {
-  box-shadow: 0 12px calc(32px * var(--glow-strength))
-      calc(-6px * var(--glow-strength))
-      rgba(255, 196, 128, var(--glow-alpha));
 }
 
 @keyframes cartScorePop {
@@ -765,13 +744,19 @@ main {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  transition: 0.3s;
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
+  box-shadow: 0 6px 0 rgba(146, 43, 33, 0.45), 0 16px 22px rgba(192, 57, 43, 0.28);
 }
 
 .menu_content .add-btn:hover {
   background: #a93226;
   border-color: #a93226;
+  box-shadow: 0 8px 0 rgba(130, 34, 25, 0.5), 0 20px 26px rgba(192, 57, 43, 0.32);
+}
+
+.menu_content .add-btn:active {
+  box-shadow: 0 5px 0 rgba(130, 34, 25, 0.45), 0 14px 22px rgba(192, 57, 43, 0.26);
 }
 
 .menu_btn.btn.btn-danger {
@@ -783,7 +768,7 @@ main {
 .btn.btn-danger {
   background: #c0392b;
   border: 1px solid #c0392b;
-  transition: 0.3s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
   position: relative;
   z-index: 1;
   text-transform: capitalize;
@@ -792,6 +777,7 @@ main {
   padding: 15px 25px;
   color: #fff;
   text-align: center;
+  box-shadow: 0 6px 0 rgba(146, 43, 33, 0.45), 0 16px 24px rgba(192, 57, 43, 0.28);
 }
 
 .btn.btn-danger::before {
@@ -809,6 +795,14 @@ main {
 .btn.btn-danger:hover::before {
   top: 0;
   left: 0;
+}
+
+.btn.btn-danger:hover {
+  box-shadow: 0 8px 0 rgba(130, 34, 25, 0.5), 0 20px 28px rgba(192, 57, 43, 0.32);
+}
+
+.btn.btn-danger:active {
+  box-shadow: 0 5px 0 rgba(130, 34, 25, 0.45), 0 16px 24px rgba(192, 57, 43, 0.28);
 }
 
 /* Cart section */
@@ -873,17 +867,24 @@ main {
 }
 
 .cart-items button {
-  background-color: transparent;
+  background-color: #fff4ef;
   color: #c0392b;
   border: 1px solid rgba(192, 57, 43, 0.3);
-  border-radius: 0.25rem;
-  padding: 0.25rem 0.5rem;
+  border-radius: 0.35rem;
+  padding: 0.3rem 0.7rem;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 0 rgba(192, 57, 43, 0.18), 0 12px 18px rgba(192, 57, 43, 0.16);
 }
 
 .cart-items button:hover {
-  background-color: rgba(192, 57, 43, 0.1);
+  background-color: #ffe2d8;
+  box-shadow: 0 5px 0 rgba(146, 43, 33, 0.24), 0 14px 22px rgba(192, 57, 43, 0.22);
+}
+
+.cart-items button:active {
+  box-shadow: 0 3px 0 rgba(146, 43, 33, 0.2), 0 10px 18px rgba(192, 57, 43, 0.18);
 }
 
 .cart-footer {
@@ -900,39 +901,63 @@ main {
 }
 
 .checkout-btn,
-.place-order-btn,
-.close-checkout {
+.place-order-btn {
   background-color: #c0392b;
   color: #fff;
   border: none;
   border-radius: 0.5rem;
   padding: 0.6rem 1.2rem;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  transition: background-color 0.2s ease-in-out, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 6px 0 rgba(146, 43, 33, 0.55), 0 16px 24px rgba(192, 57, 43, 0.25);
 }
 
-.checkout-btn:disabled {
+.checkout-btn:disabled,
+.place-order-btn:disabled {
   background-color: #ccc;
   cursor: not-allowed;
+  color: #666;
+  box-shadow: none;
 }
 
 .checkout-btn:not(:disabled):hover,
-.close-checkout:hover {
+.place-order-btn:not(:disabled):hover {
   background-color: #a93226;
+  box-shadow: 0 8px 0 rgba(130, 34, 25, 0.5), 0 20px 28px rgba(192, 57, 43, 0.3);
+}
+
+.checkout-btn:not(:disabled):active,
+.place-order-btn:not(:disabled):active {
+  box-shadow: 0 4px 0 rgba(130, 34, 25, 0.45), 0 14px 24px rgba(192, 57, 43, 0.26);
+}
+
+.place-order-btn .button-text {
+  font-size: 0.95rem;
 }
 
 .close-checkout {
-  padding: 0.2rem 0.6rem;
-  font-size: 1.4rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 1.2rem;
   line-height: 1;
-  background-color: transparent;
-  color: #333;
-  border: none;
+  border-radius: 999px;
+  background-color: #ffffff;
+  color: #c0392b;
+  border: 1px solid rgba(192, 57, 43, 0.25);
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 0 rgba(192, 57, 43, 0.28), 0 12px 20px rgba(192, 57, 43, 0.2);
 }
 
 .close-checkout:hover {
-  background-color: transparent;
-  color: #c0392b;
+  background-color: #ffe8e4;
+  color: #922b21;
+  box-shadow: 0 5px 0 rgba(146, 43, 33, 0.32), 0 14px 22px rgba(192, 57, 43, 0.26);
+}
+
+.close-checkout:active {
+  box-shadow: 0 3px 0 rgba(146, 43, 33, 0.28), 0 10px 18px rgba(192, 57, 43, 0.2);
 }
 
 .checkout-panel {
@@ -1090,12 +1115,18 @@ main {
   border: none;
   border-radius: 999px;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  box-shadow: 0 5px 0 rgba(146, 43, 33, 0.45), 0 14px 22px rgba(192, 57, 43, 0.28);
 }
 
 .schedule-save:hover {
   background-color: #a93226;
   transform: translateY(-1px);
+  box-shadow: 0 7px 0 rgba(130, 34, 25, 0.5), 0 18px 26px rgba(192, 57, 43, 0.32);
+}
+
+.schedule-save:active {
+  box-shadow: 0 4px 0 rgba(130, 34, 25, 0.45), 0 12px 20px rgba(192, 57, 43, 0.24);
 }
 
 .schedule-summary {
@@ -1176,11 +1207,17 @@ main {
   color: #c0392b;
   font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  box-shadow: 0 3px 0 rgba(192, 57, 43, 0.2), 0 8px 12px rgba(192, 57, 43, 0.18);
 }
 
 .quantity-controls button:hover {
   background-color: rgba(192, 57, 43, 0.1);
+  box-shadow: 0 4px 0 rgba(146, 43, 33, 0.26), 0 10px 14px rgba(192, 57, 43, 0.24);
+}
+
+.quantity-controls button:active {
+  box-shadow: 0 2px 0 rgba(146, 43, 33, 0.24), 0 8px 12px rgba(192, 57, 43, 0.18);
 }
 
 .quantity-controls input {
@@ -1305,17 +1342,24 @@ main {
   border-radius: 999px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, transform 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  box-shadow: 0 4px 0 rgba(192, 57, 43, 0.2), 0 12px 18px rgba(192, 57, 43, 0.18);
 }
 
 .tip-button:hover {
   background-color: rgba(192, 57, 43, 0.1);
   transform: translateY(-1px);
+  box-shadow: 0 6px 0 rgba(146, 43, 33, 0.26), 0 16px 24px rgba(192, 57, 43, 0.24);
 }
 
 .tip-button.is-active {
   background-color: #c0392b;
   color: #fff;
+  box-shadow: 0 6px 0 rgba(146, 43, 33, 0.35), 0 18px 26px rgba(192, 57, 43, 0.28);
+}
+
+.tip-button:active {
+  box-shadow: 0 3px 0 rgba(146, 43, 33, 0.24), 0 12px 20px rgba(192, 57, 43, 0.22);
 }
 
 .custom-tip-container {
@@ -1415,10 +1459,6 @@ main {
   background-image: none;
   cursor: not-allowed;
   color: #666;
-}
-
-.place-order-btn.shimmer-action {
-  color: #4d1f00;
 }
 
 .flying-cart-image {

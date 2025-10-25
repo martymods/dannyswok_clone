@@ -58,9 +58,9 @@
       </div>
     </section>
     <section id="cart">
-      <h2>Your Cart</h2>
-      <div class="cart-summary">
-        <p id="cart-empty" class="cart-empty">Your cart is currently empty.</p>
+      <h2 class="cart-heading is-hidden" aria-hidden="true">Your Cart</h2>
+      <div class="cart-summary is-hidden" aria-hidden="true">
+        <p id="cart-empty" class="cart-empty is-hidden" aria-hidden="true">Your cart is currently empty.</p>
         <ul id="cart-items" class="cart-items"></ul>
         <div class="cart-footer">
           <div id="cart-total" class="cart-total">Total: $0.00</div>
@@ -199,9 +199,8 @@
           <span>Total</span>
           <strong id="checkout-total-amount">$0.00</strong>
         </div>
-        <button id="place-order" class="place-order-btn shimmer-action" type="button">
+        <button id="place-order" class="place-order-btn" type="button">
           <span class="button-text">Place order</span>
-          <span class="shimmer-layer" aria-hidden="true"></span>
         </button>
       </div>
     </section>
