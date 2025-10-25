@@ -27,6 +27,10 @@ body {
   display: none !important;
 }
 
+.hidden {
+  display: none !important;
+}
+
 header {
   background-color: #fff;
   border-bottom: 1px solid #e5e5e5;
@@ -709,6 +713,109 @@ main {
   gap: 0.75rem;
 }
 
+.dropoff-options,
+.delivery-time-options {
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.dropoff-options legend,
+.delivery-time-options legend {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.dropoff-options label,
+.delivery-time-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.dropoff-instructions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-left: 1.6rem;
+}
+
+.dropoff-instructions textarea {
+  border: 1px solid #dcdcdc;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  resize: vertical;
+  font-size: 0.95rem;
+}
+
+.schedule-container {
+  margin-top: 0.75rem;
+  border: 1px solid rgba(192, 57, 43, 0.15);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(255, 239, 213, 0.7), rgba(255, 228, 196, 0.4));
+}
+
+.schedule-helper {
+  margin-top: 0;
+  font-size: 0.9rem;
+  color: #8a4d0f;
+}
+
+.schedule-controls {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.schedule-controls label {
+  font-weight: 600;
+}
+
+.schedule-controls input[type="time"] {
+  border: 1px solid #dcdcdc;
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.95rem;
+}
+
+.schedule-save {
+  padding: 0.5rem 1rem;
+  background-color: #c0392b;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.schedule-save:hover {
+  background-color: #a93226;
+  transform: translateY(-1px);
+}
+
+.schedule-summary {
+  margin: 0.75rem 0 0;
+  font-size: 0.9rem;
+  color: #8a4d0f;
+}
+
+.schedule-summary.is-confirmed {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.schedule-summary.is-warning {
+  color: #c0392b;
+  font-weight: 600;
+}
+
 .checkout-items {
   display: grid;
   gap: 1rem;
@@ -862,12 +969,85 @@ main {
   color: #27ae60;
 }
 
+.tip-section {
+  margin-top: 1.5rem;
+  padding: 1.2rem;
+  border: 1px solid rgba(192, 57, 43, 0.2);
+  border-radius: 0.75rem;
+  background: linear-gradient(145deg, rgba(255, 248, 232, 0.9), rgba(255, 241, 214, 0.7));
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tip-section h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #b03a2e;
+}
+
+.tip-note {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #8a4d0f;
+}
+
+.tip-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.tip-button {
+  flex: 1 1 90px;
+  border: 1px solid #c0392b;
+  background: #fff;
+  color: #c0392b;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.tip-button:hover {
+  background-color: rgba(192, 57, 43, 0.1);
+  transform: translateY(-1px);
+}
+
+.tip-button.is-active {
+  background-color: #c0392b;
+  color: #fff;
+}
+
+.tip-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  color: #8a4d0f;
+}
+
 .checkout-total-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 1.15rem;
   margin-bottom: 1rem;
+}
+
+.checkout-total-row.grand-total {
+  border-top: 1px dashed rgba(192, 57, 43, 0.3);
+  padding-top: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.checkout-total-row span {
+  font-weight: 500;
+}
+
+.checkout-total-row strong {
+  font-weight: 700;
 }
 
 .place-order-btn {
@@ -878,6 +1058,120 @@ main {
 .place-order-btn:disabled {
   background-color: #ccc;
   cursor: not-allowed;
+}
+
+#calendar {
+  position: relative;
+}
+
+#calendar .calendar {
+  font-family: 'Roboto', sans-serif;
+  background-color: #fff8ec;
+  border-radius: 12px;
+  box-shadow: 0 12px 35px rgba(192, 57, 43, 0.18);
+  overflow: hidden;
+}
+
+#calendar .calendar--nav {
+  background: linear-gradient(120deg, #b03a2e, #d35400);
+  color: #fff3cd;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+#calendar .calendar--nav a {
+  position: absolute;
+  top: 16px;
+  font-size: 32px;
+  color: rgba(255, 243, 205, 0.7);
+  cursor: pointer;
+  user-select: none;
+}
+
+#calendar .calendar--nav a:hover {
+  color: #fff;
+}
+
+#calendar .calendar--nav a:first-child {
+  left: 10px;
+}
+
+#calendar .calendar--nav a:last-child {
+  right: 10px;
+}
+
+#calendar .calendar--nav h1 {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+#calendar .calendar--nav small {
+  display: block;
+  font-size: 0.5em;
+  font-weight: 300;
+}
+
+#calendar .calendar--days {
+  padding: 0.75rem 1rem 1rem;
+}
+
+#calendar .calendar--days span {
+  width: 14.2857%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  margin: 6px 0;
+  line-height: 34px;
+  font-size: 0.95rem;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+#calendar .calendar--days span.label {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: rgba(0, 0, 0, 0.35);
+  cursor: default;
+}
+
+#calendar .calendar--days span.muted {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+#calendar .calendar--days span.today {
+  font-weight: 700;
+  color: #b03a2e;
+}
+
+#calendar .calendar--days span.selected {
+  color: #fff;
+  font-weight: 700;
+}
+
+#calendar .calendar--days span.selected::after {
+  content: '';
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-5deg);
+  background-image: url('images/chinese-food-boxes2.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  z-index: -1;
+}
+
+#calendar .calendar--days span:hover:not(.label) {
+  transform: translateY(-2px);
 }
 
 @media (max-width: 600px) {
@@ -892,6 +1186,15 @@ main {
   }
 
   .checkout-quantity {
+    align-items: flex-start;
+  }
+
+  .tip-buttons {
+    flex-direction: column;
+  }
+
+  .schedule-controls {
+    flex-direction: column;
     align-items: flex-start;
   }
 }
