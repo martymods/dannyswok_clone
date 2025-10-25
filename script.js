@@ -10,6 +10,10 @@
 // Each filename contains one or two dish names separated by casing.  We use
 // the names encoded in the filenames to pair menu entries with imagery.
 const fallbackImage = 'images/chinesemenu/store_interior.jpg';
+const cartAddSound = typeof Audio === 'function' ? new Audio('audio/wok_register.mp3') : null;
+if (cartAddSound) {
+  cartAddSound.preload = 'auto';
+}
 
 const menuImageSources = [
   'images/chinesemenu/b-b-q_spare_rib_tips_w_fried_rice_Fried_Scallop_w_French_Fries.jpg',
@@ -1187,6 +1191,23 @@ function addToCart(item, options = {}) {
   updateCart();
   celebrateCartScore(options.imageElement);
   animateItemImage(options.imageElement);
+  playCartSound();
+}
+
+function playCartSound() {
+  if (!cartAddSound) {
+    return;
+  }
+
+  try {
+    cartAddSound.currentTime = 0;
+    const playPromise = cartAddSound.play();
+    if (playPromise && typeof playPromise.then === 'function') {
+      playPromise.catch(() => {});
+    }
+  } catch (error) {
+    // Ignore errors triggered by autoplay restrictions or unsupported playback.
+  }
 }
 
 function animateItemImage(imageElement) {
