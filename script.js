@@ -1348,60 +1348,10 @@ function removeFromCart(id) {
 
 // Update the cart display and totals
 function updateCart() {
-  const cartItemsContainer = document.getElementById('cart-items');
-  const emptyState = document.getElementById('cart-empty');
-  const cartHeading = document.querySelector('#cart > h2');
-  const cartSummary = document.querySelector('.cart-summary');
-  if (!cartItemsContainer) {
-    return;
-  }
-  cartItemsContainer.innerHTML = '';
   const { total, count } = calculateCartTotals();
-  const entries = Object.keys(cart);
-  const hasItems = entries.length > 0;
-  if (cartSummary) {
-    cartSummary.classList.toggle('is-hidden', !hasItems);
-    cartSummary.setAttribute('aria-hidden', String(!hasItems));
-  }
-  if (cartHeading) {
-    cartHeading.classList.toggle('is-hidden', !hasItems);
-    cartHeading.setAttribute('aria-hidden', String(!hasItems));
-  }
-  cartItemsContainer.style.display = entries.length ? 'block' : 'none';
-  entries.forEach((id) => {
-    const item = cart[id];
-    const li = document.createElement('li');
-    const nameSpan = document.createElement('span');
-    nameSpan.textContent = `${item.quantity}× ${item.name}`;
-    const priceSpan = document.createElement('span');
-    const itemTotal = item.price * item.quantity;
-    priceSpan.textContent = `$${itemTotal.toFixed(2)}`;
-    li.appendChild(nameSpan);
-    li.appendChild(priceSpan);
-    const removeBtn = document.createElement('button');
-    removeBtn.textContent = 'Remove';
-    removeBtn.addEventListener('click', () => removeFromCart(id));
-    li.appendChild(removeBtn);
-    cartItemsContainer.appendChild(li);
-  });
-  const totalEl = document.getElementById('cart-total');
-  if (totalEl) {
-    totalEl.textContent = `Total: $${total.toFixed(2)}`;
-  }
-
-  if (emptyState) {
-    emptyState.classList.add('is-hidden');
-    emptyState.setAttribute('aria-hidden', 'true');
-  }
-
   const cartCountEl = document.getElementById('cart-count');
   if (cartCountEl) {
     cartCountEl.textContent = count;
-  }
-
-  const checkoutButton = document.getElementById('checkout-button');
-  if (checkoutButton) {
-    checkoutButton.disabled = !hasItems;
   }
 
   updateCheckoutView();
@@ -1730,10 +1680,6 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleCheckoutPanel(true);
       }
     });
-  }
-  const checkoutButton = document.getElementById('checkout-button');
-  if (checkoutButton) {
-    checkoutButton.addEventListener('click', () => toggleCheckoutPanel(true));
   }
   const closeCheckout = document.getElementById('close-checkout');
   if (closeCheckout) {
