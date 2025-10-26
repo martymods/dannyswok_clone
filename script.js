@@ -2040,19 +2040,60 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentOrderDetails = null;
   let paymentProcessing = false;
 
+  function getStripePublishableKeyFromDom() {
+    if (typeof window !== 'undefined') {
+      if (typeof window.STRIPE_PUBLISHABLE_KEY === 'string' && window.STRIPE_PUBLISHABLE_KEY.trim()) {
+        return window.STRIPE_PUBLISHABLE_KEY.trim();
+      }
+      if (typeof window.__STRIPE_PUBLISHABLE_KEY__ === 'string' && window.__STRIPE_PUBLISHABLE_KEY__.trim()) {
+        return window.__STRIPE_PUBLISHABLE_KEY__.trim();
+      }
+    }
+
+    const metaTag = document.querySelector('meta[name="stripe-publishable-key"]');
+    if (metaTag && typeof metaTag.content === 'string' && metaTag.content.trim()) {
+      return metaTag.content.trim();
+    }
+
+    const dataSource = document.querySelector('[data-stripe-publishable-key]');
+    if (dataSource) {
+      const value = dataSource.getAttribute('data-stripe-publishable-key');
+      if (value && value.trim()) {
+        return value.trim();
+      }
+    }
+
+    return null;
+  }
+
   async function ensureStripeInitialized() {
     if (stripeInstance) {
       return;
     }
-    const response = await fetch('/api/config');
-    if (!response.ok) {
-      throw new Error('Unable to load payment configuration.');
+
+    let publishableKey = getStripePublishableKeyFromDom();
+
+    if (!publishableKey) {
+      try {
+        const response = await fetch('/api/config', { cache: 'no-store' });
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.publishableKey) {
+            publishableKey = data.publishableKey;
+          }
+        } else {
+          console.warn('Stripe config endpoint responded with status', response.status);
+        }
+      } catch (error) {
+        console.error('Failed to load Stripe configuration via API.', error);
+      }
     }
-    const data = await response.json();
-    if (!data.publishableKey) {
-      throw new Error('Stripe publishable key missing.');
+
+    if (!publishableKey) {
+      throw new Error('Stripe publishable key is not configured.');
     }
-    stripeInstance = Stripe(data.publishableKey);
+
+    stripeInstance = Stripe(publishableKey);
     stripeElements = stripeInstance.elements();
   }
 
