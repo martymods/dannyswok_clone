@@ -240,6 +240,45 @@
       </div>
     </section>
   </main>
+  <div
+    id="payment-modal"
+    class="payment-modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="payment-modal-title"
+    aria-hidden="true"
+  >
+    <div class="payment-modal__dialog">
+      <button type="button" id="close-payment-modal" class="payment-modal__close" aria-label="Close payment dialog">
+        &times;
+      </button>
+      <h2 id="payment-modal-title">Complete your payment</h2>
+      <p class="payment-modal__amount">
+        Amount due: <strong id="payment-amount">$0.00</strong>
+      </p>
+      <div id="payment-order-summary" class="payment-order-summary"></div>
+      <form id="payment-form" class="payment-form" autocomplete="on">
+        <div class="payment-form__field">
+          <label for="cardholder-name">Name on card</label>
+          <input type="text" id="cardholder-name" name="cardholder-name" autocomplete="name" placeholder="Full name" />
+        </div>
+        <div class="payment-form__field">
+          <label for="cardholder-email">Email (for receipt)</label>
+          <input type="email" id="cardholder-email" name="cardholder-email" autocomplete="email" placeholder="you@example.com" />
+        </div>
+        <div id="payment-request-button-wrapper" class="payment-request-button-wrapper hidden" aria-hidden="true"></div>
+        <p id="wallet-hint" class="wallet-hint hidden" aria-hidden="true">
+          Use Apple Pay or Google Pay for a faster checkout.
+        </p>
+        <div id="stripe-card-element" class="stripe-card-element" role="group" aria-label="Card payment fields"></div>
+        <button id="confirm-payment" type="button" class="confirm-payment-btn">
+          <span class="button-text">Confirm &amp; pay</span>
+        </button>
+        <p id="payment-status" class="payment-status" role="alert" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
+  <script src="https://js.stripe.com/v3"></script>
   <script src="script.js"></script>
 </body>
 </html>
