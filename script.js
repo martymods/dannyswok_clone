@@ -25,6 +25,8 @@ const STORE_LOCATIONS = {
   },
 };
 
+let headerFulfilmentMode = 'pickup';
+
 if (cartAddSound) {
   cartAddSound.preload = 'auto';
 }
@@ -91,9 +93,65 @@ function applySelectedStoreFromQuery() {
     displayWrapper.dataset.storeId = matchedStoreId;
     displayWrapper.classList.remove('menu-header__selected-store--empty');
   } else {
-    addressElement.textContent = 'Select a store for pickup';
+    addressElement.textContent = getHeaderFulfilmentPlaceholder();
     displayWrapper.classList.add('menu-header__selected-store--empty');
     displayWrapper.removeAttribute('data-store-id');
+  }
+
+  updateHeaderFulfilmentDisplay();
+}
+
+function getHeaderFulfilmentPlaceholder() {
+  return headerFulfilmentMode === 'delivery' ? 'Select a store for delivery' : 'Select a store for pickup';
+}
+
+function updateHeaderFulfilmentDisplay() {
+  const displayWrapper = document.getElementById('selected-store-display');
+  const labelElement = displayWrapper ? displayWrapper.querySelector('.menu-header__selected-store-label') : null;
+  const valueElement = document.getElementById('selected-store-address');
+  if (!displayWrapper || !labelElement || !valueElement) {
+    return;
+  }
+
+  const isDelivery = headerFulfilmentMode === 'delivery';
+  labelElement.textContent = isDelivery ? 'Delivery from' : 'Pickup from';
+  if (displayWrapper.classList.contains('menu-header__selected-store--empty')) {
+    valueElement.textContent = getHeaderFulfilmentPlaceholder();
+  }
+  displayWrapper.dataset.fulfilment = headerFulfilmentMode;
+  displayWrapper.setAttribute('aria-pressed', isDelivery ? 'true' : 'false');
+  displayWrapper.setAttribute(
+    'aria-label',
+    isDelivery ? 'Toggle fulfilment (currently delivery)' : 'Toggle fulfilment (currently pickup)',
+  );
+}
+
+function handleHeaderFulfilmentToggle(event) {
+  if (event.type === 'keydown') {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+    if (event.repeat) {
+      return;
+    }
+    event.preventDefault();
+  }
+
+  headerFulfilmentMode = headerFulfilmentMode === 'pickup' ? 'delivery' : 'pickup';
+
+  const displayWrapper = document.getElementById('selected-store-display');
+  if (displayWrapper) {
+    displayWrapper.classList.remove('is-animating');
+    // Force a reflow so the animation can replay reliably
+    void displayWrapper.offsetWidth; // eslint-disable-line no-void
+    displayWrapper.classList.add('is-animating');
+  }
+
+  updateHeaderFulfilmentDisplay();
+
+  const checkoutPanel = document.getElementById('checkout-panel');
+  if (checkoutPanel && !checkoutPanel.classList.contains('hidden')) {
+    applyHeaderFulfilmentToCheckout();
   }
 }
 
@@ -1520,15 +1578,36 @@ function toggleDeliveryFields(isDelivery) {
   updateCheckoutView();
 }
 
+function applyHeaderFulfilmentToCheckout() {
+  const pickupRadio = document.getElementById('fulfilment-pickup');
+  const deliveryRadio = document.getElementById('fulfilment-delivery');
+  if (!pickupRadio || !deliveryRadio) {
+    return false;
+  }
+
+  const isDelivery = headerFulfilmentMode === 'delivery';
+  pickupRadio.checked = !isDelivery;
+  deliveryRadio.checked = isDelivery;
+  toggleDeliveryFields(isDelivery);
+  return true;
+}
+
 function toggleCheckoutPanel(open) {
   const checkoutPanel = document.getElementById('checkout-panel');
   if (!checkoutPanel) {
     return;
   }
+
+  let syncedFulfilment = false;
+  if (open) {
+    syncedFulfilment = applyHeaderFulfilmentToCheckout();
+  }
   checkoutPanel.classList.toggle('hidden', !open);
   checkoutPanel.setAttribute('aria-hidden', String(!open));
   if (open) {
-    updateCheckoutView();
+    if (!syncedFulfilment) {
+      updateCheckoutView();
+    }
     const panelTop = checkoutPanel.getBoundingClientRect().top + window.scrollY;
     window.scrollTo({ top: panelTop - 16, behavior: 'smooth' });
   }
@@ -1752,6 +1831,15 @@ function updateCheckoutView() {
 // Kick off the rendering once the DOM has loaded
 document.addEventListener('DOMContentLoaded', () => {
   applySelectedStoreFromQuery();
+  const storeDisplay = document.getElementById('selected-store-display');
+  if (storeDisplay) {
+    storeDisplay.addEventListener('click', handleHeaderFulfilmentToggle);
+    storeDisplay.addEventListener('keydown', handleHeaderFulfilmentToggle);
+    storeDisplay.addEventListener('animationend', () => {
+      storeDisplay.classList.remove('is-animating');
+    });
+    updateHeaderFulfilmentDisplay();
+  }
   buildHeroCarousel();
   renderMenu();
   handleMenuLoadingScreen();
