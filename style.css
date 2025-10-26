@@ -2295,25 +2295,25 @@ body.landing-page.is-map-ready .leaflet-control-container {
     transform: translate(-50%, -300px) scale(0.5, 2);
   }
   10% {
-    transform: translate(-50%, 0) scale(0.5, 1);
+    transform: translate(-50%, 92px) scale(0.5, 1);
   }
   20% {
-    transform: translate(-50%, 0) scale(1.1, 0.3);
+    transform: translate(-50%, 92px) scale(1.1, 0.3);
   }
   25% {
-    transform: translate(-50%, 0) scale(1.1, 0.7);
+    transform: translate(-50%, 92px) scale(1.1, 0.7);
   }
   30% {
-    transform: translate(-50%, 0) scale(0.8, 1.1);
+    transform: translate(-50%, 88px) scale(0.8, 1.1);
   }
   50% {
-    transform: translate(-50%, 0) scale(1.1, 0.9);
+    transform: translate(-50%, 94px) scale(1.1, 0.9);
   }
   75% {
-    transform: translate(-50%, 0) scale(0.95, 1.05);
+    transform: translate(-50%, 90px) scale(0.95, 1.05);
   }
   100% {
-    transform: translate(-50%, 0) scale(1, 1);
+    transform: translate(-50%, 92px) scale(1, 1);
   }
 }
 
