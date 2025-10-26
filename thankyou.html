@@ -252,16 +252,50 @@
     }
 
     @media (max-width: 768px) {
+      .fortune-overlay {
+        padding: 16px;
+      }
+
       .fortune-wrapper {
+        width: 100%;
+        max-width: 320px;
         height: auto;
-        padding: 32px;
+        padding: 24px 16px;
       }
 
       .fortune {
+        width: 260px;
+        height: 150px;
         position: relative;
         top: 0;
         left: 50%;
         transform: translateX(-50%) rotate(-10deg);
+      }
+
+      .fortune-left,
+      .fortune-right {
+        width: 140px;
+        height: 140px;
+        background-size: contain;
+      }
+
+      .fortune-right {
+        left: 130px;
+      }
+
+      .fortune-message {
+        left: -170px;
+        right: -20px;
+        bottom: 120px;
+      }
+
+      .fortune-message span {
+        font-size: 0.9rem;
+        padding: 6px 24px 6px 12px;
+        max-width: calc(100vw - 120px);
+        white-space: normal;
+        line-height: 1.35;
+        text-align: center;
       }
 
       .receipt-card {
@@ -284,7 +318,7 @@
       </div>
       <canvas id="drawing_canvas" aria-hidden="true"></canvas>
     </div>
-    <p>Tap anywhere to open your virtual receipt.</p>
+    <p id="overlayInstruction">Tap anywhere to open your virtual receipt.</p>
     <audio id="cookieAudio" src="audio/cookieOpen_Full.mp3" preload="auto"></audio>
   </div>
 
@@ -711,6 +745,7 @@
       const intervalId = setInterval(updateTimer, 1000);
     }
 
+    let instructionElement = null;
     let overlayElement = null;
     let overlayHidden = false;
     let hideTimeoutId = null;
@@ -770,9 +805,13 @@
       setupTimer();
 
       overlayElement = document.getElementById('fortuneOverlay');
+      instructionElement = document.getElementById('overlayInstruction');
       if (!overlayElement) return;
 
       interactionHandler = () => {
+        if (instructionElement && instructionElement.style.display !== 'none') {
+          instructionElement.style.display = 'none';
+        }
         if (overlayHidden) return;
 
         if (!animationStarted) {
