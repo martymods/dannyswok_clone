@@ -218,6 +218,7 @@
   let selectedButton = null;
   let photoOverlayState = null;
   let lastPhotoTrigger = null;
+  let pendingPhotoPlacementTimer = null;
   const markerRepositionClass = 'is-repositioned';
 
   function updateMarkerSelection(storeId, options = {}) {
@@ -400,11 +401,66 @@
     openPhotoOverlay(storeId, storeLabel, info);
   }
 
+  function clearPendingPhotoPlacement() {
+    if (pendingPhotoPlacementTimer) {
+      clearTimeout(pendingPhotoPlacementTimer);
+      pendingPhotoPlacementTimer = null;
+    }
+  }
+
+  function calculatePhotoMarkerLatLng(baseLatLng, zoomLevel = map.getZoom()) {
+    const mapSize = map.getSize();
+    const horizontalOffset = Math.min(176, Math.max(108, Math.round(mapSize.x * 0.22)));
+    const verticalOffset = Math.min(140, Math.max(76, Math.round(mapSize.y * 0.22)));
+    const projectedPoint = map.project(baseLatLng, zoomLevel);
+    const offsetPoint = projectedPoint.add(L.point(-horizontalOffset, -verticalOffset));
+
+    return map.unproject(offsetPoint, zoomLevel);
+  }
+
+  function calculateFocusedViewCenter(baseLatLng, zoomLevel) {
+    const targetLatLng = L.latLng(baseLatLng);
+    const mapSize = map.getSize();
+    const mapWidth = mapSize.x;
+    const mapHeight = mapSize.y;
+    const markerAnchorX = 112;
+    const markerAnchorY = 120;
+    let minMarkerX = Math.max(markerAnchorX + 24, 24);
+    let maxMarkerX = mapWidth - 16;
+    if (maxMarkerX < minMarkerX) {
+      minMarkerX = maxMarkerX;
+    }
+    const baselineMarkerX = Math.round(mapWidth * 0.6);
+    const desiredMarkerX = Math.min(
+      Math.max(baselineMarkerX, minMarkerX),
+      maxMarkerX
+    );
+    let minMarkerY = Math.max(markerAnchorY + 20, 40);
+    let maxMarkerY = mapHeight - 64;
+    if (maxMarkerY < minMarkerY) {
+      minMarkerY = maxMarkerY;
+    }
+    const baselineMarkerY = Math.round(mapHeight * 0.52);
+    const desiredMarkerY = Math.min(
+      Math.max(baselineMarkerY, minMarkerY),
+      maxMarkerY
+    );
+    const targetPoint = map.project(targetLatLng, zoomLevel);
+    const centerPoint = L.point(
+      targetPoint.x + mapWidth / 2 - desiredMarkerX,
+      targetPoint.y + mapHeight / 2 - desiredMarkerY
+    );
+
+    return map.unproject(centerPoint, zoomLevel);
+  }
+
   function addPhotoMarker(target, id, label) {
     const info = storePhotoData[id];
     if (!info) {
       return;
     }
+
+    const displayLatLng = calculatePhotoMarkerLatLng(target);
 
     const photoIcon = L.divIcon({
       html: `
@@ -418,16 +474,16 @@
           <span class="store-photo-card__preview" aria-hidden="true">
             <img src="${info.src}" alt="">
           </span>
-          <span class="store-photo-card__hint" aria-hidden="true">Photo</span>
+          <span class="store-photo-card__hint" aria-hidden="true">Enter</span>
         </button>
       `,
       className: 'store-photo-card-wrapper',
       iconSize: [132, 148],
-      iconAnchor: [66, 120],
+      iconAnchor: [112, 120],
       popupAnchor: [0, -96],
     });
 
-    photoMarker = L.marker(target, {
+    photoMarker = L.marker(displayLatLng, {
       icon: photoIcon,
       interactive: true,
       keyboard: false,
@@ -456,18 +512,24 @@
 
     playSoundEffect(storeSelectSound);
 
-    const target = [lat, lng];
+    const target = L.latLng(lat, lng);
+    const focusZoomLevel = 16.1;
+    const focusedCenter = calculateFocusedViewCenter(target, focusZoomLevel);
 
-    map.flyTo(target, 17, {
+    map.flyTo(focusedCenter, focusZoomLevel, {
       duration: 1.2,
+      easeLinearity: 0.25,
     });
 
-    const mapWidth = mapElement.clientWidth || 0;
-    const horizontalOffset = Math.min(220, Math.max(90, Math.round(mapWidth * 0.22)));
+    const placePhotoMarker = () => {
+      clearPendingPhotoPlacement();
+      addPhotoMarker(target, id, label);
+    };
 
-    map.once('moveend', () => {
-      map.panBy([-horizontalOffset, 0], { animate: true });
-    });
+    clearPendingPhotoPlacement();
+    pendingPhotoPlacementTimer = setTimeout(placePhotoMarker, 2200);
+
+    map.once('moveend', placePhotoMarker);
 
     if (photoMarker) {
       photoMarker.remove();
@@ -479,8 +541,6 @@
     updateMarkerSelection(id, { focusMarker });
 
     updateMenuLink(label, id);
-
-    addPhotoMarker(target, id, label);
   }
 
   storeData.forEach((store) => {
