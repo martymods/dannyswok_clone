@@ -410,11 +410,11 @@
 
   function calculatePhotoMarkerLatLng(baseLatLng) {
     const mapSize = map.getSize();
-    const horizontalOffset = Math.min(180, Math.max(112, Math.round(mapSize.x * 0.24)));
+    const horizontalOffset = Math.min(176, Math.max(108, Math.round(mapSize.x * 0.22)));
     const verticalOffset = Math.min(140, Math.max(76, Math.round(mapSize.y * 0.22)));
 
     const layerPoint = map.latLngToLayerPoint(baseLatLng);
-    const offsetPoint = layerPoint.add(L.point(horizontalOffset, -verticalOffset));
+    const offsetPoint = layerPoint.add(L.point(-horizontalOffset, -verticalOffset));
 
     return map.layerPointToLatLng(offsetPoint);
   }
@@ -439,12 +439,12 @@
           <span class="store-photo-card__preview" aria-hidden="true">
             <img src="${info.src}" alt="">
           </span>
-          <span class="store-photo-card__hint" aria-hidden="true">Photo</span>
+          <span class="store-photo-card__hint" aria-hidden="true">Enter</span>
         </button>
       `,
       className: 'store-photo-card-wrapper',
       iconSize: [132, 148],
-      iconAnchor: [66, 120],
+      iconAnchor: [112, 120],
       popupAnchor: [0, -96],
     });
 
@@ -484,7 +484,7 @@
     });
 
     const mapWidth = mapElement.clientWidth || 0;
-    const horizontalOffset = Math.min(220, Math.max(90, Math.round(mapWidth * 0.22)));
+    const horizontalOffset = Math.min(212, Math.max(96, Math.round(mapWidth * 0.22)));
     const placePhotoMarker = () => {
       clearPendingPhotoPlacement();
       addPhotoMarker(target, id, label);
@@ -494,7 +494,7 @@
     pendingPhotoPlacementTimer = setTimeout(placePhotoMarker, 2200);
 
     map.once('moveend', () => {
-      map.panBy([-horizontalOffset, 0], { animate: true });
+      map.panBy([horizontalOffset, 0], { animate: true });
 
       map.once('moveend', placePhotoMarker);
     });
