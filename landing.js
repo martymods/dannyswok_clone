@@ -46,6 +46,61 @@
     pageBody.classList.remove('is-map-ready');
   }
 
+  const easternTimeZone = 'America/New_York';
+  const minutesPerHour = 60;
+  const storeStatusUpdateInterval = 60 * 1000;
+
+  const storeHoursByDay = {
+    0: { open: 11 * minutesPerHour + 30, close: 22 * minutesPerHour + 30 },
+    1: { open: 11 * minutesPerHour, close: 22 * minutesPerHour + 30 },
+    2: { open: 11 * minutesPerHour, close: 22 * minutesPerHour + 30 },
+    3: { open: 11 * minutesPerHour, close: 22 * minutesPerHour + 30 },
+    4: { open: 11 * minutesPerHour, close: 22 * minutesPerHour + 30 },
+    5: { open: 11 * minutesPerHour, close: 23 * minutesPerHour + 30 },
+    6: { open: 11 * minutesPerHour, close: 23 * minutesPerHour + 30 },
+  };
+
+  function getEasternNow() {
+    const localeString = new Date().toLocaleString('en-US', { timeZone: easternTimeZone });
+    return new Date(localeString);
+  }
+
+  function calculateStoreStatus() {
+    const now = getEasternNow();
+    const day = now.getDay();
+    const currentMinutes = now.getHours() * minutesPerHour + now.getMinutes();
+    const hours = storeHoursByDay[day];
+
+    if (!hours) {
+      return {
+        isOpen: false,
+        text: 'Closed · Order ahead for pickup',
+        state: 'closed',
+      };
+    }
+
+    const isOpen = currentMinutes >= hours.open && currentMinutes < hours.close;
+
+    return {
+      isOpen,
+      text: isOpen ? 'Open' : 'Closed · Order ahead for pickup',
+      state: isOpen ? 'open' : 'closed',
+    };
+  }
+
+  function applyStatusToElement(element) {
+    if (!element) {
+      return;
+    }
+
+    const status = calculateStoreStatus();
+    element.textContent = status.text;
+    element.setAttribute('data-status', status.state);
+
+    element.classList.toggle('store-photo-card__status--open', status.isOpen);
+    element.classList.toggle('store-photo-card__status--closed', !status.isOpen);
+  }
+
   const mapElement = document.getElementById('store-map');
   if (!mapElement) {
     if (pageBody) {
@@ -219,6 +274,7 @@
   let photoOverlayState = null;
   let lastPhotoTrigger = null;
   let pendingPhotoPlacementTimer = null;
+  let storeStatusIntervalId = null;
   const markerRepositionClass = 'is-repositioned';
 
   function updateMarkerSelection(storeId, options = {}) {
@@ -475,6 +531,7 @@
             <img src="${info.src}" alt="">
           </span>
           <span class="store-photo-card__hint" aria-hidden="true">Enter</span>
+          <span class="store-photo-card__status" aria-live="polite"></span>
         </button>
       `,
       className: 'store-photo-card-wrapper',
@@ -490,6 +547,30 @@
       riseOnHover: true,
       zIndexOffset: 350,
     }).addTo(map);
+
+    const refreshStoreStatus = () => {
+      if (!photoMarker) {
+        return;
+      }
+
+      const markerElement = photoMarker.getElement();
+      if (!markerElement) {
+        return;
+      }
+
+      const statusElement = markerElement.querySelector('.store-photo-card__status');
+      applyStatusToElement(statusElement);
+    };
+
+    if (storeStatusIntervalId) {
+      clearInterval(storeStatusIntervalId);
+      storeStatusIntervalId = null;
+    }
+
+    requestAnimationFrame(() => {
+      refreshStoreStatus();
+      storeStatusIntervalId = window.setInterval(refreshStoreStatus, storeStatusUpdateInterval);
+    });
   }
 
   function selectStore(button, options = {}) {
@@ -532,6 +613,11 @@
     map.once('moveend', placePhotoMarker);
 
     if (photoMarker) {
+      if (storeStatusIntervalId) {
+        clearInterval(storeStatusIntervalId);
+        storeStatusIntervalId = null;
+      }
+
       photoMarker.remove();
       photoMarker = null;
     }
