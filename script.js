@@ -2066,26 +2066,49 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  async function parseStripeConfigResponse(response, sourceLabel) {
-    if (!response || !response.ok) {
-      return null;
-    }
-
+  async function fetchStripeConfig() {
     try {
-      const raw = await response.text();
-      if (!raw) {
-        return null;
-      }
-
-      const data = JSON.parse(raw);
-      if (data && typeof data.publishableKey === 'string' && data.publishableKey.trim()) {
-        return data.publishableKey.trim();
+      const response = await fetch('/api/config', { cache: 'no-store' });
+      if (response.ok) {
+        try {
+          const data = await response.json();
+          if (data && typeof data.publishableKey === 'string' && data.publishableKey.trim()) {
+            return { publishableKey: data.publishableKey.trim() };
+          }
+        } catch (error) {
+          console.error('Failed to parse Stripe configuration from /api/config.', error);
+        }
+      } else if (response.status !== 404) {
+        console.warn('Stripe config endpoint responded with status', response.status);
       }
     } catch (error) {
-      console.error(`Failed to parse Stripe configuration from ${sourceLabel}.`, error);
+      console.error('Failed to load Stripe configuration via API.', error);
     }
 
-    return null;
+    let fallbackResponse;
+    try {
+      fallbackResponse = await fetch('/stripe-config.json', { cache: 'no-store' });
+    } catch (error) {
+      throw new Error('Could not load stripe-config.json (network error).');
+    }
+
+    if (!fallbackResponse.ok) {
+      throw new Error(`Could not load stripe-config.json (${fallbackResponse.status})`);
+    }
+
+    const fallbackText = await fallbackResponse.text();
+    let fallbackData;
+    try {
+      fallbackData = JSON.parse(fallbackText);
+    } catch (error) {
+      throw new Error(`stripe-config.json is not valid JSON: ${error.message}`);
+    }
+
+    if (!fallbackData || typeof fallbackData.publishableKey !== 'string' || !fallbackData.publishableKey.trim()) {
+      throw new Error('stripe-config.json missing "publishableKey".');
+    }
+
+    return { publishableKey: fallbackData.publishableKey.trim() };
   }
 
   async function ensureStripeInitialized() {
@@ -2096,30 +2119,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let publishableKey = getStripePublishableKeyFromDom();
 
     if (!publishableKey) {
-      let apiConfigResponse = null;
-      try {
-        apiConfigResponse = await fetch('/api/config', { cache: 'no-store' });
-      } catch (error) {
-        console.error('Failed to load Stripe configuration via API.', error);
-      }
-
-      if (apiConfigResponse && apiConfigResponse.ok) {
-        publishableKey = await parseStripeConfigResponse(apiConfigResponse, '/api/config');
-      } else if (apiConfigResponse && apiConfigResponse.status !== 404) {
-        console.warn('Stripe config endpoint responded with status', apiConfigResponse.status);
-      }
-
-      if (!publishableKey) {
-        try {
-          const fallbackResponse = await fetch('/stripe-config.json', { cache: 'no-store' });
-          if (fallbackResponse.ok) {
-            publishableKey = await parseStripeConfigResponse(fallbackResponse, 'stripe-config.json');
-          } else if (fallbackResponse.status !== 404) {
-            console.warn('Stripe fallback config responded with status', fallbackResponse.status);
-          }
-        } catch (error) {
-          console.error('Failed to load Stripe fallback configuration.', error);
-        }
+      const config = await fetchStripeConfig();
+      if (config && typeof config.publishableKey === 'string') {
+        publishableKey = config.publishableKey;
       }
     }
 
