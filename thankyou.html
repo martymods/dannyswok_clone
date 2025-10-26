@@ -10,6 +10,19 @@
   <style>
     :root {
       color-scheme: only light;
+      --dw-primary: #c0392b;
+      --dw-primary-strong: #e74c3c;
+      --dw-primary-dark: #922b21;
+      --dw-accent: #f39c12;
+      --dw-surface: #fff6e6;
+      --dw-surface-strong: #ffe6c1;
+      --dw-surface-contrast: #ffffff;
+      --dw-text-dark: #2c1a0a;
+      --dw-text-muted: #5a4636;
+      --dw-border-soft: rgba(192, 57, 43, 0.18);
+      --dw-border-strong: rgba(192, 57, 43, 0.32);
+      --dw-glow: rgba(231, 76, 60, 0.28);
+      --dw-overlay: rgba(44, 26, 10, 0.55);
     }
 
     * {
@@ -19,8 +32,8 @@
     body {
       margin: 0;
       font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #ffffff;
-      color: #1f1f1f;
+      background: var(--dw-surface);
+      color: var(--dw-text-dark);
     }
 
     .visually-hidden {
@@ -38,7 +51,7 @@
     .fortune-overlay {
       position: fixed;
       inset: 0;
-      background: #ffffff;
+      background: var(--dw-surface);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -59,9 +72,11 @@
       height: 400px;
       max-height: calc(100% - 120px);
       display: block;
-      background-color: #ffffff;
+      background-color: var(--dw-surface-contrast);
+      border-radius: 24px;
       padding: 50px;
       position: relative;
+      box-shadow: 0 40px 80px rgba(44, 26, 10, 0.22);
     }
 
     .fortune {
@@ -126,7 +141,8 @@
 
     .fortune-message span {
       display: block;
-      background-color: #ffffff;
+      background-color: var(--dw-surface-contrast);
+      color: var(--dw-text-dark);
       padding: 8px 65px 7px 15px;
       white-space: nowrap;
       max-width: max-content;
@@ -142,7 +158,7 @@
 
     .fortune-overlay p {
       font-size: 1rem;
-      color: #3f3f3f;
+      color: var(--dw-text-muted);
       margin: 0;
       text-align: center;
     }
@@ -154,10 +170,10 @@
     }
 
     .receipt-card {
-      background: #ffffff;
-      border-radius: 16px;
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      box-shadow: 0 24px 40px rgba(31, 41, 55, 0.12);
+      background: var(--dw-surface-contrast);
+      border-radius: 20px;
+      border: 1px solid var(--dw-border-soft);
+      box-shadow: 0 32px 60px rgba(44, 26, 10, 0.18);
       padding: 32px;
       display: grid;
       gap: 24px;
@@ -191,7 +207,7 @@
     }
 
     .eta-badge {
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      background: linear-gradient(135deg, var(--dw-primary), var(--dw-accent));
       color: #ffffff;
       border-radius: 999px;
       padding: 8px 16px;
@@ -199,10 +215,11 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
+      box-shadow: 0 10px 25px var(--dw-glow);
     }
 
     .order-summary {
-      border-top: 1px dashed rgba(0, 0, 0, 0.1);
+      border-top: 1px solid var(--dw-border-soft);
       padding-top: 16px;
       display: grid;
       gap: 16px;
@@ -212,23 +229,29 @@
       display: flex;
       justify-content: space-between;
       gap: 12px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: rgba(255, 246, 230, 0.6);
+      border: 1px solid var(--dw-border-soft);
     }
 
     .order-item span {
       font-size: 1rem;
+      color: var(--dw-text-dark);
     }
 
     .totals {
-      border-top: 1px dashed rgba(0, 0, 0, 0.1);
+      border-top: 1px solid var(--dw-border-soft);
       padding-top: 16px;
       display: grid;
-      gap: 8px;
+      gap: 12px;
     }
 
     .totals div {
       display: flex;
       justify-content: space-between;
       font-weight: 600;
+      color: var(--dw-text-dark);
     }
 
     .status-grid {
@@ -237,14 +260,27 @@
     }
 
     .status-card {
-      background: rgba(59, 130, 246, 0.08);
-      border-radius: 12px;
-      padding: 20px;
+      background: var(--dw-surface-contrast);
+      border-radius: 18px;
+      padding: 24px;
+      border: 1px solid var(--dw-border-soft);
+      box-shadow: 0 12px 30px rgba(44, 26, 10, 0.12);
+    }
+
+    .status-card--accent {
+      background: linear-gradient(135deg, rgba(192, 57, 43, 0.08), rgba(243, 156, 18, 0.12));
+      border: 1px solid var(--dw-border-strong);
+      box-shadow: 0 16px 36px rgba(192, 57, 43, 0.18);
     }
 
     .status-card h2 {
       margin: 0 0 8px;
       font-size: 1.25rem;
+      color: var(--dw-primary-dark);
+    }
+
+    .status-card p {
+      color: var(--dw-text-muted);
     }
 
     .timer {
@@ -254,12 +290,12 @@
       letter-spacing: 0.2em;
       text-align: center;
       margin-top: 8px;
-      color: #0f172a;
+      color: var(--dw-primary-dark);
     }
 
     .footnote {
       font-size: 0.9rem;
-      color: #555;
+      color: var(--dw-text-muted);
       line-height: 1.5;
     }
 
@@ -268,10 +304,10 @@
     }
 
     .merch-panel {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.08));
-      border-radius: 20px;
-      border: 1px solid rgba(59, 130, 246, 0.18);
-      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+      background: linear-gradient(140deg, rgba(192, 57, 43, 0.12), rgba(243, 156, 18, 0.08));
+      border-radius: 24px;
+      border: 1px solid var(--dw-border-strong);
+      box-shadow: 0 28px 50px rgba(44, 26, 10, 0.16);
       padding: 36px 32px 40px;
       display: grid;
       gap: 32px;
@@ -288,13 +324,13 @@
     .merch-heading h2 {
       font-size: 2rem;
       margin: 0 0 12px;
-      color: #0f172a;
+      color: var(--dw-primary-dark);
     }
 
     .merch-heading p {
       margin: 0;
       max-width: 540px;
-      color: #334155;
+      color: var(--dw-text-muted);
       line-height: 1.6;
     }
 
@@ -303,14 +339,14 @@
       max-width: 100%;
       height: auto;
       flex: 0 0 auto;
-      filter: drop-shadow(0 12px 18px rgba(30, 64, 175, 0.25));
+      filter: drop-shadow(0 14px 22px rgba(192, 57, 43, 0.26));
     }
 
     .merch-carousel {
       position: relative;
       overflow: hidden;
       border-radius: 18px;
-      background: rgba(15, 23, 42, 0.08);
+      background: rgba(192, 57, 43, 0.08);
       padding: 18px 0;
       mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
     }
@@ -331,8 +367,8 @@
       flex: 0 0 220px;
       border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 12px 22px rgba(15, 23, 42, 0.12);
-      background: #ffffff;
+      box-shadow: 0 12px 24px rgba(192, 57, 43, 0.18);
+      background: var(--dw-surface-contrast);
     }
 
     .merch-carousel-item img {
@@ -358,10 +394,10 @@
     }
 
     .merch-product-card {
-      background: rgba(255, 255, 255, 0.96);
-      border-radius: 18px;
-      border: 1px solid rgba(59, 130, 246, 0.15);
-      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+      background: var(--dw-surface-contrast);
+      border-radius: 20px;
+      border: 1px solid var(--dw-border-soft);
+      box-shadow: 0 14px 28px rgba(44, 26, 10, 0.12);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -371,14 +407,21 @@
     .merch-product-card:hover,
     .merch-product-card:focus-within {
       transform: translateY(-6px);
-      box-shadow: 0 18px 34px rgba(37, 99, 235, 0.18);
+      box-shadow: 0 20px 38px rgba(192, 57, 43, 0.2);
     }
 
     .merch-product-image {
       position: relative;
       padding-top: 68%;
-      background-size: cover;
-      background-position: center;
+      overflow: hidden;
+    }
+
+    .merch-product-image img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .merch-product-body {
@@ -391,12 +434,12 @@
     .merch-product-body h3 {
       margin: 0;
       font-size: 1.1rem;
-      color: #0f172a;
+      color: var(--dw-primary-dark);
     }
 
     .merch-product-body p {
       margin: 0;
-      color: #475569;
+      color: var(--dw-text-muted);
       font-size: 0.95rem;
     }
 
@@ -404,31 +447,31 @@
       align-self: flex-start;
       padding: 10px 18px;
       border-radius: 999px;
-      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      background: linear-gradient(135deg, var(--dw-primary), var(--dw-accent));
       border: none;
       color: #ffffff;
       font-weight: 600;
       cursor: pointer;
       transition: transform 0.25s ease, box-shadow 0.25s ease;
-      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.28);
+      box-shadow: 0 10px 22px var(--dw-glow);
     }
 
     .merch-add-button:hover,
     .merch-add-button:focus-visible {
       transform: translateY(-2px);
-      box-shadow: 0 14px 26px rgba(99, 102, 241, 0.35);
+      box-shadow: 0 14px 26px rgba(231, 76, 60, 0.35);
       outline: none;
     }
 
     .merch-add-button:active {
       transform: translateY(0);
-      box-shadow: 0 8px 18px rgba(59, 130, 246, 0.32);
+      box-shadow: 0 8px 18px rgba(146, 43, 33, 0.32);
     }
 
     .merch-cart-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.58);
+      background: var(--dw-overlay);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -445,11 +488,88 @@
       overflow: hidden;
     }
 
+    .merch-lightbox {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1100;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .merch-lightbox.is-hidden {
+      display: none;
+    }
+
+    .merch-lightbox.is-visible {
+      pointer-events: auto;
+      opacity: 1;
+    }
+
+    .merch-lightbox-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      border: none;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .merch-lightbox-content {
+      position: relative;
+      background: var(--dw-surface-contrast);
+      border-radius: 20px;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35);
+      padding: 24px;
+      max-width: min(560px, 90vw);
+      max-height: min(80vh, 720px);
+      display: grid;
+      gap: 16px;
+    }
+
+    .merch-lightbox-content img {
+      width: 100%;
+      height: auto;
+      border-radius: 14px;
+      box-shadow: 0 14px 30px rgba(44, 26, 10, 0.24);
+    }
+
+    .merch-lightbox-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(192, 57, 43, 0.22);
+      color: var(--dw-primary-dark);
+      font-size: 1.25rem;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .merch-lightbox-close:hover,
+    .merch-lightbox-close:focus-visible {
+      transform: translateY(-2px);
+      background: rgba(243, 156, 18, 0.28);
+      outline: none;
+    }
+
+    .merch-lightbox-caption {
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--dw-text-muted);
+    }
+
     .merch-cart-dialog {
-      background: #ffffff;
-      border-radius: 24px;
-      border: 1px solid rgba(59, 130, 246, 0.18);
-      box-shadow: 0 30px 60px rgba(15, 23, 42, 0.22);
+      background: var(--dw-surface-contrast);
+      border-radius: 28px;
+      border: 1px solid var(--dw-border-soft);
+      box-shadow: 0 36px 70px rgba(44, 26, 10, 0.28);
       width: min(720px, 100%);
       display: grid;
       grid-template-columns: auto 1fr;
@@ -467,8 +587,8 @@
       height: 40px;
       border-radius: 50%;
       border: none;
-      background: rgba(148, 163, 184, 0.2);
-      color: #0f172a;
+      background: rgba(192, 57, 43, 0.16);
+      color: var(--dw-primary-dark);
       font-size: 1.4rem;
       cursor: pointer;
       transition: background 0.2s ease, transform 0.2s ease;
@@ -476,7 +596,7 @@
 
     .merch-cart-close:hover,
     .merch-cart-close:focus-visible {
-      background: rgba(99, 102, 241, 0.25);
+      background: rgba(243, 156, 18, 0.28);
       transform: translateY(-2px);
       outline: none;
     }
@@ -491,7 +611,7 @@
     .merch-cart-figure {
       width: 180px;
       height: auto;
-      filter: drop-shadow(0 18px 35px rgba(59, 130, 246, 0.35));
+      filter: drop-shadow(0 18px 35px rgba(192, 57, 43, 0.35));
       animation: cartFloat 3.6s ease-in-out infinite;
     }
 
@@ -500,7 +620,7 @@
       width: 180px;
       height: 180px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(96, 165, 250, 0.35) 0%, rgba(129, 140, 248, 0) 65%);
+      background: radial-gradient(circle, rgba(231, 76, 60, 0.32) 0%, rgba(243, 156, 18, 0) 70%);
       animation: cartPulse 3s ease-in-out infinite;
       z-index: -1;
     }
@@ -536,24 +656,60 @@
     .merch-cart-content h3 {
       font-size: 1.5rem;
       margin: 0;
-      color: #0f172a;
+      color: var(--dw-primary-dark);
     }
 
     .merch-cart-product {
       margin: 0;
       font-weight: 600;
-      color: #4338ca;
+      color: var(--dw-primary);
     }
 
     .merch-cart-preview {
-      width: 100%;
-      height: 120px;
+      border-radius: 18px;
+      border: 1px solid var(--dw-border-soft);
+      padding: 14px;
+      background: rgba(255, 246, 230, 0.65);
+      display: grid;
+      gap: 12px;
+    }
+
+    .merch-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .merch-preview-thumb {
+      border: none;
+      padding: 0;
+      background: var(--dw-surface-contrast);
       border-radius: 16px;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      border: 1px solid rgba(99, 102, 241, 0.22);
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(44, 26, 10, 0.12);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .merch-preview-thumb:focus-visible,
+    .merch-preview-thumb:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 28px rgba(192, 57, 43, 0.2);
+      outline: none;
+    }
+
+    .merch-preview-thumb img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .merch-preview-hint {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--dw-text-muted);
+      text-align: center;
     }
 
     .merch-cart-form fieldset {
@@ -589,19 +745,19 @@
       justify-content: center;
       align-items: center;
       border-radius: 12px;
-      background: rgba(191, 219, 254, 0.4);
-      border: 1px solid rgba(59, 130, 246, 0.35);
+      background: rgba(255, 246, 230, 0.75);
+      border: 1px solid var(--dw-border-soft);
       padding: 10px 12px;
       text-align: center;
       font-weight: 600;
-      color: #1e3a8a;
+      color: var(--dw-text-dark);
       transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
     }
 
     .merch-size-options input:checked + span {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.85), rgba(99, 102, 241, 0.85));
+      background: linear-gradient(135deg, var(--dw-primary), var(--dw-accent));
       color: #ffffff;
-      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.35);
+      box-shadow: 0 10px 20px var(--dw-glow);
       transform: translateY(-1px);
     }
 
@@ -610,7 +766,7 @@
     }
 
     .merch-size-options input:focus-visible + span {
-      outline: 3px solid rgba(96, 165, 250, 0.6);
+      outline: 3px solid rgba(243, 156, 18, 0.45);
       outline-offset: 2px;
     }
 
@@ -624,24 +780,25 @@
       display: grid;
       gap: 6px;
       font-size: 0.9rem;
-      color: #334155;
+      color: var(--dw-text-muted);
     }
 
     .merch-form-grid input,
     .merch-form-grid textarea {
       border-radius: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.6);
+      border: 1px solid rgba(192, 57, 43, 0.25);
       padding: 10px 12px;
       font-size: 0.95rem;
       font-family: inherit;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      background: var(--dw-surface-contrast);
     }
 
     .merch-form-grid input:focus-visible,
     .merch-form-grid textarea:focus-visible {
       outline: none;
-      border-color: #6366f1;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+      border-color: var(--dw-primary-strong);
+      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.25);
     }
 
     .merch-cart-actions {
@@ -655,18 +812,18 @@
       padding: 12px 24px;
       border-radius: 999px;
       border: none;
-      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      background: linear-gradient(135deg, var(--dw-primary), var(--dw-accent));
       color: #ffffff;
       font-weight: 600;
       cursor: pointer;
-      box-shadow: 0 16px 30px rgba(124, 58, 237, 0.32);
+      box-shadow: 0 16px 30px rgba(231, 76, 60, 0.32);
       transition: transform 0.25s ease, box-shadow 0.25s ease;
     }
 
     .merch-submit-button:hover,
     .merch-submit-button:focus-visible {
       transform: translateY(-2px);
-      box-shadow: 0 20px 36px rgba(37, 99, 235, 0.38);
+      box-shadow: 0 20px 36px rgba(243, 156, 18, 0.36);
       outline: none;
     }
 
@@ -676,7 +833,7 @@
 
     .merch-cart-feedback {
       font-size: 0.9rem;
-      color: #1d4ed8;
+      color: var(--dw-primary);
       font-weight: 500;
       opacity: 0;
       transform: translateY(4px);
@@ -690,7 +847,7 @@
 
     .merch-disclaimer {
       font-size: 0.85rem;
-      color: #475569;
+      color: var(--dw-text-muted);
       margin: 0;
     }
 
@@ -813,7 +970,7 @@
           <h2>Relax, your driver is getting ready</h2>
           <p>We’re preparing your world-famous dishes and syncing with your driver. Keep an eye on the live countdown while we ready your order.</p>
         </div>
-        <div class="status-card" style="background: rgba(139, 92, 246, 0.1);">
+        <div class="status-card status-card--accent">
           <h2>Delivery window</h2>
           <p>Your meal will be ready for pickup at <span id="readyTime"></span> and on its way to you shortly after.</p>
         </div>
@@ -961,114 +1118,128 @@
         </div>
 
         <div class="merch-product-grid" role="list" aria-label="Danny's Wok hoodie catalog">
-          <article class="merch-product-card" role="listitem" data-product="Ash Hoodie — Back" data-image="images/clothing/unisex-heavy-blend-hoodie-ash-back-68fdfdf7a97ba.png">
-            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-ash-back-68fdfdf7a97ba.png');"></div>
-            <div class="merch-product-body">
-              <h3>Ash Hoodie — Back</h3>
-              <p>Show off the Danny's Wok crest in a soft ash finish.</p>
-              <button type="button" class="merch-add-button">Add to cart</button>
+          <article
+            class="merch-product-card"
+            role="listitem"
+            data-product="Ash Hoodie"
+            data-front-image="images/clothing/unisex-heavy-blend-hoodie-ash-front-68fdfdf7a900e.png"
+            data-back-image="images/clothing/unisex-heavy-blend-hoodie-ash-back-68fdfdf7a97ba.png"
+            data-front-alt="Ash hoodie front"
+            data-back-alt="Ash hoodie back"
+          >
+            <div class="merch-product-image">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-ash-front-68fdfdf7a900e.png" alt="Ash hoodie front" loading="lazy" />
             </div>
-          </article>
-          <article class="merch-product-card" role="listitem" data-product="Ash Hoodie — Front" data-image="images/clothing/unisex-heavy-blend-hoodie-ash-front-68fdfdf7a900e.png">
-            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-ash-front-68fdfdf7a900e.png');"></div>
             <div class="merch-product-body">
-              <h3>Ash Hoodie — Front</h3>
+              <h3>Ash Hoodie</h3>
               <p>Classic logo placement to rep the wok wherever you go.</p>
               <button type="button" class="merch-add-button">Add to cart</button>
             </div>
           </article>
-          <article class="merch-product-card" role="listitem" data-product="Black Hoodie — Back" data-image="images/clothing/unisex-heavy-blend-hoodie-black-back-68fdfdf7a9888.png">
-            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-black-back-68fdfdf7a9888.png');"></div>
-            <div class="merch-product-body">
-              <h3>Black Hoodie — Back</h3>
-              <p>Bold and sleek with a full-back emblem that glows.</p>
-              <button type="button" class="merch-add-button">Add to cart</button>
+          <article
+            class="merch-product-card"
+            role="listitem"
+            data-product="Black Hoodie"
+            data-front-image="images/clothing/unisex-heavy-blend-hoodie-black-front-68fdfdf7a91eb.png"
+            data-back-image="images/clothing/unisex-heavy-blend-hoodie-black-back-68fdfdf7a9888.png"
+            data-front-alt="Black hoodie front"
+            data-back-alt="Black hoodie back"
+          >
+            <div class="merch-product-image">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-black-front-68fdfdf7a91eb.png" alt="Black hoodie front" loading="lazy" />
             </div>
-          </article>
-          <article class="merch-product-card" role="listitem" data-product="Black Hoodie — Front" data-image="images/clothing/unisex-heavy-blend-hoodie-black-front-68fdfdf7a91eb.png">
-            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-black-front-68fdfdf7a91eb.png');"></div>
             <div class="merch-product-body">
-              <h3>Black Hoodie — Front</h3>
+              <h3>Black Hoodie</h3>
               <p>The everyday essential with a subtle chest logo.</p>
               <button type="button" class="merch-add-button">Add to cart</button>
             </div>
           </article>
-          <article class="merch-product-card" role="listitem" data-product="Irish Green Hoodie — Back" data-image="images/clothing/unisex-heavy-blend-hoodie-irish-green-back-68fdfdf7a9934.png">
-            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-irish-green-back-68fdfdf7a9934.png');"></div>
-            <div class="merch-product-body">
-              <h3>Irish Green Hoodie — Back</h3>
-              <p>A vibrant splash of color with celebratory graphics.</p>
-              <button type="button" class="merch-add-button">Add to cart</button>
+          <article
+            class="merch-product-card"
+            role="listitem"
+            data-product="Irish Green Hoodie"
+            data-front-image="images/clothing/unisex-heavy-blend-hoodie-irish-green-front-68fdfdf7a929d.png"
+            data-back-image="images/clothing/unisex-heavy-blend-hoodie-irish-green-back-68fdfdf7a9934.png"
+            data-front-alt="Irish green hoodie front"
+            data-back-alt="Irish green hoodie back"
+          >
+            <div class="merch-product-image">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-irish-green-front-68fdfdf7a929d.png" alt="Irish green hoodie front" loading="lazy" />
             </div>
-          </article>
-          <article class="merch-product-card" role="listitem" data-product="Irish Green Hoodie — Front" data-image="images/clothing/unisex-heavy-blend-hoodie-irish-green-front-68fdfdf7a929d.png">
-            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-irish-green-front-68fdfdf7a929d.png');"></div>
             <div class="merch-product-body">
-              <h3>Irish Green Hoodie — Front</h3>
+              <h3>Irish Green Hoodie</h3>
               <p>Bright, bold, and ready for post-delivery adventures.</p>
               <button type="button" class="merch-add-button">Add to cart</button>
             </div>
           </article>
-          <article class="merch-product-card" role="listitem" data-product="Navy Hoodie — Back" data-image="images/clothing/unisex-heavy-blend-hoodie-navy-back-68fdfdf7a99c5.png">
-            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-navy-back-68fdfdf7a99c5.png');"></div>
-            <div class="merch-product-body">
-              <h3>Navy Hoodie — Back</h3>
-              <p>Deep navy tones paired with our limited-edition badge.</p>
-              <button type="button" class="merch-add-button">Add to cart</button>
+          <article
+            class="merch-product-card"
+            role="listitem"
+            data-product="Navy Hoodie"
+            data-front-image="images/clothing/unisex-heavy-blend-hoodie-navy-front-68fdfdf7a9341.png"
+            data-back-image="images/clothing/unisex-heavy-blend-hoodie-navy-back-68fdfdf7a99c5.png"
+            data-front-alt="Navy hoodie front"
+            data-back-alt="Navy hoodie back"
+          >
+            <div class="merch-product-image">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-navy-front-68fdfdf7a9341.png" alt="Navy hoodie front" loading="lazy" />
             </div>
-          </article>
-          <article class="merch-product-card" role="listitem" data-product="Navy Hoodie — Front" data-image="images/clothing/unisex-heavy-blend-hoodie-navy-front-68fdfdf7a9341.png">
-            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-navy-front-68fdfdf7a9341.png');"></div>
             <div class="merch-product-body">
-              <h3>Navy Hoodie — Front</h3>
+              <h3>Navy Hoodie</h3>
               <p>Cozy fleece with a subtle front mark for everyday wear.</p>
               <button type="button" class="merch-add-button">Add to cart</button>
             </div>
           </article>
-          <article class="merch-product-card" role="listitem" data-product="Red Hoodie — Back" data-image="images/clothing/unisex-heavy-blend-hoodie-red-back-68fdfdf7a9a50.png">
-            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-red-back-68fdfdf7a9a50.png');"></div>
-            <div class="merch-product-body">
-              <h3>Red Hoodie — Back</h3>
-              <p>Turn heads with a fiery, full-color Danny's Wok print.</p>
-              <button type="button" class="merch-add-button">Add to cart</button>
+          <article
+            class="merch-product-card"
+            role="listitem"
+            data-product="Red Hoodie"
+            data-front-image="images/clothing/unisex-heavy-blend-hoodie-red-front-68fdfdf7a93df.png"
+            data-back-image="images/clothing/unisex-heavy-blend-hoodie-red-back-68fdfdf7a9a50.png"
+            data-front-alt="Red hoodie front"
+            data-back-alt="Red hoodie back"
+          >
+            <div class="merch-product-image">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-red-front-68fdfdf7a93df.png" alt="Red hoodie front" loading="lazy" />
             </div>
-          </article>
-          <article class="merch-product-card" role="listitem" data-product="Red Hoodie — Front" data-image="images/clothing/unisex-heavy-blend-hoodie-red-front-68fdfdf7a93df.png">
-            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-red-front-68fdfdf7a93df.png');"></div>
             <div class="merch-product-body">
-              <h3>Red Hoodie — Front</h3>
+              <h3>Red Hoodie</h3>
               <p>Match the Danny's Wok color story with a bold pop of red.</p>
               <button type="button" class="merch-add-button">Add to cart</button>
             </div>
           </article>
-          <article class="merch-product-card" role="listitem" data-product="Sport Grey Hoodie — Back" data-image="images/clothing/unisex-heavy-blend-hoodie-sport-grey-back-68fdfdf7a9ada.png">
-            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-sport-grey-back-68fdfdf7a9ada.png');"></div>
-            <div class="merch-product-body">
-              <h3>Sport Grey Hoodie — Back</h3>
-              <p>A modern neutral with a graphic that beams under the lights.</p>
-              <button type="button" class="merch-add-button">Add to cart</button>
+          <article
+            class="merch-product-card"
+            role="listitem"
+            data-product="Sport Grey Hoodie"
+            data-front-image="images/clothing/unisex-heavy-blend-hoodie-sport-grey-front-68fdfdf7a947a.png"
+            data-back-image="images/clothing/unisex-heavy-blend-hoodie-sport-grey-back-68fdfdf7a9ada.png"
+            data-front-alt="Sport grey hoodie front"
+            data-back-alt="Sport grey hoodie back"
+          >
+            <div class="merch-product-image">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-sport-grey-front-68fdfdf7a947a.png" alt="Sport grey hoodie front" loading="lazy" />
             </div>
-          </article>
-          <article class="merch-product-card" role="listitem" data-product="Sport Grey Hoodie — Front" data-image="images/clothing/unisex-heavy-blend-hoodie-sport-grey-front-68fdfdf7a947a.png">
-            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-sport-grey-front-68fdfdf7a947a.png');"></div>
             <div class="merch-product-body">
-              <h3>Sport Grey Hoodie — Front</h3>
+              <h3>Sport Grey Hoodie</h3>
               <p>Easy to layer, easy to love, ready for your next feast.</p>
               <button type="button" class="merch-add-button">Add to cart</button>
             </div>
           </article>
-          <article class="merch-product-card" role="listitem" data-product="White Hoodie — Back" data-image="images/clothing/unisex-heavy-blend-hoodie-white-back-68fdfdf7a9b65.png">
-            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-white-back-68fdfdf7a9b65.png');"></div>
-            <div class="merch-product-body">
-              <h3>White Hoodie — Back</h3>
-              <p>Bright, clean, and perfect for highlighting the wok crest.</p>
-              <button type="button" class="merch-add-button">Add to cart</button>
+          <article
+            class="merch-product-card"
+            role="listitem"
+            data-product="White Hoodie"
+            data-front-image="images/clothing/unisex-heavy-blend-hoodie-white-front-68fdfdf7a951b.png"
+            data-back-image="images/clothing/unisex-heavy-blend-hoodie-white-back-68fdfdf7a9b65.png"
+            data-front-alt="White hoodie front"
+            data-back-alt="White hoodie back"
+          >
+            <div class="merch-product-image">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-white-front-68fdfdf7a951b.png" alt="White hoodie front" loading="lazy" />
             </div>
-          </article>
-          <article class="merch-product-card" role="listitem" data-product="White Hoodie — Front" data-image="images/clothing/unisex-heavy-blend-hoodie-white-front-68fdfdf7a951b.png">
-            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-white-front-68fdfdf7a951b.png');"></div>
             <div class="merch-product-body">
-              <h3>White Hoodie — Front</h3>
+              <h3>White Hoodie</h3>
               <p>Crisp white fleece with a minimalist front graphic.</p>
               <button type="button" class="merch-add-button">Add to cart</button>
             </div>
@@ -1087,7 +1258,7 @@
       </div>
       <div class="merch-cart-content">
         <h3 id="merchCartTitle">Finish your hoodie pick</h3>
-        <p class="merch-cart-product" id="merchCartProduct">Ash Hoodie — Back</p>
+        <p class="merch-cart-product" id="merchCartProduct">Ash Hoodie</p>
         <figure class="merch-cart-preview" id="merchCartPreview" aria-hidden="true"></figure>
         <form class="merch-cart-form" id="merchCartForm">
           <fieldset>
@@ -1164,6 +1335,14 @@
           </div>
         </form>
         <p class="merch-disclaimer">Shipping typically begins within 2 business days. We’ll send updates to your email.</p>
+      </div>
+    </div>
+    <div class="merch-lightbox is-hidden" id="merchLightbox" aria-hidden="true">
+      <button type="button" class="merch-lightbox-backdrop" data-dismiss="lightbox" aria-label="Close enlarged hoodie view"></button>
+      <div class="merch-lightbox-content" role="dialog" aria-modal="true" aria-labelledby="merchLightboxCaption">
+        <button type="button" class="merch-lightbox-close" id="merchLightboxClose" aria-label="Close enlarged hoodie image">×</button>
+        <img id="merchLightboxImage" src="" alt="" />
+        <p id="merchLightboxCaption" class="merch-lightbox-caption"></p>
       </div>
     </div>
   </div>
@@ -1595,8 +1774,17 @@
       const merchPreview = document.getElementById('merchCartPreview');
       const merchForm = document.getElementById('merchCartForm');
       const merchFeedback = document.getElementById('merchCartFeedback');
+      const merchLightbox = document.getElementById('merchLightbox');
+      const merchLightboxImage = document.getElementById('merchLightboxImage');
+      const merchLightboxCaption = document.getElementById('merchLightboxCaption');
+      const merchLightboxClose = document.getElementById('merchLightboxClose');
+      const merchLightboxBackdrop = merchLightbox
+        ? merchLightbox.querySelector('[data-dismiss="lightbox"]')
+        : null;
       let lastActiveTrigger = null;
       let merchEscapeHandler = null;
+      let lastPreviewTrigger = null;
+      let merchLightboxEscapeHandler = null;
 
       function setMerchCartState(visible) {
         if (!merchCart) return;
@@ -1611,17 +1799,118 @@
         }
       }
 
-      function updateMerchProduct(name, image) {
-        if (merchProductLabel) {
-          merchProductLabel.textContent = name;
+      function closeMerchLightbox() {
+        if (!merchLightbox) return;
+        merchLightbox.classList.remove('is-visible');
+        merchLightbox.classList.add('is-hidden');
+        merchLightbox.setAttribute('aria-hidden', 'true');
+        if (merchLightboxImage) {
+          merchLightboxImage.src = '';
+          merchLightboxImage.alt = '';
         }
-        if (merchPreview) {
-          merchPreview.style.backgroundImage = image ? `url('${image}')` : 'none';
+        if (merchLightboxCaption) {
+          merchLightboxCaption.textContent = '';
+        }
+        if (merchLightboxEscapeHandler) {
+          document.removeEventListener('keydown', merchLightboxEscapeHandler);
+          merchLightboxEscapeHandler = null;
+        }
+        if (lastPreviewTrigger && document.contains(lastPreviewTrigger)) {
+          try {
+            lastPreviewTrigger.focus({ preventScroll: true });
+          } catch (error) {
+            lastPreviewTrigger.focus();
+          }
+        }
+        lastPreviewTrigger = null;
+      }
+
+      function openMerchLightbox(image, alt) {
+        if (!merchLightbox || !image) return;
+        merchLightbox.classList.remove('is-hidden');
+        merchLightbox.classList.add('is-visible');
+        merchLightbox.setAttribute('aria-hidden', 'false');
+        if (merchLightboxImage) {
+          merchLightboxImage.src = image;
+          merchLightboxImage.alt = alt || '';
+        }
+        if (merchLightboxCaption) {
+          merchLightboxCaption.textContent = alt || '';
+        }
+        if (!merchLightboxEscapeHandler) {
+          merchLightboxEscapeHandler = (event) => {
+            if (event.key === 'Escape') {
+              closeMerchLightbox();
+            }
+          };
+          document.addEventListener('keydown', merchLightboxEscapeHandler);
+        }
+        if (merchLightboxClose) {
+          try {
+            merchLightboxClose.focus({ preventScroll: true });
+          } catch (error) {
+            merchLightboxClose.focus();
+          }
         }
       }
 
-      function openMerchCart(productName, image) {
-        updateMerchProduct(productName, image);
+      function updateMerchProduct(name, frontImage, backImage, frontAlt, backAlt) {
+        if (merchProductLabel) {
+          merchProductLabel.textContent = name;
+        }
+        if (!merchPreview) return;
+
+        const views = [];
+        lastPreviewTrigger = null;
+        if (frontImage) {
+          views.push({ src: frontImage, alt: frontAlt || `${name} front view` });
+        }
+        if (backImage) {
+          views.push({ src: backImage, alt: backAlt || `${name} back view` });
+        }
+
+        merchPreview.innerHTML = '';
+
+        if (!views.length) {
+          merchPreview.setAttribute('aria-hidden', 'true');
+          return;
+        }
+
+        const grid = document.createElement('div');
+        grid.className = 'merch-preview-grid';
+
+        views.forEach((view) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'merch-preview-thumb';
+          button.dataset.image = view.src;
+          button.dataset.alt = view.alt;
+
+          const img = document.createElement('img');
+          img.src = view.src;
+          img.alt = view.alt;
+          img.loading = 'lazy';
+
+          button.appendChild(img);
+          button.addEventListener('click', () => {
+            lastPreviewTrigger = button;
+            openMerchLightbox(view.src, view.alt);
+          });
+
+          grid.appendChild(button);
+        });
+
+        const caption = document.createElement('figcaption');
+        caption.className = 'merch-preview-hint';
+        caption.textContent = 'Tap a view to see it larger.';
+
+        merchPreview.append(grid, caption);
+        merchPreview.setAttribute('aria-hidden', 'false');
+      }
+
+      function openMerchCart(productName, frontImage, backImage, frontAlt, backAlt) {
+        closeMerchLightbox();
+        updateMerchProduct(productName, frontImage, backImage, frontAlt, backAlt);
         setMerchCartState(true);
         if (merchForm) {
           const firstSize = merchForm.querySelector("input[name='merch-size']");
@@ -1636,6 +1925,10 @@
         if (!merchEscapeHandler) {
           merchEscapeHandler = (event) => {
             if (event.key === 'Escape') {
+              if (merchLightbox && merchLightbox.classList.contains('is-visible')) {
+                closeMerchLightbox();
+                return;
+              }
               closeMerchCart();
             }
           };
@@ -1649,6 +1942,7 @@
           document.removeEventListener('keydown', merchEscapeHandler);
           merchEscapeHandler = null;
         }
+        closeMerchLightbox();
         if (merchFeedback) {
           merchFeedback.classList.remove('is-visible');
           merchFeedback.textContent = '';
@@ -1665,17 +1959,27 @@
       if (merchCart && merchAddButtons.length && merchForm) {
         const firstCard = document.querySelector('.merch-product-card');
         if (firstCard) {
-          updateMerchProduct(firstCard.dataset.product || 'Danny\'s Wok Hoodie', firstCard.dataset.image || '');
+          const initialName = firstCard.dataset.product || "Danny's Wok Hoodie";
+          updateMerchProduct(
+            initialName,
+            firstCard.dataset.frontImage || '',
+            firstCard.dataset.backImage || '',
+            firstCard.dataset.frontAlt || '',
+            firstCard.dataset.backAlt || ''
+          );
         }
 
         merchAddButtons.forEach((button) => {
           button.addEventListener('click', () => {
             const card = button.closest('.merch-product-card');
             if (!card) return;
-            const productName = card.dataset.product || 'Danny\'s Wok Hoodie';
-            const image = card.dataset.image || '';
+            const productName = card.dataset.product || "Danny's Wok Hoodie";
+            const frontImage = card.dataset.frontImage || '';
+            const backImage = card.dataset.backImage || '';
+            const frontAlt = card.dataset.frontAlt || '';
+            const backAlt = card.dataset.backAlt || '';
             lastActiveTrigger = button;
-            openMerchCart(productName, image);
+            openMerchCart(productName, frontImage, backImage, frontAlt, backAlt);
           });
         });
 
@@ -1688,6 +1992,14 @@
             closeMerchCart();
           }
         });
+
+        if (merchLightboxClose) {
+          merchLightboxClose.addEventListener('click', closeMerchLightbox);
+        }
+
+        if (merchLightboxBackdrop) {
+          merchLightboxBackdrop.addEventListener('click', closeMerchLightbox);
+        }
 
         merchForm.addEventListener('submit', (event) => {
           event.preventDefault();
