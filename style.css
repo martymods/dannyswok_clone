@@ -72,6 +72,89 @@ header {
   flex-wrap: wrap;
 }
 
+header.menu-header {
+  align-items: flex-start;
+}
+
+.menu-header__left,
+.menu-header__right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.menu-header__left {
+  flex: 1 1 auto;
+  min-width: 260px;
+}
+
+.menu-header__locations {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(243, 156, 18, 0.08);
+  color: var(--dw-text-muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.menu-header__locations span {
+  white-space: nowrap;
+}
+
+.menu-header__locations span + span::before {
+  content: '•';
+  margin: 0 0.4rem;
+  color: rgba(243, 156, 18, 0.85);
+}
+
+.menu-header__right {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  flex: 0 1 auto;
+}
+
+.menu-header__right nav {
+  margin-left: 0;
+}
+
+.menu-header__selected-store {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(192, 57, 43, 0.08);
+  color: var(--dw-primary);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.menu-header__selected-store--empty {
+  background: rgba(192, 57, 43, 0.04);
+  color: var(--dw-text-muted);
+}
+
+.menu-header__selected-store-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.menu-header__selected-store-value {
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
 .site-logo {
   display: inline-flex;
   align-items: center;
@@ -531,6 +614,34 @@ button:disabled {
 }
 
 @media (max-width: 600px) {
+  header.menu-header {
+    align-items: stretch;
+  }
+
+  .menu-header__left,
+  .menu-header__right {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-width: 100%;
+  }
+
+  .menu-header__right {
+    align-items: flex-start;
+  }
+
+  .menu-header__selected-store {
+    align-self: stretch;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .menu-header__locations {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.25rem 0.5rem;
+  }
+
   header nav {
     width: 100%;
     justify-content: flex-start;
