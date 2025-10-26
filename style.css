@@ -1900,6 +1900,34 @@ body.landing-page {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
 }
 
+.store-photo-card__status {
+  position: absolute;
+  bottom: -2.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+  color: #fefefe;
+  pointer-events: none;
+  white-space: normal;
+  line-height: 1.2;
+  max-width: 10rem;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+}
+
+.store-photo-card__status--open {
+  color: #3dff9f;
+  text-shadow: 0 0 6px rgba(61, 255, 159, 0.85), 0 0 14px rgba(61, 255, 159, 0.65);
+}
+
+.store-photo-card__status--closed {
+  color: #ffd27f;
+  text-shadow: 0 0 6px rgba(255, 133, 27, 0.7), 0 0 14px rgba(255, 133, 27, 0.5);
+}
+
 .store-photo-card:hover,
 .store-photo-card:focus-visible {
   transform: translateY(-4px) scale(1.05);
