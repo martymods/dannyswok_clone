@@ -61,6 +61,26 @@
   }
   const storeButtons = Array.from(document.querySelectorAll('.store-card'));
   const enterMenuLink = document.getElementById('enter-menu-link');
+  const storeData = storeButtons
+    .map((button) => {
+      const lat = Number(button.dataset.lat);
+      const lng = Number(button.dataset.lng);
+      const label = button.dataset.label || button.textContent.trim();
+      const id = button.dataset.id || label.toLowerCase();
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || !id) {
+        return null;
+      }
+
+      return {
+        id,
+        label,
+        lat,
+        lng,
+        button,
+      };
+    })
+    .filter(Boolean);
   const storePhotoData = {
     southwest: {
       src: 'images/baltimore_store.png',
@@ -75,16 +95,7 @@
       alt: "Street view of Danny's Wok on North Broad Street.",
     },
   };
-  const storeLocations = storeButtons
-    .map((button) => {
-      const lat = Number(button.dataset.lat);
-      const lng = Number(button.dataset.lng);
-      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-        return null;
-      }
-      return [lat, lng];
-    })
-    .filter(Boolean);
+  const storeLocations = storeData.map(({ lat, lng }) => [lat, lng]);
 
   if (mapElement) {
     mapElement.addEventListener('click', handlePhotoCardInteraction);
@@ -201,11 +212,43 @@
     popupAnchor: [0, -48],
   });
 
-  let activeMarker = null;
+  const markersById = new Map();
+  let activeMarkerId = null;
   let photoMarker = null;
   let selectedButton = null;
   let photoOverlayState = null;
   let lastPhotoTrigger = null;
+  const markerRepositionClass = 'is-repositioned';
+
+  function updateMarkerSelection(storeId, options = {}) {
+    const { focusMarker = false } = options;
+
+    if (activeMarkerId && markersById.has(activeMarkerId)) {
+      const previousMarker = markersById.get(activeMarkerId);
+      const previousElement = previousMarker && previousMarker.getElement();
+      if (previousElement) {
+        previousElement.classList.remove('is-active');
+        previousElement.classList.remove(markerRepositionClass);
+        previousElement.setAttribute('aria-pressed', 'false');
+      }
+    }
+
+    activeMarkerId = storeId;
+
+    const nextMarker = markersById.get(storeId);
+    if (nextMarker) {
+      const nextElement = nextMarker.getElement();
+      if (nextElement) {
+        nextElement.classList.add('is-active');
+        nextElement.classList.add(markerRepositionClass);
+        nextElement.setAttribute('aria-pressed', 'true');
+
+        if (focusMarker) {
+          nextElement.focus({ preventScroll: true });
+        }
+      }
+    }
+  }
 
   function updateMenuLink(label, id) {
     if (!enterMenuLink) {
@@ -393,7 +436,8 @@
     }).addTo(map);
   }
 
-  function selectStore(button) {
+  function selectStore(button, options = {}) {
+    const { focusMarker = false } = options;
     const lat = Number(button.dataset.lat);
     const lng = Number(button.dataset.lng);
     const label = button.dataset.label || 'selected';
@@ -425,10 +469,6 @@
       map.panBy([-horizontalOffset, 0], { animate: true });
     });
 
-    if (activeMarker) {
-      activeMarker.remove();
-    }
-
     if (photoMarker) {
       photoMarker.remove();
       photoMarker = null;
@@ -436,17 +476,56 @@
 
     closePhotoOverlay();
 
-    activeMarker = L.marker(target, {
-      icon: markerIcon,
-      interactive: false,
-      keyboard: false,
-      riseOnHover: false,
-    }).addTo(map);
+    updateMarkerSelection(id, { focusMarker });
 
     updateMenuLink(label, id);
 
     addPhotoMarker(target, id, label);
   }
+
+  storeData.forEach((store) => {
+    const marker = L.marker([store.lat, store.lng], {
+      icon: markerIcon,
+      interactive: true,
+      keyboard: true,
+      title: store.label,
+      riseOnHover: true,
+      zIndexOffset: 420,
+    }).addTo(map);
+
+    markersById.set(store.id, marker);
+
+    marker.on('click', () => {
+      selectStore(store.button, { focusMarker: true });
+    });
+
+    marker.on('add', () => {
+      const element = marker.getElement();
+      if (!element) {
+        return;
+      }
+
+      element.setAttribute('tabindex', '0');
+      element.setAttribute('role', 'button');
+      element.setAttribute(
+        'aria-label',
+        `${store.label} Danny's Wok location`
+      );
+      element.setAttribute('aria-pressed', 'false');
+      element.dataset.storeMarkerId = store.id;
+
+      if (!element.dataset.storeMarkerInteractive) {
+        element.dataset.storeMarkerInteractive = 'true';
+
+        element.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            selectStore(store.button, { focusMarker: true });
+          }
+        });
+      }
+    });
+  });
 
   storeButtons.forEach((button) => {
     button.addEventListener('click', () => {
