@@ -222,6 +222,12 @@
       box-shadow: 0 10px 25px var(--dw-glow);
     }
 
+    .eta-icon {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+    }
+
     .order-summary {
       border-top: 1px solid var(--dw-border-soft);
       padding-top: 16px;
@@ -962,6 +968,7 @@
           <h1 id="thankYouTitle">Thank you for ordering from Danny's Wok!</h1>
         </div>
         <span class="eta-badge" aria-live="polite">
+          <img src="images/wok_flip.gif" alt="Animated wok flipping" class="eta-icon" />
           <span id="timerLabel">ETA</span>
           <span id="etaTimer" class="timer" aria-label="Estimated time of arrival">18:00</span>
         </span>
