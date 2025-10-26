@@ -2066,23 +2066,27 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
+  let cachedStripeConfig = null;
+
   async function fetchStripeConfig() {
+    if (cachedStripeConfig) {
+      return cachedStripeConfig;
+    }
+
     try {
       const response = await fetch('/api/config', { cache: 'no-store' });
       if (response.ok) {
-        try {
-          const data = await response.json();
+        const text = await response.text();
+        if (text && text.trim().length) {
+          const data = JSON.parse(text);
           if (data && typeof data.publishableKey === 'string' && data.publishableKey.trim()) {
-            return { publishableKey: data.publishableKey.trim() };
+            cachedStripeConfig = { publishableKey: data.publishableKey.trim() };
+            return cachedStripeConfig;
           }
-        } catch (error) {
-          console.error('Failed to parse Stripe configuration from /api/config.', error);
         }
-      } else if (response.status !== 404) {
-        console.warn('Stripe config endpoint responded with status', response.status);
       }
     } catch (error) {
-      console.error('Failed to load Stripe configuration via API.', error);
+      console.debug('Skipping /api/config:', error);
     }
 
     let fallbackResponse;
@@ -2093,44 +2097,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!fallbackResponse.ok) {
-      throw new Error(`Could not load stripe-config.json (${fallbackResponse.status})`);
+      throw new Error(`/stripe-config.json not found (status ${fallbackResponse.status}).`);
     }
 
     const fallbackText = await fallbackResponse.text();
+    if (!fallbackText || !fallbackText.trim().length) {
+      throw new Error('stripe-config.json is empty.');
+    }
+
     let fallbackData;
     try {
       fallbackData = JSON.parse(fallbackText);
     } catch (error) {
-      throw new Error(`stripe-config.json is not valid JSON: ${error.message}`);
+      throw new Error(`stripe-config.json is invalid JSON: ${error.message}`);
     }
 
     if (!fallbackData || typeof fallbackData.publishableKey !== 'string' || !fallbackData.publishableKey.trim()) {
       throw new Error('stripe-config.json missing "publishableKey".');
     }
 
-    return { publishableKey: fallbackData.publishableKey.trim() };
+    cachedStripeConfig = { publishableKey: fallbackData.publishableKey.trim() };
+    return cachedStripeConfig;
   }
 
   async function ensureStripeInitialized() {
     if (stripeInstance) {
-      return;
+      return stripeInstance;
     }
 
     let publishableKey = getStripePublishableKeyFromDom();
 
     if (!publishableKey) {
       const config = await fetchStripeConfig();
-      if (config && typeof config.publishableKey === 'string') {
-        publishableKey = config.publishableKey;
-      }
+      publishableKey = config.publishableKey;
     }
 
     if (!publishableKey) {
-      throw new Error('Stripe publishable key is not configured.');
+      throw new Error('Stripe publishable key is unavailable.');
     }
 
     stripeInstance = Stripe(publishableKey);
-    stripeElements = stripeInstance.elements();
+    stripeElements = stripeInstance.elements({
+      appearance: {
+        theme: 'stripe',
+      },
+    });
+
+    return stripeInstance;
   }
 
   function mountCardElement() {
