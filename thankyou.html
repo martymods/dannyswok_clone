@@ -72,27 +72,26 @@
     }
 
     .fortune-wrapper {
-      width: 600px;
-      max-width: calc(100% - 32px);
-      height: 400px;
-      max-height: calc(100% - 120px);
+      width: min(440px, 90vw);
+      height: clamp(260px, 60vh, 360px);
       display: block;
-      background-color: var(--dw-surface-contrast);
-      border-radius: 24px;
-      padding: 50px;
       position: relative;
-      box-shadow: 0 40px 80px rgba(44, 26, 10, 0.22);
+      margin: 0 auto;
+      padding: 0;
+      background: transparent;
+      border-radius: 0;
+      box-shadow: none;
     }
 
     .fortune {
-      width: 500px;
+      width: min(360px, 90vw);
       height: 200px;
       display: block;
       position: absolute;
-      transform-origin: 40% 50%;
-      top: 120px;
+      top: 50%;
       left: 50%;
-      transform: translateX(-50%) rotate(-10deg);
+      transform-origin: 40% 50%;
+      transform: translate(-50%, -50%) rotate(-10deg);
     }
 
     #drawing_canvas {
@@ -151,7 +150,7 @@
       padding: 8px 65px 7px 15px;
       white-space: nowrap;
       max-width: max-content;
-      box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.3);
+      box-shadow: none;
       transform-origin: right bottom;
       position: absolute;
       bottom: 20px;
@@ -862,19 +861,17 @@
       }
 
       .fortune-wrapper {
-        width: 100%;
-        max-width: 320px;
-        height: auto;
-        padding: 24px 16px;
+        width: min(320px, 90vw);
+        height: clamp(200px, 50vh, 240px);
+        padding: 0;
       }
 
       .fortune {
         width: 260px;
         height: 150px;
-        position: relative;
-        top: 0;
         left: 50%;
-        transform: translateX(-50%) rotate(-10deg);
+        top: 50%;
+        transform: translate(-50%, -50%) rotate(-10deg);
       }
 
       .fortune-left,
@@ -1590,12 +1587,12 @@
       }
 
       const fortuneKeyframes = [
-        { transform: 'translateX(-50%) rotate(-10deg)' },
-        { transform: 'translateX(-50%) rotate(-5deg)', offset: 0.2 },
-        { transform: 'translateX(-50%) rotate(5deg)', offset: 0.4 },
-        { transform: 'translateX(-50%) rotate(-5deg)', offset: 0.6 },
-        { transform: 'translateX(-50%) rotate(5deg)', offset: 0.8 },
-        { transform: 'translateX(-50%) rotate(0deg)', offset: 1 }
+        { transform: 'translate(-50%, -50%) rotate(-10deg)' },
+        { transform: 'translate(-50%, -50%) rotate(-5deg)', offset: 0.2 },
+        { transform: 'translate(-50%, -50%) rotate(5deg)', offset: 0.4 },
+        { transform: 'translate(-50%, -50%) rotate(-5deg)', offset: 0.6 },
+        { transform: 'translate(-50%, -50%) rotate(5deg)', offset: 0.8 },
+        { transform: 'translate(-50%, -50%) rotate(0deg)', offset: 1 }
       ];
 
       const sharedTiming = {
