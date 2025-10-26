@@ -1183,6 +1183,17 @@ function handleMenuLoadingScreen() {
   });
 }
 
+function shuffleArray(array) {
+  const shuffled = array.slice();
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = shuffled[i];
+    shuffled[i] = shuffled[j];
+    shuffled[j] = tmp;
+  }
+  return shuffled;
+}
+
 function buildHeroCarousel() {
   const track = document.getElementById('hero-track');
   const carousel = document.getElementById('hero-carousel');
@@ -1199,7 +1210,8 @@ function buildHeroCarousel() {
     return;
   }
 
-  const slides = items.map((item) => ({
+  const randomizedItems = shuffleArray(items);
+  const slides = randomizedItems.map((item) => ({
     item,
     image: findImageForItem(item.name) || fallbackImage,
   }));
