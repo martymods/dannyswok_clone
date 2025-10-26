@@ -35,8 +35,24 @@
       </a>
     </div>
     <div class="menu-header__right">
-      <div class="menu-header__selected-store menu-header__selected-store--empty" id="selected-store-display" aria-live="polite">
-        <span class="menu-header__selected-store-label">Pickup from</span>
+      <div
+        class="menu-header__selected-store menu-header__selected-store--empty"
+        id="selected-store-display"
+        aria-live="polite"
+        role="button"
+        tabindex="0"
+        aria-pressed="false"
+        aria-label="Toggle between pickup and delivery fulfilment"
+      >
+        <span class="menu-header__selected-store-label">
+          <img
+            src="images/delivery_.png"
+            alt=""
+            class="menu-header__fulfilment-icon"
+            aria-hidden="true"
+          >
+          <span class="menu-header__selected-store-label-text">Pickup from</span>
+        </span>
         <span class="menu-header__selected-store-value" id="selected-store-address">Select a store for pickup</span>
       </div>
       <nav>
