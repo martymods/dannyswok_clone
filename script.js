@@ -13,6 +13,18 @@ const fallbackImage = 'images/chinesemenu/store_interior.jpg';
 const cartAddSound = typeof Audio === 'function' ? new Audio('audio/wok_register.mp3') : null;
 const hoverSound = typeof Audio === 'function' ? new Audio('audio/scroll_hover_over_sound.mp3') : null;
 
+const STORE_LOCATIONS = {
+  southwest: {
+    shortAddress: '5750 BALTIMORE AVE',
+  },
+  olney: {
+    shortAddress: '5675 N FRONT',
+  },
+  'hunting-park': {
+    shortAddress: '4322 NORTH BROAD STREET',
+  },
+};
+
 if (cartAddSound) {
   cartAddSound.preload = 'auto';
 }
@@ -51,6 +63,39 @@ function handleGlobalButtonHover(event) {
 }
 
 document.addEventListener('mouseover', handleGlobalButtonHover);
+
+function normalizeStoreId(storeId) {
+  if (!storeId) {
+    return null;
+  }
+
+  const normalized = String(storeId).trim().toLowerCase();
+  return Object.prototype.hasOwnProperty.call(STORE_LOCATIONS, normalized)
+    ? normalized
+    : null;
+}
+
+function applySelectedStoreFromQuery() {
+  const displayWrapper = document.getElementById('selected-store-display');
+  const addressElement = document.getElementById('selected-store-address');
+  if (!displayWrapper || !addressElement) {
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const matchedStoreId = normalizeStoreId(params.get('store'));
+
+  if (matchedStoreId) {
+    const { shortAddress } = STORE_LOCATIONS[matchedStoreId];
+    addressElement.textContent = shortAddress;
+    displayWrapper.dataset.storeId = matchedStoreId;
+    displayWrapper.classList.remove('menu-header__selected-store--empty');
+  } else {
+    addressElement.textContent = 'Select a store for pickup';
+    displayWrapper.classList.add('menu-header__selected-store--empty');
+    displayWrapper.removeAttribute('data-store-id');
+  }
+}
 
 const menuImageSources = [
   'images/chinesemenu/b-b-q_spare_rib_tips_w_fried_rice_Fried_Scallop_w_French_Fries.jpg',
@@ -1706,6 +1751,7 @@ function updateCheckoutView() {
 
 // Kick off the rendering once the DOM has loaded
 document.addEventListener('DOMContentLoaded', () => {
+  applySelectedStoreFromQuery();
   buildHeroCarousel();
   renderMenu();
   handleMenuLoadingScreen();

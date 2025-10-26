@@ -27,21 +27,34 @@
     <img src="images/logos4.png" alt="Danny's Wok signature wordmark" class="menu-loading-screen__logo">
     <span class="visually-hidden">Loading the Danny's Wok menu…</span>
   </div>
-  <header>
-    <a href="index.html#store-selector" class="site-logo" aria-label="Back to the Danny's Wok store selector">
-      <img src="images/logos_icon.png" alt="Danny's Wok chef mascot" class="site-logo__icon">
-      <img src="images/logos_font.png" alt="Danny's Wok wordmark" class="site-logo__wordmark">
-    </a>
-    <nav>
-      <a href="#our_menu">Menu</a>
-      <div class="cart-actions">
-        <a href="#cart" class="cart-link">Cart <span id="cart-count" class="cart-count">0</span></a>
-        <a href="#cart" id="cart-icon-button" class="cart-icon-button" aria-label="View your cart">
-          <img src="images/chinese-food-boxes2.png" alt="Chinese takeout boxes cart" class="cart-icon-image">
-          <span class="shimmer-layer" aria-hidden="true"></span>
-        </a>
+  <header class="menu-header">
+    <div class="menu-header__left">
+      <a href="index.html#store-selector" class="site-logo" aria-label="Back to the Danny's Wok store selector">
+        <img src="images/logos_icon.png" alt="Danny's Wok chef mascot" class="site-logo__icon">
+        <img src="images/logos_font.png" alt="Danny's Wok wordmark" class="site-logo__wordmark">
+      </a>
+      <div class="menu-header__locations" aria-label="Danny's Wok store locations">
+        <span>5750 BALTIMORE AVE</span>
+        <span>5675 N FRONT</span>
+        <span>4322 NORTH BROAD STREET</span>
       </div>
-    </nav>
+    </div>
+    <div class="menu-header__right">
+      <div class="menu-header__selected-store menu-header__selected-store--empty" id="selected-store-display" aria-live="polite">
+        <span class="menu-header__selected-store-label">Pickup from</span>
+        <span class="menu-header__selected-store-value" id="selected-store-address">Select a store for pickup</span>
+      </div>
+      <nav>
+        <a href="#our_menu">Menu</a>
+        <div class="cart-actions">
+          <a href="#cart" class="cart-link">Cart <span id="cart-count" class="cart-count">0</span></a>
+          <a href="#cart" id="cart-icon-button" class="cart-icon-button" aria-label="View your cart">
+            <img src="images/chinese-food-boxes2.png" alt="Chinese takeout boxes cart" class="cart-icon-image">
+            <span class="shimmer-layer" aria-hidden="true"></span>
+          </a>
+        </div>
+      </nav>
+    </div>
   </header>
   <section class="hero" aria-label="Browse the Danny's Wok menu">
     <div class="hero-heading">
