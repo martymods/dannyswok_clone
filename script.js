@@ -2068,56 +2068,93 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let cachedStripeConfig = null;
 
+  async function loadStripeConfigFromJson() {
+    let response;
+    try {
+      response = await fetch('/stripe-config.json', { cache: 'no-store' });
+    } catch (error) {
+      throw new Error('Could not load stripe-config.json (network error).');
+    }
+
+    if (!response.ok) {
+      throw new Error(`/stripe-config.json not found (status ${response.status}).`);
+    }
+
+    const text = await response.text();
+    if (!text || !text.trim().length) {
+      throw new Error('stripe-config.json is empty.');
+    }
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (error) {
+      throw new Error(`stripe-config.json is invalid JSON: ${error.message}`);
+    }
+
+    if (!data || typeof data.publishableKey !== 'string' || !data.publishableKey.trim()) {
+      throw new Error('stripe-config.json missing "publishableKey".');
+    }
+
+    return { publishableKey: data.publishableKey.trim() };
+  }
+
+  async function loadStripeConfigFromApi() {
+    try {
+      const response = await fetch('/api/config', { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      const text = await response.text();
+      if (!text || !text.trim().length) {
+        throw new Error('Response body was empty.');
+      }
+
+      const data = JSON.parse(text);
+      if (!data || typeof data.publishableKey !== 'string' || !data.publishableKey.trim()) {
+        throw new Error('Missing "publishableKey" in response body.');
+      }
+
+      return { publishableKey: data.publishableKey.trim() };
+    } catch (error) {
+      throw new Error(`/api/config unavailable: ${error.message}`);
+    }
+  }
+
   async function fetchStripeConfig() {
     if (cachedStripeConfig) {
       return cachedStripeConfig;
     }
 
-    try {
-      const response = await fetch('/api/config', { cache: 'no-store' });
-      if (response.ok) {
-        const text = await response.text();
-        if (text && text.trim().length) {
-          const data = JSON.parse(text);
-          if (data && typeof data.publishableKey === 'string' && data.publishableKey.trim()) {
-            cachedStripeConfig = { publishableKey: data.publishableKey.trim() };
-            return cachedStripeConfig;
-          }
+    const globalObject = typeof window !== 'undefined' ? window : globalThis;
+    const preferApiConfig = Boolean(globalObject && globalObject.STRIPE_USE_API_CONFIG);
+    const allowApiFallback = preferApiConfig || Boolean(globalObject && globalObject.STRIPE_ALLOW_API_FALLBACK);
+
+    if (!preferApiConfig) {
+      try {
+        cachedStripeConfig = await loadStripeConfigFromJson();
+        return cachedStripeConfig;
+      } catch (jsonError) {
+        if (!allowApiFallback) {
+          throw jsonError;
         }
+        console.debug('stripe-config.json not available, attempting /api/config instead.', jsonError);
       }
-    } catch (error) {
-      console.debug('Skipping /api/config:', error);
     }
 
-    let fallbackResponse;
     try {
-      fallbackResponse = await fetch('/stripe-config.json', { cache: 'no-store' });
-    } catch (error) {
-      throw new Error('Could not load stripe-config.json (network error).');
-    }
+      cachedStripeConfig = await loadStripeConfigFromApi();
+      return cachedStripeConfig;
+    } catch (apiError) {
+      if (!preferApiConfig) {
+        throw apiError;
+      }
 
-    if (!fallbackResponse.ok) {
-      throw new Error(`/stripe-config.json not found (status ${fallbackResponse.status}).`);
+      console.debug('/api/config unavailable, attempting stripe-config.json instead.', apiError);
+      cachedStripeConfig = await loadStripeConfigFromJson();
+      return cachedStripeConfig;
     }
-
-    const fallbackText = await fallbackResponse.text();
-    if (!fallbackText || !fallbackText.trim().length) {
-      throw new Error('stripe-config.json is empty.');
-    }
-
-    let fallbackData;
-    try {
-      fallbackData = JSON.parse(fallbackText);
-    } catch (error) {
-      throw new Error(`stripe-config.json is invalid JSON: ${error.message}`);
-    }
-
-    if (!fallbackData || typeof fallbackData.publishableKey !== 'string' || !fallbackData.publishableKey.trim()) {
-      throw new Error('stripe-config.json missing "publishableKey".');
-    }
-
-    cachedStripeConfig = { publishableKey: fallbackData.publishableKey.trim() };
-    return cachedStripeConfig;
   }
 
   async function ensureStripeInitialized() {
