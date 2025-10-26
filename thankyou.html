@@ -23,6 +23,18 @@
       color: #1f1f1f;
     }
 
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     .fortune-overlay {
       position: fixed;
       inset: 0;
@@ -251,6 +263,437 @@
       line-height: 1.5;
     }
 
+    .merch-upsell {
+      margin-top: 56px;
+    }
+
+    .merch-panel {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.08));
+      border-radius: 20px;
+      border: 1px solid rgba(59, 130, 246, 0.18);
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+      padding: 36px 32px 40px;
+      display: grid;
+      gap: 32px;
+    }
+
+    .merch-heading {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .merch-heading h2 {
+      font-size: 2rem;
+      margin: 0 0 12px;
+      color: #0f172a;
+    }
+
+    .merch-heading p {
+      margin: 0;
+      max-width: 540px;
+      color: #334155;
+      line-height: 1.6;
+    }
+
+    .merch-wordmark {
+      width: 220px;
+      max-width: 100%;
+      height: auto;
+      flex: 0 0 auto;
+      filter: drop-shadow(0 12px 18px rgba(30, 64, 175, 0.25));
+    }
+
+    .merch-carousel {
+      position: relative;
+      overflow: hidden;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, 0.08);
+      padding: 18px 0;
+      mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+    }
+
+    .merch-carousel-track {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      animation: merchSlide 48s linear infinite;
+    }
+
+    .merch-carousel:hover .merch-carousel-track,
+    .merch-carousel:focus-within .merch-carousel-track {
+      animation-play-state: paused;
+    }
+
+    .merch-carousel-item {
+      flex: 0 0 220px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 12px 22px rgba(15, 23, 42, 0.12);
+      background: #ffffff;
+    }
+
+    .merch-carousel-item img {
+      display: block;
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+    }
+
+    @keyframes merchSlide {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+
+    .merch-product-grid {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .merch-product-card {
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 18px;
+      border: 1px solid rgba(59, 130, 246, 0.15);
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .merch-product-card:hover,
+    .merch-product-card:focus-within {
+      transform: translateY(-6px);
+      box-shadow: 0 18px 34px rgba(37, 99, 235, 0.18);
+    }
+
+    .merch-product-image {
+      position: relative;
+      padding-top: 68%;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .merch-product-body {
+      padding: 18px 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .merch-product-body h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: #0f172a;
+    }
+
+    .merch-product-body p {
+      margin: 0;
+      color: #475569;
+      font-size: 0.95rem;
+    }
+
+    .merch-add-button {
+      align-self: flex-start;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      border: none;
+      color: #ffffff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.28);
+    }
+
+    .merch-add-button:hover,
+    .merch-add-button:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 26px rgba(99, 102, 241, 0.35);
+      outline: none;
+    }
+
+    .merch-add-button:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 18px rgba(59, 130, 246, 0.32);
+    }
+
+    .merch-cart-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.58);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+
+    .merch-cart-overlay.is-hidden {
+      display: none;
+    }
+
+    body.merch-cart-open {
+      overflow: hidden;
+    }
+
+    .merch-cart-dialog {
+      background: #ffffff;
+      border-radius: 24px;
+      border: 1px solid rgba(59, 130, 246, 0.18);
+      box-shadow: 0 30px 60px rgba(15, 23, 42, 0.22);
+      width: min(720px, 100%);
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 24px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .merch-cart-close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(148, 163, 184, 0.2);
+      color: #0f172a;
+      font-size: 1.4rem;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .merch-cart-close:hover,
+    .merch-cart-close:focus-visible {
+      background: rgba(99, 102, 241, 0.25);
+      transform: translateY(-2px);
+      outline: none;
+    }
+
+    .merch-cart-art {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .merch-cart-figure {
+      width: 180px;
+      height: auto;
+      filter: drop-shadow(0 18px 35px rgba(59, 130, 246, 0.35));
+      animation: cartFloat 3.6s ease-in-out infinite;
+    }
+
+    .merch-cart-glow {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(96, 165, 250, 0.35) 0%, rgba(129, 140, 248, 0) 65%);
+      animation: cartPulse 3s ease-in-out infinite;
+      z-index: -1;
+    }
+
+    @keyframes cartFloat {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    @keyframes cartPulse {
+      0%,
+      100% {
+        transform: scale(0.95);
+        opacity: 0.6;
+      }
+      50% {
+        transform: scale(1.08);
+        opacity: 1;
+      }
+    }
+
+    .merch-cart-content {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .merch-cart-content h3 {
+      font-size: 1.5rem;
+      margin: 0;
+      color: #0f172a;
+    }
+
+    .merch-cart-product {
+      margin: 0;
+      font-weight: 600;
+      color: #4338ca;
+    }
+
+    .merch-cart-preview {
+      width: 100%;
+      height: 120px;
+      border-radius: 16px;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      border: 1px solid rgba(99, 102, 241, 0.22);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+    }
+
+    .merch-cart-form fieldset {
+      border: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    .merch-size-options {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+    }
+
+    .merch-size-options label {
+      position: relative;
+      cursor: pointer;
+      display: block;
+    }
+
+    .merch-size-options input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .merch-size-options span {
+      display: inline-flex;
+      width: 100%;
+      justify-content: center;
+      align-items: center;
+      border-radius: 12px;
+      background: rgba(191, 219, 254, 0.4);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      padding: 10px 12px;
+      text-align: center;
+      font-weight: 600;
+      color: #1e3a8a;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+    }
+
+    .merch-size-options input:checked + span {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.85), rgba(99, 102, 241, 0.85));
+      color: #ffffff;
+      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .merch-size-options label:hover span {
+      transform: translateY(-1px);
+    }
+
+    .merch-size-options input:focus-visible + span {
+      outline: 3px solid rgba(96, 165, 250, 0.6);
+      outline-offset: 2px;
+    }
+
+    .merch-form-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .merch-form-grid label {
+      display: grid;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: #334155;
+    }
+
+    .merch-form-grid input,
+    .merch-form-grid textarea {
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .merch-form-grid input:focus-visible,
+    .merch-form-grid textarea:focus-visible {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    }
+
+    .merch-cart-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .merch-submit-button {
+      padding: 12px 24px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: #ffffff;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 16px 30px rgba(124, 58, 237, 0.32);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .merch-submit-button:hover,
+    .merch-submit-button:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 36px rgba(37, 99, 235, 0.38);
+      outline: none;
+    }
+
+    .merch-submit-button:active {
+      transform: translateY(0);
+    }
+
+    .merch-cart-feedback {
+      font-size: 0.9rem;
+      color: #1d4ed8;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .merch-cart-feedback.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .merch-disclaimer {
+      font-size: 0.85rem;
+      color: #475569;
+      margin: 0;
+    }
+
     @media (max-width: 768px) {
       .fortune-overlay {
         padding: 16px;
@@ -304,6 +747,36 @@
 
       .receipt-header h1 {
         font-size: 1.6rem;
+      }
+
+      .merch-panel {
+        padding: 28px 20px 32px;
+      }
+
+      .merch-heading h2 {
+        font-size: 1.6rem;
+      }
+
+      .merch-wordmark {
+        width: 160px;
+      }
+
+      .merch-carousel-item {
+        flex: 0 0 180px;
+      }
+
+      .merch-cart-dialog {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        text-align: center;
+      }
+
+      .merch-cart-content {
+        width: 100%;
+      }
+
+      .merch-cart-preview {
+        height: 180px;
       }
     }
   </style>
@@ -382,7 +855,318 @@
 
       <p class="footnote">You’ll receive a notification when your driver leaves our kitchen. Feel free to keep this tab open and watch the countdown—your world of flavor is on the way!</p>
     </div>
+
+    <section class="merch-upsell" aria-labelledby="merchTitle">
+      <div class="merch-panel">
+        <div class="merch-heading">
+          <div>
+            <h2 id="merchTitle">Extend the celebration with Danny's merch</h2>
+            <p>
+              Keep the Danny's Wok energy going long after dinner. Browse our cozy hoodies below,
+              choose your favorite fit, and we’ll tuck it into your cart with the same care as your
+              takeout order.
+            </p>
+          </div>
+          <img src="images/clothing/merch_reducesize.png" alt="Danny's Wok merch branding" class="merch-wordmark" />
+        </div>
+
+        <div class="merch-carousel" aria-label="Preview of Danny's Wok hoodies">
+          <div class="merch-carousel-track">
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-ash-front-68fdfdf7a900e.png" alt="Ash hoodie front" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-ash-back-68fdfdf7a97ba.png" alt="Ash hoodie back" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-black-front-68fdfdf7a91eb.png" alt="Black hoodie front" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-black-back-68fdfdf7a9888.png" alt="Black hoodie back" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-irish-green-front-68fdfdf7a929d.png" alt="Irish green hoodie front" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-irish-green-back-68fdfdf7a9934.png" alt="Irish green hoodie back" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-navy-front-68fdfdf7a9341.png" alt="Navy hoodie front" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-navy-back-68fdfdf7a99c5.png" alt="Navy hoodie back" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-red-front-68fdfdf7a93df.png" alt="Red hoodie front" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-red-back-68fdfdf7a9a50.png" alt="Red hoodie back" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-sport-grey-front-68fdfdf7a947a.png" alt="Sport grey hoodie front" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-sport-grey-back-68fdfdf7a9ada.png" alt="Sport grey hoodie back" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-white-front-68fdfdf7a951b.png" alt="White hoodie front" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-white-back-68fdfdf7a9b65.png" alt="White hoodie back" />
+            </figure>
+            <!-- Duplicate the sequence for seamless animation -->
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-ash-front-68fdfdf7a900e.png" alt="Ash hoodie front duplicate" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-ash-back-68fdfdf7a97ba.png" alt="Ash hoodie back duplicate" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-black-front-68fdfdf7a91eb.png" alt="Black hoodie front duplicate" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-black-back-68fdfdf7a9888.png" alt="Black hoodie back duplicate" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-irish-green-front-68fdfdf7a929d.png" alt="Irish green hoodie front duplicate" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-irish-green-back-68fdfdf7a9934.png" alt="Irish green hoodie back duplicate" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-navy-front-68fdfdf7a9341.png" alt="Navy hoodie front duplicate" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-navy-back-68fdfdf7a99c5.png" alt="Navy hoodie back duplicate" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-red-front-68fdfdf7a93df.png" alt="Red hoodie front duplicate" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-red-back-68fdfdf7a9a50.png" alt="Red hoodie back duplicate" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-sport-grey-front-68fdfdf7a947a.png" alt="Sport grey hoodie front duplicate" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-sport-grey-back-68fdfdf7a9ada.png" alt="Sport grey hoodie back duplicate" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-white-front-68fdfdf7a951b.png" alt="White hoodie front duplicate" />
+            </figure>
+            <figure class="merch-carousel-item">
+              <img src="images/clothing/unisex-heavy-blend-hoodie-white-back-68fdfdf7a9b65.png" alt="White hoodie back duplicate" />
+            </figure>
+          </div>
+        </div>
+
+        <div class="merch-product-grid" role="list" aria-label="Danny's Wok hoodie catalog">
+          <article class="merch-product-card" role="listitem" data-product="Ash Hoodie — Back" data-image="images/clothing/unisex-heavy-blend-hoodie-ash-back-68fdfdf7a97ba.png">
+            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-ash-back-68fdfdf7a97ba.png');"></div>
+            <div class="merch-product-body">
+              <h3>Ash Hoodie — Back</h3>
+              <p>Show off the Danny's Wok crest in a soft ash finish.</p>
+              <button type="button" class="merch-add-button">Add to cart</button>
+            </div>
+          </article>
+          <article class="merch-product-card" role="listitem" data-product="Ash Hoodie — Front" data-image="images/clothing/unisex-heavy-blend-hoodie-ash-front-68fdfdf7a900e.png">
+            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-ash-front-68fdfdf7a900e.png');"></div>
+            <div class="merch-product-body">
+              <h3>Ash Hoodie — Front</h3>
+              <p>Classic logo placement to rep the wok wherever you go.</p>
+              <button type="button" class="merch-add-button">Add to cart</button>
+            </div>
+          </article>
+          <article class="merch-product-card" role="listitem" data-product="Black Hoodie — Back" data-image="images/clothing/unisex-heavy-blend-hoodie-black-back-68fdfdf7a9888.png">
+            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-black-back-68fdfdf7a9888.png');"></div>
+            <div class="merch-product-body">
+              <h3>Black Hoodie — Back</h3>
+              <p>Bold and sleek with a full-back emblem that glows.</p>
+              <button type="button" class="merch-add-button">Add to cart</button>
+            </div>
+          </article>
+          <article class="merch-product-card" role="listitem" data-product="Black Hoodie — Front" data-image="images/clothing/unisex-heavy-blend-hoodie-black-front-68fdfdf7a91eb.png">
+            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-black-front-68fdfdf7a91eb.png');"></div>
+            <div class="merch-product-body">
+              <h3>Black Hoodie — Front</h3>
+              <p>The everyday essential with a subtle chest logo.</p>
+              <button type="button" class="merch-add-button">Add to cart</button>
+            </div>
+          </article>
+          <article class="merch-product-card" role="listitem" data-product="Irish Green Hoodie — Back" data-image="images/clothing/unisex-heavy-blend-hoodie-irish-green-back-68fdfdf7a9934.png">
+            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-irish-green-back-68fdfdf7a9934.png');"></div>
+            <div class="merch-product-body">
+              <h3>Irish Green Hoodie — Back</h3>
+              <p>A vibrant splash of color with celebratory graphics.</p>
+              <button type="button" class="merch-add-button">Add to cart</button>
+            </div>
+          </article>
+          <article class="merch-product-card" role="listitem" data-product="Irish Green Hoodie — Front" data-image="images/clothing/unisex-heavy-blend-hoodie-irish-green-front-68fdfdf7a929d.png">
+            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-irish-green-front-68fdfdf7a929d.png');"></div>
+            <div class="merch-product-body">
+              <h3>Irish Green Hoodie — Front</h3>
+              <p>Bright, bold, and ready for post-delivery adventures.</p>
+              <button type="button" class="merch-add-button">Add to cart</button>
+            </div>
+          </article>
+          <article class="merch-product-card" role="listitem" data-product="Navy Hoodie — Back" data-image="images/clothing/unisex-heavy-blend-hoodie-navy-back-68fdfdf7a99c5.png">
+            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-navy-back-68fdfdf7a99c5.png');"></div>
+            <div class="merch-product-body">
+              <h3>Navy Hoodie — Back</h3>
+              <p>Deep navy tones paired with our limited-edition badge.</p>
+              <button type="button" class="merch-add-button">Add to cart</button>
+            </div>
+          </article>
+          <article class="merch-product-card" role="listitem" data-product="Navy Hoodie — Front" data-image="images/clothing/unisex-heavy-blend-hoodie-navy-front-68fdfdf7a9341.png">
+            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-navy-front-68fdfdf7a9341.png');"></div>
+            <div class="merch-product-body">
+              <h3>Navy Hoodie — Front</h3>
+              <p>Cozy fleece with a subtle front mark for everyday wear.</p>
+              <button type="button" class="merch-add-button">Add to cart</button>
+            </div>
+          </article>
+          <article class="merch-product-card" role="listitem" data-product="Red Hoodie — Back" data-image="images/clothing/unisex-heavy-blend-hoodie-red-back-68fdfdf7a9a50.png">
+            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-red-back-68fdfdf7a9a50.png');"></div>
+            <div class="merch-product-body">
+              <h3>Red Hoodie — Back</h3>
+              <p>Turn heads with a fiery, full-color Danny's Wok print.</p>
+              <button type="button" class="merch-add-button">Add to cart</button>
+            </div>
+          </article>
+          <article class="merch-product-card" role="listitem" data-product="Red Hoodie — Front" data-image="images/clothing/unisex-heavy-blend-hoodie-red-front-68fdfdf7a93df.png">
+            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-red-front-68fdfdf7a93df.png');"></div>
+            <div class="merch-product-body">
+              <h3>Red Hoodie — Front</h3>
+              <p>Match the Danny's Wok color story with a bold pop of red.</p>
+              <button type="button" class="merch-add-button">Add to cart</button>
+            </div>
+          </article>
+          <article class="merch-product-card" role="listitem" data-product="Sport Grey Hoodie — Back" data-image="images/clothing/unisex-heavy-blend-hoodie-sport-grey-back-68fdfdf7a9ada.png">
+            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-sport-grey-back-68fdfdf7a9ada.png');"></div>
+            <div class="merch-product-body">
+              <h3>Sport Grey Hoodie — Back</h3>
+              <p>A modern neutral with a graphic that beams under the lights.</p>
+              <button type="button" class="merch-add-button">Add to cart</button>
+            </div>
+          </article>
+          <article class="merch-product-card" role="listitem" data-product="Sport Grey Hoodie — Front" data-image="images/clothing/unisex-heavy-blend-hoodie-sport-grey-front-68fdfdf7a947a.png">
+            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-sport-grey-front-68fdfdf7a947a.png');"></div>
+            <div class="merch-product-body">
+              <h3>Sport Grey Hoodie — Front</h3>
+              <p>Easy to layer, easy to love, ready for your next feast.</p>
+              <button type="button" class="merch-add-button">Add to cart</button>
+            </div>
+          </article>
+          <article class="merch-product-card" role="listitem" data-product="White Hoodie — Back" data-image="images/clothing/unisex-heavy-blend-hoodie-white-back-68fdfdf7a9b65.png">
+            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-white-back-68fdfdf7a9b65.png');"></div>
+            <div class="merch-product-body">
+              <h3>White Hoodie — Back</h3>
+              <p>Bright, clean, and perfect for highlighting the wok crest.</p>
+              <button type="button" class="merch-add-button">Add to cart</button>
+            </div>
+          </article>
+          <article class="merch-product-card" role="listitem" data-product="White Hoodie — Front" data-image="images/clothing/unisex-heavy-blend-hoodie-white-front-68fdfdf7a951b.png">
+            <div class="merch-product-image" style="background-image: url('images/clothing/unisex-heavy-blend-hoodie-white-front-68fdfdf7a951b.png');"></div>
+            <div class="merch-product-body">
+              <h3>White Hoodie — Front</h3>
+              <p>Crisp white fleece with a minimalist front graphic.</p>
+              <button type="button" class="merch-add-button">Add to cart</button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <div class="merch-cart-overlay is-hidden" id="merchCart" aria-hidden="true">
+    <div class="merch-cart-dialog" role="dialog" aria-modal="true" aria-labelledby="merchCartTitle">
+      <button type="button" class="merch-cart-close" id="closeMerchCart" aria-label="Close merch cart">×</button>
+      <div class="merch-cart-art" aria-hidden="true">
+        <span class="merch-cart-glow"></span>
+        <img src="images/chinese-food-boxes2.png" alt="" class="merch-cart-figure" />
+      </div>
+      <div class="merch-cart-content">
+        <h3 id="merchCartTitle">Finish your hoodie pick</h3>
+        <p class="merch-cart-product" id="merchCartProduct">Ash Hoodie — Back</p>
+        <figure class="merch-cart-preview" id="merchCartPreview" aria-hidden="true"></figure>
+        <form class="merch-cart-form" id="merchCartForm">
+          <fieldset>
+            <legend class="visually-hidden">Select a hoodie size</legend>
+            <div class="merch-size-options">
+              <label>
+                <input type="radio" name="merch-size" value="XS" checked />
+                <span>XS</span>
+              </label>
+              <label>
+                <input type="radio" name="merch-size" value="Small" />
+                <span>Small</span>
+              </label>
+              <label>
+                <input type="radio" name="merch-size" value="Medium" />
+                <span>Medium</span>
+              </label>
+              <label>
+                <input type="radio" name="merch-size" value="Large" />
+                <span>Large</span>
+              </label>
+              <label>
+                <input type="radio" name="merch-size" value="X-Large" />
+                <span>X-Large</span>
+              </label>
+              <label>
+                <input type="radio" name="merch-size" value="X3" />
+                <span>X3</span>
+              </label>
+              <label>
+                <input type="radio" name="merch-size" value="X5" />
+                <span>X5</span>
+              </label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend class="visually-hidden">Shipping information</legend>
+            <div class="merch-form-grid">
+              <label>
+                Full name
+                <input type="text" name="shipping-name" autocomplete="name" required />
+              </label>
+              <label>
+                Email
+                <input type="email" name="shipping-email" autocomplete="email" required />
+              </label>
+              <label>
+                Street address
+                <input type="text" name="shipping-address" autocomplete="street-address" required />
+              </label>
+              <label>
+                City
+                <input type="text" name="shipping-city" autocomplete="address-level2" required />
+              </label>
+              <label>
+                State / Province
+                <input type="text" name="shipping-state" autocomplete="address-level1" required />
+              </label>
+              <label>
+                ZIP / Postal code
+                <input type="text" name="shipping-zip" autocomplete="postal-code" required />
+              </label>
+            </div>
+            <div class="merch-form-grid">
+              <label>
+                Delivery notes (optional)
+                <textarea name="shipping-notes" rows="2" placeholder="Add any special instructions"></textarea>
+              </label>
+            </div>
+          </fieldset>
+          <div class="merch-cart-actions">
+            <button type="submit" class="merch-submit-button">Add hoodie &amp; keep shopping</button>
+            <p class="merch-cart-feedback" id="merchCartFeedback" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+        <p class="merch-disclaimer">Shipping typically begins within 2 business days. We’ll send updates to your email.</p>
+      </div>
+    </div>
+  </div>
 
   <script>
     const quotes = [
@@ -803,6 +1587,124 @@
       }
 
       setupTimer();
+
+      const merchCart = document.getElementById('merchCart');
+      const closeMerchCartButton = document.getElementById('closeMerchCart');
+      const merchAddButtons = document.querySelectorAll('.merch-add-button');
+      const merchProductLabel = document.getElementById('merchCartProduct');
+      const merchPreview = document.getElementById('merchCartPreview');
+      const merchForm = document.getElementById('merchCartForm');
+      const merchFeedback = document.getElementById('merchCartFeedback');
+      let lastActiveTrigger = null;
+      let merchEscapeHandler = null;
+
+      function setMerchCartState(visible) {
+        if (!merchCart) return;
+        if (visible) {
+          merchCart.classList.remove('is-hidden');
+          merchCart.setAttribute('aria-hidden', 'false');
+          document.body.classList.add('merch-cart-open');
+        } else {
+          merchCart.classList.add('is-hidden');
+          merchCart.setAttribute('aria-hidden', 'true');
+          document.body.classList.remove('merch-cart-open');
+        }
+      }
+
+      function updateMerchProduct(name, image) {
+        if (merchProductLabel) {
+          merchProductLabel.textContent = name;
+        }
+        if (merchPreview) {
+          merchPreview.style.backgroundImage = image ? `url('${image}')` : 'none';
+        }
+      }
+
+      function openMerchCart(productName, image) {
+        updateMerchProduct(productName, image);
+        setMerchCartState(true);
+        if (merchForm) {
+          const firstSize = merchForm.querySelector("input[name='merch-size']");
+          if (firstSize) {
+            try {
+              firstSize.focus({ preventScroll: true });
+            } catch (error) {
+              firstSize.focus();
+            }
+          }
+        }
+        if (!merchEscapeHandler) {
+          merchEscapeHandler = (event) => {
+            if (event.key === 'Escape') {
+              closeMerchCart();
+            }
+          };
+          document.addEventListener('keydown', merchEscapeHandler);
+        }
+      }
+
+      function closeMerchCart() {
+        setMerchCartState(false);
+        if (merchEscapeHandler) {
+          document.removeEventListener('keydown', merchEscapeHandler);
+          merchEscapeHandler = null;
+        }
+        if (merchFeedback) {
+          merchFeedback.classList.remove('is-visible');
+          merchFeedback.textContent = '';
+        }
+        if (lastActiveTrigger && document.contains(lastActiveTrigger)) {
+          try {
+            lastActiveTrigger.focus({ preventScroll: true });
+          } catch (error) {
+            lastActiveTrigger.focus();
+          }
+        }
+      }
+
+      if (merchCart && merchAddButtons.length && merchForm) {
+        const firstCard = document.querySelector('.merch-product-card');
+        if (firstCard) {
+          updateMerchProduct(firstCard.dataset.product || 'Danny\'s Wok Hoodie', firstCard.dataset.image || '');
+        }
+
+        merchAddButtons.forEach((button) => {
+          button.addEventListener('click', () => {
+            const card = button.closest('.merch-product-card');
+            if (!card) return;
+            const productName = card.dataset.product || 'Danny\'s Wok Hoodie';
+            const image = card.dataset.image || '';
+            lastActiveTrigger = button;
+            openMerchCart(productName, image);
+          });
+        });
+
+        if (closeMerchCartButton) {
+          closeMerchCartButton.addEventListener('click', closeMerchCart);
+        }
+
+        merchCart.addEventListener('click', (event) => {
+          if (event.target === merchCart) {
+            closeMerchCart();
+          }
+        });
+
+        merchForm.addEventListener('submit', (event) => {
+          event.preventDefault();
+          if (merchFeedback && merchProductLabel) {
+            merchFeedback.textContent = `${merchProductLabel.textContent} was added to your cart!`;
+            merchFeedback.classList.add('is-visible');
+          }
+          merchForm.reset();
+          const firstSize = merchForm.querySelector("input[name='merch-size']");
+          if (firstSize) {
+            firstSize.checked = true;
+          }
+          setTimeout(() => {
+            closeMerchCart();
+          }, 1400);
+        });
+      }
 
       overlayElement = document.getElementById('fortuneOverlay');
       instructionElement = document.getElementById('overlayInstruction');
