@@ -2017,65 +2017,506 @@ document.addEventListener('DOMContentLoaded', () => {
   if (saveScheduleBtn) {
     saveScheduleBtn.addEventListener('click', handleScheduleSave);
   }
+  const paymentModal = document.getElementById('payment-modal');
+  const paymentModalClose = document.getElementById('close-payment-modal');
+  const paymentAmountEl = document.getElementById('payment-amount');
+  const paymentSummaryContainer = document.getElementById('payment-order-summary');
+  const confirmPaymentBtn = document.getElementById('confirm-payment');
+  const paymentStatusEl = document.getElementById('payment-status');
+  const paymentRequestWrapper = document.getElementById('payment-request-button-wrapper');
+  const walletHint = document.getElementById('wallet-hint');
+  const cardholderNameInput = document.getElementById('cardholder-name');
+  const cardholderEmailInput = document.getElementById('cardholder-email');
+  const stripeCardElementContainer = document.getElementById('stripe-card-element');
+
+  let stripeInstance = null;
+  let stripeElements = null;
+  let stripeCardElement = null;
+  let cardMounted = false;
+  let paymentRequest = null;
+  let paymentRequestButton = null;
+  let walletAvailable = false;
+  let currentPaymentIntent = null;
+  let currentOrderDetails = null;
+  let paymentProcessing = false;
+
+  async function ensureStripeInitialized() {
+    if (stripeInstance) {
+      return;
+    }
+    const response = await fetch('/api/config');
+    if (!response.ok) {
+      throw new Error('Unable to load payment configuration.');
+    }
+    const data = await response.json();
+    if (!data.publishableKey) {
+      throw new Error('Stripe publishable key missing.');
+    }
+    stripeInstance = Stripe(data.publishableKey);
+    stripeElements = stripeInstance.elements();
+  }
+
+  function mountCardElement() {
+    if (!stripeElements || !stripeCardElementContainer) {
+      throw new Error('Card element unavailable.');
+    }
+    if (!stripeCardElement) {
+      stripeCardElement = stripeElements.create('card', {
+        style: {
+          base: {
+            color: '#1b1b1b',
+            fontFamily: 'inherit',
+            fontSize: '16px',
+            '::placeholder': {
+              color: '#a0a0a0',
+            },
+          },
+        },
+      });
+    }
+    if (!cardMounted) {
+      stripeCardElement.mount(stripeCardElementContainer);
+      cardMounted = true;
+    }
+  }
+
+  function resetPaymentStatus() {
+    if (paymentStatusEl) {
+      paymentStatusEl.textContent = '';
+      paymentStatusEl.classList.remove('payment-status--error', 'payment-status--success');
+    }
+  }
+
+  function setPaymentStatus(message, type = 'info') {
+    if (!paymentStatusEl) {
+      return;
+    }
+    paymentStatusEl.textContent = message;
+    paymentStatusEl.classList.remove('payment-status--error', 'payment-status--success');
+    if (type === 'error') {
+      paymentStatusEl.classList.add('payment-status--error');
+    } else if (type === 'success') {
+      paymentStatusEl.classList.add('payment-status--success');
+    }
+  }
+
+  function closePaymentModal() {
+    if (paymentModal) {
+      paymentModal.classList.add('hidden');
+      paymentModal.setAttribute('aria-hidden', 'true');
+    }
+    document.body.classList.remove('modal-open');
+    currentOrderDetails = null;
+    currentPaymentIntent = null;
+    paymentProcessing = false;
+    resetPaymentStatus();
+    if (confirmPaymentBtn) {
+      confirmPaymentBtn.disabled = false;
+      confirmPaymentBtn.classList.remove('is-loading');
+    }
+  }
+
+  function buildOrderDetailsForPayment() {
+    const { total: subtotal, count } = calculateCartTotals();
+    if (!count) {
+      return null;
+    }
+    const fulfilmentRadio = document.querySelector('input[name="fulfilment"]:checked');
+    const fulfilmentValue = fulfilmentRadio ? fulfilmentRadio.value : 'pickup';
+    const fulfilment = fulfilmentValue === 'delivery' ? 'Delivery' : 'Pickup';
+    const isDelivery = fulfilment === 'Delivery';
+    let tipAmount = 0;
+    if (isDelivery) {
+      if (selectedTipType === 'custom') {
+        tipAmount = roundCurrency(Math.max(customTipAmount, 0));
+      } else {
+        const tipPercent = Number.isFinite(selectedTipPercent) ? selectedTipPercent : 0;
+        tipAmount = roundCurrency(subtotal * tipPercent);
+      }
+    }
+    const expressFee = isDelivery && selectedDeliverySpeed === 'express' ? EXPRESS_DELIVERY_FEE : 0;
+    const items = Object.keys(cart).map((id) => {
+      const item = cart[id];
+      return {
+        id,
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: item.price,
+        total: roundCurrency(item.price * item.quantity),
+        instructions: item.instructions || '',
+      };
+    });
+    const notes = [];
+    let scheduleDescription = '';
+    if (isDelivery) {
+      const dropoff = document.querySelector('input[name="dropoff"]:checked');
+      if (dropoff) {
+        notes.push(dropoff.value === 'door' ? 'Leave at the door' : 'Hand to customer');
+      }
+      const dropoffNotes = document.getElementById('dropoff-notes');
+      if (dropoffNotes && dropoffNotes.value.trim()) {
+        notes.push(`Instructions: ${dropoffNotes.value.trim()}`);
+      }
+      if (selectedDeliverySpeed === 'express') {
+        notes.push('Express delivery (ETA 15 mins)');
+      } else if (selectedDeliverySpeed === 'schedule') {
+        const deliverySchedule = scheduleStates.delivery;
+        if (deliverySchedule.confirmed && deliverySchedule.date && deliverySchedule.time) {
+          scheduleDescription = `Scheduled for ${formatScheduleDate(deliverySchedule.date)} at ${formatDisplayTime(deliverySchedule.time)}`;
+          notes.push(scheduleDescription);
+        }
+      }
+    } else if (selectedPickupTimeOption === 'schedule') {
+      const pickupSchedule = scheduleStates.pickup;
+      if (pickupSchedule.confirmed && pickupSchedule.date && pickupSchedule.time) {
+        scheduleDescription = `Pickup on ${formatScheduleDate(pickupSchedule.date)} at ${formatDisplayTime(pickupSchedule.time)}`;
+        notes.push(scheduleDescription);
+      } else {
+        notes.push('Pickup schedule pending confirmation');
+      }
+    } else {
+      scheduleDescription = 'Pickup window: 10 – 15 mins';
+      notes.push(scheduleDescription);
+    }
+    if (isDelivery && tipAmount > 0) {
+      notes.push(`Tip: ${formatCurrency(tipAmount)}`);
+    }
+    const grandTotal = roundCurrency(subtotal + tipAmount + expressFee);
+    const deliveryName = document.getElementById('delivery-name');
+    const deliveryPhone = document.getElementById('delivery-phone');
+    const deliveryAddress = document.getElementById('delivery-address');
+    const deliveryCity = document.getElementById('delivery-city');
+    const deliveryZip = document.getElementById('delivery-zip');
+    const customer = {
+      name: deliveryName ? deliveryName.value.trim() : '',
+      phone: deliveryPhone ? deliveryPhone.value.trim() : '',
+      address: [deliveryAddress?.value.trim(), deliveryCity?.value.trim(), deliveryZip?.value.trim()]
+        .filter(Boolean)
+        .join(', '),
+    };
+    return {
+      fulfilment,
+      isDelivery,
+      subtotal: roundCurrency(subtotal),
+      tipAmount,
+      expressFee,
+      grandTotal,
+      items,
+      notes,
+      scheduleDescription,
+      customer,
+    };
+  }
+
+  function buildPaymentMetadata(order) {
+    const metadata = {
+      fulfilment: order.fulfilment,
+      subtotal: order.subtotal.toFixed(2),
+      tip: order.tipAmount.toFixed(2),
+      express_fee: order.expressFee.toFixed(2),
+      total: order.grandTotal.toFixed(2),
+    };
+    if (order.scheduleDescription) {
+      metadata.schedule = order.scheduleDescription;
+    }
+    if (order.customer?.name) {
+      metadata.customer_name = order.customer.name;
+    }
+    if (order.customer?.phone) {
+      metadata.customer_phone = order.customer.phone;
+    }
+    if (order.customer?.address) {
+      metadata.customer_address = order.customer.address;
+    }
+    if (order.notes.length) {
+      metadata.notes = order.notes.join(' | ').slice(0, 500);
+    }
+    order.items.slice(0, 5).forEach((item, index) => {
+      metadata[`item_${index + 1}`] = `${item.quantity}x ${item.name}`;
+    });
+    return metadata;
+  }
+
+  async function createPaymentIntent(order) {
+    const amount = Math.round(order.grandTotal * 100);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new Error('Your cart total must be greater than zero.');
+    }
+    const response = await fetch('/api/create-payment-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount,
+        currency: 'usd',
+        description: `${order.fulfilment} order at Danny's Wok`,
+        metadata: buildPaymentMetadata(order),
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.clientSecret) {
+      throw new Error(data.message || 'Unable to start payment.');
+    }
+    currentPaymentIntent = {
+      clientSecret: data.clientSecret,
+      id: data.paymentIntentId,
+      amount,
+    };
+  }
+
+  function renderPaymentSummary(order) {
+    if (!paymentSummaryContainer) {
+      return;
+    }
+    const itemsHtml = order.items
+      .map(
+        (item) =>
+          `<li><span>${item.quantity}× ${item.name}</span><span>${formatCurrency(item.total)}</span></li>`,
+      )
+      .join('');
+    const totals = [
+      `<div><span>Subtotal</span><span>${formatCurrency(order.subtotal)}</span></div>`,
+      order.tipAmount > 0 ? `<div><span>Tip</span><span>${formatCurrency(order.tipAmount)}</span></div>` : '',
+      order.expressFee > 0
+        ? `<div><span>Express delivery</span><span>${formatCurrency(order.expressFee)}</span></div>`
+        : '',
+      `<div class="payment-order-summary__grand"><span>Total</span><span>${formatCurrency(order.grandTotal)}</span></div>`,
+    ]
+      .filter(Boolean)
+      .join('');
+    const detailParts = [order.scheduleDescription, ...order.notes.filter((note) => note !== order.scheduleDescription)];
+    paymentSummaryContainer.innerHTML = `
+      <h3 class="payment-order-summary__title">Your order</h3>
+      <ul class="payment-order-summary__items">${itemsHtml}</ul>
+      <div class="payment-order-summary__totals">${totals}</div>
+      <p class="payment-order-summary__fulfilment">${[order.fulfilment, detailParts.join(' • ')].filter(Boolean).join(' • ')}</p>
+    `;
+  }
+
+  async function updatePaymentRequest(order) {
+    if (!stripeInstance || !paymentRequestWrapper) {
+      return;
+    }
+    const amount = Math.round(order.grandTotal * 100);
+    if (!paymentRequest) {
+      paymentRequest = stripeInstance.paymentRequest({
+        country: 'US',
+        currency: 'usd',
+        total: {
+          label: "Danny's Wok order",
+          amount,
+        },
+        requestPayerName: true,
+        requestPayerEmail: true,
+        requestPayerPhone: true,
+      });
+
+      paymentRequest.on('paymentmethod', async (event) => {
+        try {
+          if (!currentPaymentIntent) {
+            await createPaymentIntent(currentOrderDetails);
+          }
+          const confirmation = await stripeInstance.confirmCardPayment(
+            currentPaymentIntent.clientSecret,
+            {
+              payment_method: event.paymentMethod.id,
+            },
+            { handleActions: false },
+          );
+          if (confirmation.error) {
+            event.complete('fail');
+            setPaymentStatus(confirmation.error.message || 'Payment failed.', 'error');
+            return;
+          }
+          let { paymentIntent } = confirmation;
+          if (paymentIntent && paymentIntent.status === 'requires_action') {
+            const nextConfirmation = await stripeInstance.confirmCardPayment(
+              currentPaymentIntent.clientSecret,
+            );
+            if (nextConfirmation.error) {
+              event.complete('fail');
+              setPaymentStatus(nextConfirmation.error.message || 'Payment failed.', 'error');
+              return;
+            }
+            paymentIntent = nextConfirmation.paymentIntent;
+          }
+          event.complete('success');
+          setPaymentStatus('Payment successful! Redirecting…', 'success');
+          setTimeout(() => {
+            closePaymentModal();
+            window.location.href = 'thankyou.html';
+          }, 1000);
+        } catch (error) {
+          console.error(error);
+          event.complete('fail');
+          setPaymentStatus(error.message || 'Unable to complete Apple Pay payment.', 'error');
+        }
+      });
+
+      paymentRequest.on('cancel', () => {
+        setPaymentStatus('Apple Pay was cancelled. You can still pay with your card.', 'error');
+      });
+
+      paymentRequest.canMakePayment().then((result) => {
+        walletAvailable = Boolean(result);
+        if (walletAvailable) {
+          if (!paymentRequestButton) {
+            paymentRequestButton = stripeElements.create('paymentRequestButton', {
+              paymentRequest,
+              style: {
+                paymentRequestButton: {
+                  theme: 'dark',
+                  height: '48px',
+                },
+              },
+            });
+            paymentRequestButton.mount(paymentRequestWrapper);
+          }
+          paymentRequestWrapper.classList.remove('hidden');
+          paymentRequestWrapper.setAttribute('aria-hidden', 'false');
+          if (walletHint) {
+            walletHint.classList.remove('hidden');
+            walletHint.setAttribute('aria-hidden', 'false');
+          }
+        } else {
+          paymentRequestWrapper.classList.add('hidden');
+          paymentRequestWrapper.setAttribute('aria-hidden', 'true');
+          if (walletHint) {
+            walletHint.classList.add('hidden');
+            walletHint.setAttribute('aria-hidden', 'true');
+          }
+        }
+      });
+    } else {
+      paymentRequest.update({
+        total: {
+          label: "Danny's Wok order",
+          amount,
+        },
+      });
+    }
+
+    if (!walletAvailable) {
+      paymentRequestWrapper.classList.add('hidden');
+      paymentRequestWrapper.setAttribute('aria-hidden', 'true');
+      if (walletHint) {
+        walletHint.classList.add('hidden');
+        walletHint.setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+
+  async function openPaymentModal(order) {
+    if (!paymentModal || !paymentAmountEl) {
+      throw new Error('Payment modal is unavailable.');
+    }
+    currentOrderDetails = order;
+    paymentModal.classList.remove('hidden');
+    paymentModal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+    paymentAmountEl.textContent = formatCurrency(order.grandTotal);
+    renderPaymentSummary(order);
+    resetPaymentStatus();
+    if (confirmPaymentBtn) {
+      confirmPaymentBtn.disabled = true;
+      confirmPaymentBtn.classList.add('is-loading');
+    }
+    try {
+      await ensureStripeInitialized();
+      mountCardElement();
+      await createPaymentIntent(order);
+      await updatePaymentRequest(order);
+      if (confirmPaymentBtn) {
+        confirmPaymentBtn.disabled = false;
+        confirmPaymentBtn.classList.remove('is-loading');
+      }
+      setPaymentStatus('Enter your payment details to finish.');
+    } catch (error) {
+      setPaymentStatus(error.message || 'Unable to start payment.', 'error');
+      if (confirmPaymentBtn) {
+        confirmPaymentBtn.disabled = true;
+        confirmPaymentBtn.classList.remove('is-loading');
+      }
+    }
+  }
+
+  async function handleConfirmPayment() {
+    if (!stripeInstance || !stripeCardElement || !currentPaymentIntent || !currentOrderDetails) {
+      setPaymentStatus('Payment is not ready yet. Please try again.', 'error');
+      return;
+    }
+    if (paymentProcessing) {
+      return;
+    }
+    paymentProcessing = true;
+    if (confirmPaymentBtn) {
+      confirmPaymentBtn.disabled = true;
+      confirmPaymentBtn.classList.add('is-loading');
+    }
+    setPaymentStatus('Processing payment…');
+    const billingDetails = {};
+    if (cardholderNameInput && cardholderNameInput.value.trim()) {
+      billingDetails.name = cardholderNameInput.value.trim();
+    }
+    if (cardholderEmailInput && cardholderEmailInput.value.trim()) {
+      billingDetails.email = cardholderEmailInput.value.trim();
+    }
+    try {
+      const result = await stripeInstance.confirmCardPayment(currentPaymentIntent.clientSecret, {
+        payment_method: {
+          card: stripeCardElement,
+          billing_details: billingDetails,
+        },
+      });
+      if (result.error) {
+        throw new Error(result.error.message || 'Payment failed.');
+      }
+      setPaymentStatus('Payment successful! Redirecting…', 'success');
+      setTimeout(() => {
+        closePaymentModal();
+        window.location.href = 'thankyou.html';
+      }, 1000);
+    } catch (error) {
+      setPaymentStatus(error.message || 'Unable to complete payment.', 'error');
+      if (confirmPaymentBtn) {
+        confirmPaymentBtn.disabled = false;
+        confirmPaymentBtn.classList.remove('is-loading');
+      }
+    } finally {
+      paymentProcessing = false;
+    }
+  }
+
+  if (paymentModalClose) {
+    paymentModalClose.addEventListener('click', closePaymentModal);
+  }
+  if (paymentModal) {
+    paymentModal.addEventListener('click', (event) => {
+      if (event.target === paymentModal) {
+        closePaymentModal();
+      }
+    });
+  }
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && paymentModal && !paymentModal.classList.contains('hidden')) {
+      closePaymentModal();
+    }
+  });
+  if (confirmPaymentBtn) {
+    confirmPaymentBtn.addEventListener('click', handleConfirmPayment);
+  }
   const placeOrderBtn = document.getElementById('place-order');
   if (placeOrderBtn) {
-    placeOrderBtn.addEventListener('click', () => {
-      const { count } = calculateCartTotals();
-      if (!count) {
+    placeOrderBtn.addEventListener('click', async () => {
+      const orderDetails = buildOrderDetailsForPayment();
+      if (!orderDetails) {
         alert('Add items to your cart before placing an order.');
         return;
       }
-      const fulfilment = delivery && delivery.checked ? 'Delivery' : 'Pickup';
-      const isDelivery = fulfilment === 'Delivery';
-      const { total: subtotal } = calculateCartTotals();
-      let tipAmount = 0;
-      if (isDelivery) {
-        if (selectedTipType === 'custom') {
-          tipAmount = roundCurrency(Math.max(customTipAmount, 0));
-        } else {
-          tipAmount = roundCurrency(subtotal * (Number.isFinite(selectedTipPercent) ? selectedTipPercent : 0));
-        }
+      try {
+        await openPaymentModal(orderDetails);
+      } catch (error) {
+        alert(error.message || 'Unable to start payment.');
       }
-      const expressFee = isDelivery && selectedDeliverySpeed === 'express' ? EXPRESS_DELIVERY_FEE : 0;
-      const notes = [];
-      if (fulfilment === 'Delivery') {
-        const dropoff = document.querySelector('input[name="dropoff"]:checked');
-        if (dropoff) {
-          notes.push(`Drop-off: ${dropoff.value === 'door' ? 'Leave it at the door' : 'Hand it to me'}.`);
-        }
-        const dropoffNotes = document.getElementById('dropoff-notes');
-        if (dropoffNotes && dropoffNotes.value.trim()) {
-          notes.push(`Instructions: ${dropoffNotes.value.trim()}`);
-        }
-        if (selectedDeliverySpeed === 'express') {
-          notes.push('Express delivery (ETA 15 mins) selected.');
-        } else if (selectedDeliverySpeed === 'schedule') {
-          const deliverySchedule = scheduleStates.delivery;
-          if (deliverySchedule.confirmed && deliverySchedule.date && deliverySchedule.time) {
-            notes.push(
-              `Scheduled for ${formatScheduleDate(deliverySchedule.date)} at ${formatDisplayTime(deliverySchedule.time)}.`,
-            );
-          }
-        }
-      } else if (selectedPickupTimeOption === 'schedule') {
-        const pickupSchedule = scheduleStates.pickup;
-        if (pickupSchedule.confirmed && pickupSchedule.date && pickupSchedule.time) {
-          notes.push(
-            `Pickup scheduled for ${formatScheduleDate(pickupSchedule.date)} at ${formatDisplayTime(pickupSchedule.time)}.`,
-          );
-        } else {
-          notes.push('Pickup schedule pending confirmation.');
-        }
-      } else {
-        notes.push('Pickup: Standard window (10 – 15 mins).');
-      }
-      if (isDelivery) {
-        notes.push(`Tip: ${formatCurrency(tipAmount)} (100% to drivers).`);
-      }
-      const grandTotal = roundCurrency(subtotal + tipAmount + expressFee);
-      notes.push(`Total due: ${formatCurrency(grandTotal)}.`);
-      notes.push('This demo does not submit the order.');
-      alert(`Order placed for ${fulfilment}.\n${notes.join('\n')}`);
     });
   }
 });
