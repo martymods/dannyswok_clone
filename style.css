@@ -2258,7 +2258,7 @@ body.landing-page.is-map-ready .leaflet-control-container {
 }
 
 .noodle-loader #chopstickTwo {
-  left: 42%;
+  left: 40%;
   animation-duration: 1s;
 }
 
@@ -2283,10 +2283,10 @@ body.landing-page.is-map-ready .leaflet-control-container {
     transform: translate(-6px, -360px) rotate(330deg);
   }
   90% {
-    transform: translate(-16px, 60px) rotate(333deg);
+    transform: translate(-22px, 72px) rotate(333deg);
   }
   100% {
-    transform: translate(-24px, 78px) rotate(333deg);
+    transform: translate(-32px, 92px) rotate(333deg);
   }
 }
 
