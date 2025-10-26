@@ -110,6 +110,9 @@ function updateHeaderFulfilmentDisplay() {
   const labelTextElement = displayWrapper
     ? displayWrapper.querySelector('.menu-header__selected-store-label-text')
     : null;
+  const iconElement = displayWrapper
+    ? displayWrapper.querySelector('.menu-header__fulfilment-icon')
+    : null;
   const valueElement = document.getElementById('selected-store-address');
   if (!displayWrapper || !labelTextElement || !valueElement) {
     return;
@@ -117,6 +120,9 @@ function updateHeaderFulfilmentDisplay() {
 
   const isDelivery = headerFulfilmentMode === 'delivery';
   labelTextElement.textContent = isDelivery ? 'Delivery from' : 'Pickup from';
+  if (iconElement) {
+    iconElement.hidden = !isDelivery;
+  }
   if (displayWrapper.classList.contains('menu-header__selected-store--empty')) {
     valueElement.textContent = getHeaderFulfilmentPlaceholder();
   }
