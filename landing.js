@@ -218,6 +218,7 @@
   let selectedButton = null;
   let photoOverlayState = null;
   let lastPhotoTrigger = null;
+  let pendingPhotoPlacementTimer = null;
   const markerRepositionClass = 'is-repositioned';
 
   function updateMarkerSelection(storeId, options = {}) {
@@ -400,11 +401,31 @@
     openPhotoOverlay(storeId, storeLabel, info);
   }
 
+  function clearPendingPhotoPlacement() {
+    if (pendingPhotoPlacementTimer) {
+      clearTimeout(pendingPhotoPlacementTimer);
+      pendingPhotoPlacementTimer = null;
+    }
+  }
+
+  function calculatePhotoMarkerLatLng(baseLatLng) {
+    const mapSize = map.getSize();
+    const horizontalOffset = Math.min(180, Math.max(112, Math.round(mapSize.x * 0.24)));
+    const verticalOffset = Math.min(140, Math.max(76, Math.round(mapSize.y * 0.22)));
+
+    const layerPoint = map.latLngToLayerPoint(baseLatLng);
+    const offsetPoint = layerPoint.add(L.point(horizontalOffset, -verticalOffset));
+
+    return map.layerPointToLatLng(offsetPoint);
+  }
+
   function addPhotoMarker(target, id, label) {
     const info = storePhotoData[id];
     if (!info) {
       return;
     }
+
+    const displayLatLng = calculatePhotoMarkerLatLng(target);
 
     const photoIcon = L.divIcon({
       html: `
@@ -427,7 +448,7 @@
       popupAnchor: [0, -96],
     });
 
-    photoMarker = L.marker(target, {
+    photoMarker = L.marker(displayLatLng, {
       icon: photoIcon,
       interactive: true,
       keyboard: false,
@@ -464,9 +485,18 @@
 
     const mapWidth = mapElement.clientWidth || 0;
     const horizontalOffset = Math.min(220, Math.max(90, Math.round(mapWidth * 0.22)));
+    const placePhotoMarker = () => {
+      clearPendingPhotoPlacement();
+      addPhotoMarker(target, id, label);
+    };
+
+    clearPendingPhotoPlacement();
+    pendingPhotoPlacementTimer = setTimeout(placePhotoMarker, 2200);
 
     map.once('moveend', () => {
       map.panBy([-horizontalOffset, 0], { animate: true });
+
+      map.once('moveend', placePhotoMarker);
     });
 
     if (photoMarker) {
@@ -479,8 +509,6 @@
     updateMarkerSelection(id, { focusMarker });
 
     updateMenuLink(label, id);
-
-    addPhotoMarker(target, id, label);
   }
 
   storeData.forEach((store) => {
