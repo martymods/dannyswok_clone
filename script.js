@@ -2081,8 +2081,20 @@ document.addEventListener('DOMContentLoaded', () => {
           if (data && data.publishableKey) {
             publishableKey = data.publishableKey;
           }
-        } else {
+        } else if (response.status !== 404) {
           console.warn('Stripe config endpoint responded with status', response.status);
+        }
+
+        if (!publishableKey && response.status === 404) {
+          const fallbackResponse = await fetch('./stripe-config.json', { cache: 'no-store' });
+          if (fallbackResponse.ok) {
+            const fallbackData = await fallbackResponse.json();
+            if (fallbackData && fallbackData.publishableKey) {
+              publishableKey = fallbackData.publishableKey;
+            }
+          } else if (fallbackResponse.status !== 404) {
+            console.warn('Stripe fallback config responded with status', fallbackResponse.status);
+          }
         }
       } catch (error) {
         console.error('Failed to load Stripe configuration via API.', error);
