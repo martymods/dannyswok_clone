@@ -218,6 +218,7 @@
   let selectedButton = null;
   let photoOverlayState = null;
   let lastPhotoTrigger = null;
+  const markerRepositionClass = 'is-repositioned';
 
   function updateMarkerSelection(storeId, options = {}) {
     const { focusMarker = false } = options;
@@ -227,6 +228,7 @@
       const previousElement = previousMarker && previousMarker.getElement();
       if (previousElement) {
         previousElement.classList.remove('is-active');
+        previousElement.classList.remove(markerRepositionClass);
         previousElement.setAttribute('aria-pressed', 'false');
       }
     }
@@ -238,6 +240,7 @@
       const nextElement = nextMarker.getElement();
       if (nextElement) {
         nextElement.classList.add('is-active');
+        nextElement.classList.add(markerRepositionClass);
         nextElement.setAttribute('aria-pressed', 'true');
 
         if (focusMarker) {

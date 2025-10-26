@@ -2398,6 +2398,16 @@ body.landing-page.is-map-ready .leaflet-control-container {
   transform: translateY(-4px) scale(1.03);
 }
 
+.store-marker-wrapper.is-active.is-repositioned {
+  transform: translate3d(-88px, -8px, 0) scale(1.03);
+}
+
+@media (max-width: 720px) {
+  .store-marker-wrapper.is-active.is-repositioned {
+    transform: translate3d(-8px, -108px, 0) scale(1.03);
+  }
+}
+
 .store-marker-wrapper:focus-visible {
   box-shadow: none;
 }
