@@ -9,6 +9,8 @@ This project now includes a Stripe-powered checkout experience that supports sta
    npm install
    ```
 2. Create a `.env` file based on `.env.example` and supply your `STRIPE_SECRET_KEY` and `STRIPE_PUBLISHABLE_KEY` values.
+   - If you are deploying the static files without the Node.js server, place your publishable key inside `stripe-config.json` to
+     avoid missing configuration errors in the browser.
 3. Start the local server:
    ```bash
    npm start
