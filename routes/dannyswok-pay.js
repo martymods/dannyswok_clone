@@ -79,6 +79,37 @@ function sanitizeMetadata(raw) {
   return Object.keys(metadata).length ? metadata : undefined;
 }
 
+const SESSION_METADATA_EXCLUDE_KEYS = new Set([
+  'subtotal',
+  'tip',
+  'express_fee',
+  'delivery_fee',
+  'processing_fee',
+  'fees_estimated_tax',
+  'tax',
+  'total',
+]);
+
+function filterCheckoutSessionMetadata(metadata) {
+  if (!metadata || typeof metadata !== 'object') {
+    return undefined;
+  }
+
+  const filtered = {};
+  Object.entries(metadata).forEach(([key, value]) => {
+    if (!key) {
+      return;
+    }
+    const normalizedKey = String(key).trim().toLowerCase();
+    if (!normalizedKey || SESSION_METADATA_EXCLUDE_KEYS.has(normalizedKey)) {
+      return;
+    }
+    filtered[key] = value;
+  });
+
+  return Object.keys(filtered).length ? filtered : undefined;
+}
+
 function sanitizeEmail(value) {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
@@ -466,8 +497,11 @@ function createDannysWokPayRouter({ stripe, allowedOrigins = [], menuOrigin = nu
       phone_number_collection: { enabled: true },
     };
 
+    const checkoutMetadata = filterCheckoutSessionMetadata(metadata);
+    if (checkoutMetadata) {
+      sessionParams.metadata = checkoutMetadata;
+    }
     if (metadata) {
-      sessionParams.metadata = metadata;
       sessionParams.payment_intent_data = { metadata };
     }
 
