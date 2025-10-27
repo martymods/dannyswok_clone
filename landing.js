@@ -1,7 +1,111 @@
-(function () {
+(async function () {
   const hoverSound = typeof Audio === 'function' ? new Audio('audio/scroll_hover_over_sound.mp3') : null;
   const storeSelectSound = typeof Audio === 'function' ? new Audio('audio/ui_map_nav.mp3') : null;
   const analyticsApi = window.DannysAnalytics || null;
+
+  const DEFAULT_STORES = [
+    {
+      id: 'southwest',
+      label: 'Southwest',
+      address: "5750 BALTIMORE AVE, PHILADELPHIA PA 19143",
+      shortAddress: '5750 BALTIMORE AVE',
+      phone: '215-471-9020',
+      latitude: 39.94346,
+      longitude: -75.23863,
+    },
+    {
+      id: 'olney',
+      label: 'One & Olney Plaza',
+      address: '5675 N Front St Unit 280, PHILADELPHIA, PA, 19120',
+      shortAddress: '5675 N FRONT',
+      phone: '215-276-8885',
+      latitude: 40.039947,
+      longitude: -75.122995,
+    },
+    {
+      id: 'hunting-park',
+      label: 'Hunting Park',
+      address: '4322 North Broad Street, Philadelphia, PA 19140',
+      shortAddress: '4322 NORTH BROAD STREET',
+      phone: '267-331-6699',
+      latitude: 40.016985,
+      longitude: -75.145408,
+    },
+  ];
+
+  function normalizeStoreRecord(store) {
+    const id = String(store.id || store.label || '').trim().toLowerCase();
+    return {
+      id: id || 'store',
+      label: store.label || store.shortAddress || store.address || 'Store',
+      address: store.address || store.shortAddress || store.label || '',
+      shortAddress: store.shortAddress || store.address || store.label || '',
+      phone: store.phone || '',
+      latitude: Number(store.latitude),
+      longitude: Number(store.longitude),
+    };
+  }
+
+  async function loadStoreData() {
+    try {
+      const response = await fetch('/api/menu/stores', { cache: 'no-store' });
+      if (response.ok) {
+        const data = await response.json();
+        if (data && Array.isArray(data.stores) && data.stores.length) {
+          return data.stores.map((store) => normalizeStoreRecord(store));
+        }
+      }
+    } catch (error) {
+      // Ignore fetch errors and fall back to default store data.
+    }
+    return DEFAULT_STORES.map((store) => normalizeStoreRecord(store));
+  }
+
+  function renderStoreCards(stores, container) {
+    if (!container) {
+      return [];
+    }
+    container.innerHTML = '';
+    const records = stores.map((store) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'store-card';
+      button.setAttribute('role', 'listitem');
+      button.dataset.id = store.id;
+      button.dataset.label = store.label;
+      button.dataset.lat = String(store.latitude);
+      button.dataset.lng = String(store.longitude);
+
+      const heading = document.createElement('h2');
+      heading.textContent = store.address;
+
+      const tag = document.createElement('p');
+      tag.className = 'store-card__tag';
+      tag.textContent = `(${store.label})`;
+
+      const phone = document.createElement('p');
+      phone.className = 'store-card__phone';
+      phone.innerHTML = 'Phone: <span></span>';
+      const phoneSpan = phone.querySelector('span');
+      if (phoneSpan) {
+        phoneSpan.textContent = store.phone || '—';
+      }
+
+      const cta = document.createElement('span');
+      cta.className = 'store-card__cta';
+      cta.textContent = 'Enter »»';
+
+      button.appendChild(heading);
+      button.appendChild(tag);
+      button.appendChild(phone);
+      button.appendChild(cta);
+
+      container.appendChild(button);
+
+      return { ...store, button };
+    });
+    return records;
+  }
 
   if (analyticsApi) {
     analyticsApi.sendEvent('page_view', { page: 'landing' }, { keepalive: true });
@@ -119,28 +223,22 @@
   if (!loadingScreen && pageBody) {
     pageBody.classList.add('is-map-ready');
   }
-  const storeButtons = Array.from(document.querySelectorAll('.store-card'));
+  const storeListElement = document.getElementById('store-list');
   const enterMenuLink = document.getElementById('enter-menu-link');
-  const storeData = storeButtons
-    .map((button) => {
-      const lat = Number(button.dataset.lat);
-      const lng = Number(button.dataset.lng);
-      const label = button.dataset.label || button.textContent.trim();
-      const id = button.dataset.id || label.toLowerCase();
-
-      if (!Number.isFinite(lat) || !Number.isFinite(lng) || !id) {
-        return null;
-      }
-
-      return {
-        id,
-        label,
-        lat,
-        lng,
-        button,
-      };
-    })
-    .filter(Boolean);
+  const stores = await loadStoreData();
+  const storeRecords = renderStoreCards(stores, storeListElement);
+  const storeButtons = storeRecords.map((record) => record.button);
+  const storeData = storeRecords
+    .map((record) => ({
+      id: record.id,
+      label: record.label,
+      lat: record.latitude,
+      lng: record.longitude,
+      button: record.button,
+      address: record.address,
+      phone: record.phone,
+    }))
+    .filter((record) => Number.isFinite(record.lat) && Number.isFinite(record.lng));
   const storePhotoData = {
     southwest: {
       src: 'images/baltimore_store.png',

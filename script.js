@@ -45,26 +45,91 @@ function resolveApiBase() {
 
 const API_BASE = resolveApiBase();
 
-const STORE_LOCATIONS = {
-  southwest: {
+const DEFAULT_STORE_DATA = [
+  {
+    id: 'southwest',
     shortAddress: '5750 BALTIMORE AVE',
     label: 'Southwest',
     latitude: 39.94346,
     longitude: -75.23863,
   },
-  olney: {
+  {
+    id: 'olney',
     shortAddress: '5675 N FRONT',
     label: 'One & Olney Plaza',
     latitude: 40.039947,
     longitude: -75.122995,
   },
-  'hunting-park': {
+  {
+    id: 'hunting-park',
     shortAddress: '4322 NORTH BROAD STREET',
     label: 'Hunting Park',
     latitude: 40.016985,
     longitude: -75.145408,
   },
-};
+];
+
+const storeDataById = new Map();
+let storeData = [];
+
+function applyStoreData(stores) {
+  if (!Array.isArray(stores) || !stores.length) {
+    storeData = DEFAULT_STORE_DATA.map((store) => ({ ...store }));
+  } else {
+    storeData = stores.map((store) => ({ ...store, id: String(store.id || store.label || '').trim().toLowerCase() }));
+  }
+  storeDataById.clear();
+  storeData.forEach((store) => {
+    if (store.id) {
+      storeDataById.set(store.id, store);
+    }
+  });
+}
+
+applyStoreData(DEFAULT_STORE_DATA);
+
+let storeDataLoaded = false;
+let storeDataPromise = null;
+
+function getStoreById(storeId) {
+  if (!storeId) {
+    return null;
+  }
+  const normalized = String(storeId).trim().toLowerCase();
+  return storeDataById.get(normalized) || null;
+}
+
+function getStoreList() {
+  return storeData.slice();
+}
+
+async function fetchStoreDataFromApi() {
+  try {
+    const response = await fetch('/api/menu/stores', { cache: 'no-store' });
+    if (response.ok) {
+      const data = await response.json();
+      if (data && Array.isArray(data.stores) && data.stores.length) {
+        applyStoreData(data.stores);
+      }
+    }
+  } catch (error) {
+    // Ignore fetch errors and continue using the default store data.
+  }
+  storeDataLoaded = true;
+  return storeData;
+}
+
+function ensureStoreDataLoaded() {
+  if (storeDataLoaded) {
+    return Promise.resolve(storeData);
+  }
+  if (!storeDataPromise) {
+    storeDataPromise = fetchStoreDataFromApi().finally(() => {
+      storeDataPromise = null;
+    });
+  }
+  return storeDataPromise;
+}
 
 const STATE_SALES_TAX_RATE = 0.09;
 const ORDER_PROCESSING_FEE = 2;
@@ -209,7 +274,7 @@ function applyLocationToFormFields(location, { overwrite = false } = {}) {
 }
 
 function getActiveStore() {
-  return activeStoreId ? STORE_LOCATIONS[activeStoreId] || null : null;
+  return activeStoreId ? getStoreById(activeStoreId) : null;
 }
 
 function setActiveStore(storeId) {
@@ -607,9 +672,7 @@ function normalizeStoreId(storeId) {
   }
 
   const normalized = String(storeId).trim().toLowerCase();
-  return Object.prototype.hasOwnProperty.call(STORE_LOCATIONS, normalized)
-    ? normalized
-    : null;
+  return storeDataById.has(normalized) ? normalized : null;
 }
 
 function applySelectedStoreFromQuery() {
@@ -621,10 +684,10 @@ function applySelectedStoreFromQuery() {
 
   const params = new URLSearchParams(window.location.search);
   const matchedStoreId = normalizeStoreId(params.get('store'));
+  const matchedStore = matchedStoreId ? getStoreById(matchedStoreId) : null;
 
-  if (matchedStoreId) {
-    const { shortAddress } = STORE_LOCATIONS[matchedStoreId];
-    addressElement.textContent = shortAddress;
+  if (matchedStoreId && matchedStore) {
+    addressElement.textContent = matchedStore.shortAddress || matchedStore.label || matchedStoreId;
     displayWrapper.dataset.storeId = matchedStoreId;
     displayWrapper.classList.remove('menu-header__selected-store--empty');
     setActiveStore(matchedStoreId);
@@ -945,7 +1008,17 @@ const manualImageMap = {
   '100_wing_dings': 'images/chinesemenu/party_tray_chicken_wings.jpg',
 };
 
-function findImageForItem(name) {
+function findImageForItem(name, id = null) {
+  if (id) {
+    const override = menuItemOverrides.get(id);
+    if (override?.image) {
+      return override.image;
+    }
+    const item = menuItemsById.get(id);
+    if (item?.overrideImage) {
+      return item.overrideImage;
+    }
+  }
   const key = sanitizeKey(name);
   if (manualImageMap[key]) {
     return manualImageMap[key];
@@ -999,7 +1072,7 @@ const categoryDescriptions = {
 // Define the menu data.  Each category has a unique id, a name and a list
 // of items.  Each item contains an id, a name, an optional description and
 // a price in dollars.  When adding new items be sure to assign unique ids.
-const menuData = [
+const DEFAULT_MENU_DATA = [
   {
     id: 'american',
     name: 'American Dishes',
@@ -1300,13 +1373,137 @@ const menuData = [
 ];
 
 const menuItemsById = new Map();
-menuData.forEach((category) => {
-  category.items.forEach((item) => {
-    if (!menuItemsById.has(item.id)) {
-      menuItemsById.set(item.id, item);
+const menuItemOverrides = new Map();
+let menuData = [];
+let menuDataLoaded = false;
+let menuDataPromise = null;
+
+function normalizeMenuData(data) {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+  return data.map((category) => ({
+    ...category,
+    items: Array.isArray(category?.items)
+      ? category.items.map((item) => {
+          const copy = { ...item };
+          const parsedPrice = Number(copy.price);
+          const normalizedPrice = Number.isFinite(parsedPrice) ? Math.round(parsedPrice * 100) / 100 : 0;
+          copy.basePrice = normalizedPrice;
+          copy.price = normalizedPrice;
+          return copy;
+        })
+      : [],
+  }));
+}
+
+function refreshMenuItemsIndex() {
+  menuItemsById.clear();
+  menuData.forEach((category) => {
+    if (!Array.isArray(category.items)) {
+      return;
     }
+    category.items.forEach((item) => {
+      if (!item || typeof item !== 'object' || !item.id) {
+        return;
+      }
+      const basePrice = Number.isFinite(item.basePrice) ? item.basePrice : Number(item.price);
+      item.basePrice = Number.isFinite(basePrice) ? Math.round(basePrice * 100) / 100 : 0;
+      item.price = item.basePrice;
+      const override = menuItemOverrides.get(item.id);
+      if (override) {
+        if (typeof override.price === 'number' && override.price > 0) {
+          item.price = Math.round(override.price * 100) / 100;
+        }
+        if (override.image) {
+          item.overrideImage = override.image;
+        } else {
+          delete item.overrideImage;
+        }
+      } else {
+        delete item.overrideImage;
+      }
+      if (!menuItemsById.has(item.id)) {
+        menuItemsById.set(item.id, item);
+      }
+    });
   });
-});
+}
+
+function setMenuDataFromSource(source) {
+  menuData = normalizeMenuData(source);
+  refreshMenuItemsIndex();
+}
+
+function setMenuOverridesFromData(data) {
+  menuItemOverrides.clear();
+  if (data && data.items && typeof data.items === 'object') {
+    Object.entries(data.items).forEach(([id, override]) => {
+      if (!id || !override || typeof override !== 'object') {
+        return;
+      }
+      const normalizedId = String(id).trim();
+      if (!normalizedId) {
+        return;
+      }
+      const entry = {};
+      if (typeof override.price === 'number' && override.price > 0) {
+        entry.price = Math.round(override.price * 100) / 100;
+      }
+      if (override.image && typeof override.image === 'string') {
+        entry.image = override.image;
+      }
+      if (Object.keys(entry).length) {
+        menuItemOverrides.set(normalizedId, entry);
+      }
+    });
+  }
+  if (menuData.length) {
+    refreshMenuItemsIndex();
+  }
+}
+
+async function fetchMenuDataFromApi() {
+  try {
+    const response = await fetch('data/menu-data.json', { cache: 'no-store' });
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data) && data.length) {
+        setMenuDataFromSource(data);
+      }
+    }
+  } catch (error) {
+    // Ignore fetch errors and fall back to the default menu data.
+  }
+  if (!menuData.length) {
+    setMenuDataFromSource(DEFAULT_MENU_DATA);
+  }
+  try {
+    const response = await fetch('/api/menu/overrides', { cache: 'no-store' });
+    if (response.ok) {
+      const overrides = await response.json();
+      setMenuOverridesFromData(overrides);
+    } else {
+      setMenuOverridesFromData(null);
+    }
+  } catch (error) {
+    setMenuOverridesFromData(null);
+  }
+  menuDataLoaded = true;
+  return menuData;
+}
+
+function ensureMenuDataLoaded() {
+  if (menuDataLoaded) {
+    return Promise.resolve(menuData);
+  }
+  if (!menuDataPromise) {
+    menuDataPromise = fetchMenuDataFromApi().finally(() => {
+      menuDataPromise = null;
+    });
+  }
+  return menuDataPromise;
+}
 
 function findMenuItemById(id) {
   return menuItemsById.get(id) || null;
@@ -1722,6 +1919,14 @@ function renderMenu() {
   tabList.innerHTML = '';
   tabContent.innerHTML = '';
 
+  if (!menuData.length) {
+    const message = document.createElement('p');
+    message.classList.add('menu-empty');
+    message.textContent = "We're updating the menu. Please check back soon.";
+    tabContent.appendChild(message);
+    return;
+  }
+
   menuData.forEach((category, catIndex) => {
     const navItem = document.createElement('li');
     navItem.classList.add('nav-item');
@@ -1757,7 +1962,7 @@ function renderMenu() {
       singleMenu.classList.add('single_menu');
 
       const img = document.createElement('img');
-      const matchedImage = findImageForItem(item.name);
+      const matchedImage = findImageForItem(item.name, item.id);
       img.src = matchedImage || fallbackImage;
       img.alt = item.name;
 
@@ -1870,7 +2075,7 @@ function buildHeroCarousel() {
   const randomizedItems = shuffleArray(items);
   const slides = randomizedItems.map((item) => ({
     item,
-    image: findImageForItem(item.name) || fallbackImage,
+    image: findImageForItem(item.name, item.id) || fallbackImage,
   }));
 
   const pointerCoarse = window.matchMedia('(pointer: coarse)');
@@ -2266,7 +2471,7 @@ function updateCheckoutView() {
     wrapper.classList.add('checkout-item');
 
     const image = document.createElement('img');
-    image.src = findImageForItem(item.name) || fallbackImage;
+    image.src = findImageForItem(item.name, id) || fallbackImage;
     image.alt = item.name;
 
     const details = document.createElement('div');
@@ -2465,10 +2670,11 @@ function updateCheckoutView() {
 }
 
 // Kick off the rendering once the DOM has loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   if (analyticsApi) {
     trackEvent('page_view', { page: 'menu' }, { keepalive: true });
   }
+  await Promise.all([ensureStoreDataLoaded(), ensureMenuDataLoaded()]);
   applySelectedStoreFromQuery();
   loadCachedDeliveryLocation();
   if (analyticsApi?.ensureProfile) {
@@ -3075,6 +3281,12 @@ function buildOrderDetailsForPayment() {
     order.items.slice(0, 5).forEach((item, index) => {
       metadata[`item_${index + 1}`] = `${item.quantity}x ${item.name}`;
     });
+    if (typeof analyticsApi?.getTrackingId === 'function') {
+      const trackingId = analyticsApi.getTrackingId();
+      if (trackingId) {
+        metadata.tracking_id = trackingId;
+      }
+    }
     return metadata;
   }
 

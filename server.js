@@ -5,6 +5,8 @@ require('dotenv').config();
 
 const createDannysWokPayRouter = require('./routes/dannyswok-pay');
 const createAnalyticsRouter = require('./routes/analytics');
+const createMenuRouter = require('./routes/menu');
+const createAdminRouter = require('./routes/admin');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -39,9 +41,11 @@ const DANNYSWOK_ALLOWED_ORIGINS = parsedDannysWokAllowedOrigins.length
   : DEFAULT_DANNYSWOK_ALLOWED_ORIGINS;
 const DANNYSWOK_MENU_ORIGIN = process.env.DANNYSWOK_MENU_ORIGIN || null;
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname)));
 
+app.use('/api/menu', createMenuRouter());
+app.use('/api/admin', createAdminRouter());
 app.use(
   '/api/dannyswok',
   createDannysWokPayRouter({
