@@ -3,13 +3,30 @@ const express = require('express');
 const Stripe = require('stripe');
 require('dotenv').config();
 
+const createDannysWokPayRouter = require('./routes/dannyswok-pay');
+
 const app = express();
 const port = process.env.PORT || 3000;
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: '2024-06-20' }) : null;
 
+const DANNYSWOK_ALLOWED_ORIGINS = (process.env.DANNYSWOK_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const DANNYSWOK_MENU_ORIGIN = process.env.DANNYSWOK_MENU_ORIGIN || null;
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
+
+app.use(
+  '/api/dannyswok',
+  createDannysWokPayRouter({
+    stripe,
+    allowedOrigins: DANNYSWOK_ALLOWED_ORIGINS,
+    menuOrigin: DANNYSWOK_MENU_ORIGIN,
+  }),
+);
 
 app.get('/api/config', (req, res) => {
   const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
@@ -52,6 +69,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
       paymentIntentId: paymentIntent.id,
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Failed to create payment intent', error);
     return res.status(500).json({ message: 'Unable to create payment intent.' });
   }

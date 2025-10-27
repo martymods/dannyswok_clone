@@ -13,6 +13,38 @@ const fallbackImage = 'images/chinesemenu/store_interior.jpg';
 const cartAddSound = typeof Audio === 'function' ? new Audio('audio/wok_register.mp3') : null;
 const hoverSound = typeof Audio === 'function' ? new Audio('audio/scroll_hover_over_sound.mp3') : null;
 
+function resolveApiBase() {
+  const globalObject = typeof window !== 'undefined' ? window : globalThis;
+  if (globalObject && typeof globalObject.DELCO_BACKEND_BASE === 'string') {
+    const candidate = globalObject.DELCO_BACKEND_BASE.trim();
+    if (candidate) {
+      return candidate;
+    }
+  }
+  if (globalObject && typeof globalObject.DANNYS_WOK_BACKEND_BASE === 'string') {
+    const candidate = globalObject.DANNYS_WOK_BACKEND_BASE.trim();
+    if (candidate) {
+      return candidate;
+    }
+  }
+  if (globalObject && typeof globalObject.DANNYSWOK_BACKEND_BASE === 'string') {
+    const candidate = globalObject.DANNYSWOK_BACKEND_BASE.trim();
+    if (candidate) {
+      return candidate;
+    }
+  }
+  const origin = globalObject?.location?.origin;
+  if (typeof origin === 'string' && origin.trim()) {
+    const trimmedOrigin = origin.trim();
+    if (/localhost|127\.0\.0\.1|::1/.test(trimmedOrigin)) {
+      return trimmedOrigin;
+    }
+  }
+  return 'https://www.delcotechdivision.com';
+}
+
+const API_BASE = resolveApiBase();
+
 const STORE_LOCATIONS = {
   southwest: {
     shortAddress: '5750 BALTIMORE AVE',
@@ -2096,12 +2128,16 @@ document.addEventListener('DOMContentLoaded', () => {
       throw new Error('stripe-config.json missing "publishableKey".');
     }
 
-    return { publishableKey: data.publishableKey.trim() };
+    return {
+      publishableKey: data.publishableKey.trim(),
+      menuOrigin: null,
+      allowedOrigins: [],
+    };
   }
 
   async function loadStripeConfigFromApi() {
     try {
-      const response = await fetch('/api/config', { cache: 'no-store' });
+      const response = await fetch(`${API_BASE}/api/dannyswok/config`, { cache: 'no-store', credentials: 'include' });
       if (!response.ok) {
         throw new Error(`Request failed with status ${response.status}`);
       }
@@ -2112,13 +2148,33 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const data = JSON.parse(text);
-      if (!data || typeof data.publishableKey !== 'string' || !data.publishableKey.trim()) {
+      const publishableKeyCandidates = [
+        data?.publishableKey,
+        data?.stripePublishableKey,
+        data?.stripePk,
+      ];
+      const publishableKey = publishableKeyCandidates.find(
+        (value) => typeof value === 'string' && value.trim(),
+      );
+
+      if (!publishableKey) {
         throw new Error('Missing "publishableKey" in response body.');
       }
 
-      return { publishableKey: data.publishableKey.trim() };
+      const menuOrigin = typeof data?.menuOrigin === 'string' && data.menuOrigin.trim()
+        ? data.menuOrigin.trim()
+        : null;
+      const allowedOrigins = Array.isArray(data?.allowedOrigins)
+        ? data.allowedOrigins.filter((origin) => typeof origin === 'string' && origin.trim()).map((origin) => origin.trim())
+        : [];
+
+      return {
+        publishableKey: publishableKey.trim(),
+        menuOrigin,
+        allowedOrigins,
+      };
     } catch (error) {
-      throw new Error(`/api/config unavailable: ${error.message}`);
+      throw new Error(`/api/dannyswok/config unavailable: ${error.message}`);
     }
   }
 
@@ -2139,7 +2195,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!allowApiFallback) {
           throw jsonError;
         }
-        console.debug('stripe-config.json not available, attempting /api/config instead.', jsonError);
+        console.debug('stripe-config.json not available, attempting /api/dannyswok/config instead.', jsonError);
       }
     }
 
@@ -2151,7 +2207,7 @@ document.addEventListener('DOMContentLoaded', () => {
         throw apiError;
       }
 
-      console.debug('/api/config unavailable, attempting stripe-config.json instead.', apiError);
+      console.debug('/api/dannyswok/config unavailable, attempting stripe-config.json instead.', apiError);
       cachedStripeConfig = await loadStripeConfigFromJson();
       return cachedStripeConfig;
     }
@@ -2369,9 +2425,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!Number.isFinite(amount) || amount <= 0) {
       throw new Error('Your cart total must be greater than zero.');
     }
-    const response = await fetch('/api/create-payment-intent', {
+    const response = await fetch(`${API_BASE}/api/dannyswok/create-payment-intent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({
         amount,
         currency: 'usd',
@@ -2381,11 +2438,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     const data = await response.json();
     if (!response.ok || !data.clientSecret) {
-      throw new Error(data.message || 'Unable to start payment.');
+      throw new Error(data.message || data.error || 'Unable to start payment.');
     }
     currentPaymentIntent = {
       clientSecret: data.clientSecret,
-      id: data.paymentIntentId,
+      id: data.paymentIntentId || data.id,
       amount,
     };
   }
