@@ -8,6 +8,7 @@
   <link rel="icon" type="image/png" href="images/favi.png">
   <meta property="og:image" content="images/link_image.png">
   <meta name="twitter:image" content="images/link_image.png">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -143,6 +144,10 @@
             <label for="delivery-phone">Phone number</label>
             <input type="tel" id="delivery-phone" name="delivery-phone" autocomplete="tel" placeholder="(555) 555-5555">
           </div>
+          <div class="delivery-map-container hidden" id="delivery-map-container">
+            <div class="delivery-map" id="delivery-map" aria-label="Delivery map showing store and dropoff locations"></div>
+            <p id="delivery-distance-summary" class="delivery-distance-summary"></p>
+          </div>
           <div class="field">
             <label for="delivery-address">Address</label>
             <input type="text" id="delivery-address" name="delivery-address" autocomplete="street-address" placeholder="Street address">
@@ -225,9 +230,21 @@
           <span>Subtotal</span>
           <strong id="checkout-subtotal-amount">$0.00</strong>
         </div>
-        <div class="checkout-total-row hidden" id="delivery-fee-row">
+        <div class="checkout-total-row" id="processing-fee-row">
+          <span>Processing fee</span>
+          <strong id="processing-fee-amount">$0.00</strong>
+        </div>
+        <div class="checkout-total-row" id="tax-total-row">
+          <span>Sales tax (9%)</span>
+          <strong id="tax-amount">$0.00</strong>
+        </div>
+        <div class="checkout-total-row hidden" id="delivery-distance-row">
+          <span>Delivery fee</span>
+          <strong id="delivery-distance-amount">$0.00</strong>
+        </div>
+        <div class="checkout-total-row hidden" id="express-fee-row">
           <span>Express delivery fee</span>
-          <strong id="delivery-fee-amount">$3.00</strong>
+          <strong id="express-fee-amount">$3.00</strong>
         </div>
         <div class="checkout-total-row" id="tip-total-row">
           <span>Tip</span>
@@ -278,6 +295,8 @@
     </div>
   </div>
   <script src="https://js.stripe.com/v3"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="analytics-client.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

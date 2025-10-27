@@ -158,6 +158,32 @@ function buildCheckoutLineItems(order) {
     totalCents += lineTotal;
   });
 
+  const processingCents = toCurrencyCents(order?.processingFee);
+  if (processingCents) {
+    lineItems.push({
+      price_data: {
+        currency: 'usd',
+        product_data: { name: 'Processing fee' },
+        unit_amount: processingCents,
+      },
+      quantity: 1,
+    });
+    totalCents += processingCents;
+  }
+
+  const deliveryCents = toCurrencyCents(order?.deliveryFee);
+  if (deliveryCents) {
+    lineItems.push({
+      price_data: {
+        currency: 'usd',
+        product_data: { name: 'Delivery fee' },
+        unit_amount: deliveryCents,
+      },
+      quantity: 1,
+    });
+    totalCents += deliveryCents;
+  }
+
   const tipCents = toCurrencyCents(order?.tipAmount);
   if (tipCents) {
     lineItems.push({
@@ -182,6 +208,19 @@ function buildCheckoutLineItems(order) {
       quantity: 1,
     });
     totalCents += expressCents;
+  }
+
+  const taxCents = toCurrencyCents(order?.taxAmount);
+  if (taxCents) {
+    lineItems.push({
+      price_data: {
+        currency: 'usd',
+        product_data: { name: 'Sales tax' },
+        unit_amount: taxCents,
+      },
+      quantity: 1,
+    });
+    totalCents += taxCents;
   }
 
   return { lineItems, totalCents };

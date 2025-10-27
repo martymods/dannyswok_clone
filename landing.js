@@ -1,6 +1,11 @@
 (function () {
   const hoverSound = typeof Audio === 'function' ? new Audio('audio/scroll_hover_over_sound.mp3') : null;
   const storeSelectSound = typeof Audio === 'function' ? new Audio('audio/ui_map_nav.mp3') : null;
+  const analyticsApi = window.DannysAnalytics || null;
+
+  if (analyticsApi) {
+    analyticsApi.sendEvent('page_view', { page: 'landing' }, { keepalive: true });
+  }
 
   if (hoverSound) {
     hoverSound.preload = 'auto';
@@ -574,7 +579,7 @@
   }
 
   function selectStore(button, options = {}) {
-    const { focusMarker = false } = options;
+    const { focusMarker = false, source = 'list' } = options;
     const lat = Number(button.dataset.lat);
     const lng = Number(button.dataset.lng);
     const label = button.dataset.label || 'selected';
@@ -627,6 +632,21 @@
     updateMarkerSelection(id, { focusMarker });
 
     updateMenuLink(label, id);
+
+    if (analyticsApi) {
+      analyticsApi.ensureProfile({ storeId: id, storeLabel: label, storeLat: lat, storeLng: lng });
+      analyticsApi.sendEvent(
+        'store_selected',
+        {
+          storeId: id,
+          storeLabel: label,
+          latitude: lat,
+          longitude: lng,
+          source,
+        },
+        { ensureProfile: true }
+      );
+    }
   }
 
   storeData.forEach((store) => {
@@ -642,7 +662,7 @@
     markersById.set(store.id, marker);
 
     marker.on('click', () => {
-      selectStore(store.button, { focusMarker: true });
+      selectStore(store.button, { focusMarker: true, source: 'map' });
     });
 
     marker.on('add', () => {
@@ -675,15 +695,26 @@
 
   storeButtons.forEach((button) => {
     button.addEventListener('click', () => {
-      selectStore(button);
+      selectStore(button, { source: 'list' });
     });
     button.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        selectStore(button);
+        selectStore(button, { source: 'keyboard' });
       }
     });
   });
+
+  if (enterMenuLink && analyticsApi) {
+    enterMenuLink.addEventListener('click', () => {
+      const url = new URL(enterMenuLink.href, window.location.origin);
+      analyticsApi.sendEvent(
+        'menu_cta_clicked',
+        { href: url.pathname + url.search },
+        { keepalive: true }
+      );
+    });
+  }
 
   window.addEventListener('resize', () => {
     map.invalidateSize();
