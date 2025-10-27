@@ -2453,7 +2453,16 @@ document.addEventListener('DOMContentLoaded', () => {
         metadata: buildPaymentMetadata(order),
       }),
     });
-    const data = await response.json();
+    const rawBody = await response.text();
+    if (!rawBody || !rawBody.trim()) {
+      throw new Error('Payment service returned an invalid response (empty body).');
+    }
+    let data;
+    try {
+      data = JSON.parse(rawBody);
+    } catch (error) {
+      throw new Error('Payment service returned an invalid response (malformed JSON).');
+    }
     if (!response.ok || !data.clientSecret) {
       throw new Error(data.message || data.error || 'Unable to start payment.');
     }
