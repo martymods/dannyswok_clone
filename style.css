@@ -2830,6 +2830,18 @@ body.modal-open {
 
 .payment-request-button-wrapper {
   margin-top: 4px;
+  width: 100%;
+}
+
+.payment-request-button-wrapper .StripeElement {
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.payment-request-button-wrapper[data-wallet-brand='apple-pay'] .StripeElement {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .payment-request-button-wrapper.hidden {

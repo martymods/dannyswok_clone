@@ -2057,6 +2057,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const paymentStatusEl = document.getElementById('payment-status');
   const paymentRequestWrapper = document.getElementById('payment-request-button-wrapper');
   const walletHint = document.getElementById('wallet-hint');
+  const defaultWalletHintMessage = walletHint ? walletHint.textContent : '';
   const cardholderNameInput = document.getElementById('cardholder-name');
   const cardholderEmailInput = document.getElementById('cardholder-email');
   const stripeCardElementContainer = document.getElementById('stripe-card-element');
@@ -2541,30 +2542,56 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       paymentRequest.canMakePayment().then((result) => {
-        walletAvailable = Boolean(result);
+        const walletBrand = result && result.applePay ? 'apple-pay' : result && result.googlePay ? 'google-pay' : null;
+        walletAvailable = Boolean(walletBrand);
         if (walletAvailable) {
+          if (paymentRequestWrapper) {
+            const existingBrand = paymentRequestWrapper.getAttribute('data-wallet-brand');
+            if (existingBrand !== walletBrand && paymentRequestButton) {
+              if (typeof paymentRequestButton.unmount === 'function') {
+                paymentRequestButton.unmount();
+              }
+              if (typeof paymentRequestButton.destroy === 'function') {
+                paymentRequestButton.destroy();
+              }
+              paymentRequestButton = null;
+            }
+          }
           if (!paymentRequestButton) {
+            const buttonStyle = {
+              paymentRequestButton: {
+                theme: walletBrand === 'apple-pay' ? 'black' : 'dark',
+                height: '48px',
+                type: walletBrand === 'apple-pay' ? 'pay' : 'default',
+              },
+            };
             paymentRequestButton = stripeElements.create('paymentRequestButton', {
               paymentRequest,
-              style: {
-                paymentRequestButton: {
-                  theme: 'dark',
-                  height: '48px',
-                },
-              },
+              style: buttonStyle,
             });
             paymentRequestButton.mount(paymentRequestWrapper);
           }
-          paymentRequestWrapper.classList.remove('hidden');
-          paymentRequestWrapper.setAttribute('aria-hidden', 'false');
+          if (paymentRequestWrapper) {
+            paymentRequestWrapper.dataset.walletBrand = walletBrand;
+            paymentRequestWrapper.classList.remove('hidden');
+            paymentRequestWrapper.setAttribute('aria-hidden', 'false');
+          }
           if (walletHint) {
+            walletHint.textContent =
+              walletBrand === 'apple-pay'
+                ? 'Pay instantly with Apple Pay using your saved cards.'
+                : 'Pay instantly with Google Pay using your saved cards.';
             walletHint.classList.remove('hidden');
             walletHint.setAttribute('aria-hidden', 'false');
           }
         } else {
-          paymentRequestWrapper.classList.add('hidden');
-          paymentRequestWrapper.setAttribute('aria-hidden', 'true');
+          if (paymentRequestWrapper) {
+            delete paymentRequestWrapper.dataset.walletBrand;
+            paymentRequestWrapper.classList.add('hidden');
+            paymentRequestWrapper.setAttribute('aria-hidden', 'true');
+          }
           if (walletHint) {
+            walletHint.textContent = defaultWalletHintMessage;
             walletHint.classList.add('hidden');
             walletHint.setAttribute('aria-hidden', 'true');
           }
@@ -2580,9 +2607,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!walletAvailable) {
-      paymentRequestWrapper.classList.add('hidden');
-      paymentRequestWrapper.setAttribute('aria-hidden', 'true');
+      if (paymentRequestWrapper) {
+        delete paymentRequestWrapper.dataset.walletBrand;
+        paymentRequestWrapper.classList.add('hidden');
+        paymentRequestWrapper.setAttribute('aria-hidden', 'true');
+      }
       if (walletHint) {
+        walletHint.textContent = defaultWalletHintMessage;
         walletHint.classList.add('hidden');
         walletHint.setAttribute('aria-hidden', 'true');
       }
