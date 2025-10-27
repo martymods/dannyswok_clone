@@ -2220,10 +2220,8 @@ function updateCheckoutView() {
   const deliveryDistanceAmount = document.getElementById('delivery-distance-amount');
   const expressFeeRow = document.getElementById('express-fee-row');
   const expressFeeAmount = document.getElementById('express-fee-amount');
-  const processingFeeRow = document.getElementById('processing-fee-row');
-  const processingFeeAmount = document.getElementById('processing-fee-amount');
-  const taxTotalRow = document.getElementById('tax-total-row');
-  const taxAmountEl = document.getElementById('tax-amount');
+  const feesTaxRow = document.getElementById('fees-tax-row');
+  const feesTaxAmount = document.getElementById('fees-tax-amount');
   if (!entries.length) {
     const empty = document.createElement('p');
     empty.classList.add('cart-empty');
@@ -2245,11 +2243,11 @@ function updateCheckoutView() {
     if (expressFeeRow) {
       expressFeeRow.classList.add('hidden');
     }
-    if (processingFeeAmount) {
-      processingFeeAmount.textContent = formatCurrency(0);
+    if (feesTaxAmount) {
+      feesTaxAmount.textContent = formatCurrency(0);
     }
-    if (taxAmountEl) {
-      taxAmountEl.textContent = formatCurrency(0);
+    if (feesTaxRow) {
+      feesTaxRow.classList.remove('hidden');
     }
     if (placeOrderBtn) {
       placeOrderBtn.disabled = true;
@@ -2444,19 +2442,14 @@ function updateCheckoutView() {
     }
   }
   const processingFee = ORDER_PROCESSING_FEE;
-  if (processingFeeAmount) {
-    processingFeeAmount.textContent = formatCurrency(processingFee);
-  }
-  if (processingFeeRow) {
-    processingFeeRow.classList.remove('hidden');
-  }
   const taxableAmount = subtotal + processingFee + (isDelivery ? deliveryFee : 0) + expressFee;
   const taxAmount = roundCurrency(taxableAmount * STATE_SALES_TAX_RATE);
-  if (taxAmountEl) {
-    taxAmountEl.textContent = formatCurrency(taxAmount);
+  const feesAndEstimatedTax = roundCurrency(processingFee + taxAmount);
+  if (feesTaxAmount) {
+    feesTaxAmount.textContent = formatCurrency(feesAndEstimatedTax);
   }
-  if (taxTotalRow) {
-    taxTotalRow.classList.remove('hidden');
+  if (feesTaxRow) {
+    feesTaxRow.classList.remove('hidden');
   }
   const grandTotal = roundCurrency(
     subtotal + processingFee + (isDelivery ? deliveryFee : 0) + expressFee + taxAmount + tipAmount,
@@ -3162,9 +3155,10 @@ function buildOrderDetailsForPayment() {
           `<li><span>${item.quantity}× ${item.name}</span><span>${formatCurrency(item.total)}</span></li>`,
       )
       .join('');
+    const feesAndEstimatedTax = roundCurrency(order.processingFee + order.taxAmount);
     const totals = [
       `<div><span>Subtotal</span><span>${formatCurrency(order.subtotal)}</span></div>`,
-      `<div><span>Processing fee</span><span>${formatCurrency(order.processingFee)}</span></div>`,
+      `<div><span>Fees &amp; Estimated Tax</span><span>${formatCurrency(feesAndEstimatedTax)}</span></div>`,
       order.deliveryFee > 0
         ? `<div><span>Delivery fee</span><span>${formatCurrency(order.deliveryFee)}</span></div>`
         : '',
@@ -3172,7 +3166,6 @@ function buildOrderDetailsForPayment() {
       order.expressFee > 0
         ? `<div><span>Express delivery</span><span>${formatCurrency(order.expressFee)}</span></div>`
         : '',
-      `<div><span>Sales tax</span><span>${formatCurrency(order.taxAmount)}</span></div>`,
       `<div class="payment-order-summary__grand"><span>Total</span><span>${formatCurrency(order.grandTotal)}</span></div>`,
     ]
       .filter(Boolean)

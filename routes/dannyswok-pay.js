@@ -159,16 +159,18 @@ function buildCheckoutLineItems(order) {
   });
 
   const processingCents = toCurrencyCents(order?.processingFee);
-  if (processingCents) {
+  const taxCents = toCurrencyCents(order?.taxAmount);
+  const feesAndTaxCents = (processingCents || 0) + (taxCents || 0);
+  if (feesAndTaxCents) {
     lineItems.push({
       price_data: {
         currency: 'usd',
-        product_data: { name: 'Processing fee' },
-        unit_amount: processingCents,
+        product_data: { name: 'Fees & Estimated Tax' },
+        unit_amount: feesAndTaxCents,
       },
       quantity: 1,
     });
-    totalCents += processingCents;
+    totalCents += feesAndTaxCents;
   }
 
   const deliveryCents = toCurrencyCents(order?.deliveryFee);
@@ -208,19 +210,6 @@ function buildCheckoutLineItems(order) {
       quantity: 1,
     });
     totalCents += expressCents;
-  }
-
-  const taxCents = toCurrencyCents(order?.taxAmount);
-  if (taxCents) {
-    lineItems.push({
-      price_data: {
-        currency: 'usd',
-        product_data: { name: 'Sales tax' },
-        unit_amount: taxCents,
-      },
-      quantity: 1,
-    });
-    totalCents += taxCents;
   }
 
   return { lineItems, totalCents };
