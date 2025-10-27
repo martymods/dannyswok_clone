@@ -138,6 +138,17 @@ function toCurrencyCents(value) {
   return cents > 0 ? cents : null;
 }
 
+function toNonNegativeCents(value) {
+  if (value === null || value === undefined) {
+    return 0;
+  }
+  const number = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(number) || number < 0) {
+    return null;
+  }
+  return Math.round(number * 100);
+}
+
 function toNonNegativeInteger(value) {
   if (value === null || value === undefined) {
     return 0;
@@ -168,6 +179,58 @@ function normalizeFeeMap(rawFees) {
     total += cents;
   }
   return { fees, total };
+}
+
+function normalizeOrderTotals(order) {
+  if (!order || typeof order !== 'object') {
+    return null;
+  }
+
+  const subtotalCents = toNonNegativeCents(order.subtotal);
+  if (subtotalCents === null || subtotalCents <= 0) {
+    return null;
+  }
+
+  const processingCents = toNonNegativeCents(order.processingFee);
+  if (processingCents === null) {
+    return null;
+  }
+
+  const taxCents = toNonNegativeCents(order.taxAmount);
+  if (taxCents === null) {
+    return null;
+  }
+
+  const deliveryCents = toNonNegativeCents(order.deliveryFee);
+  if (deliveryCents === null) {
+    return null;
+  }
+
+  const expressCents = toNonNegativeCents(order.expressFee);
+  if (expressCents === null) {
+    return null;
+  }
+
+  const tipCents = toNonNegativeCents(order.tipAmount);
+  if (tipCents === null) {
+    return null;
+  }
+
+  const computedTotal =
+    subtotalCents + processingCents + taxCents + deliveryCents + expressCents + tipCents;
+
+  const reportedTotalCents = toNonNegativeCents(order.grandTotal);
+
+  return {
+    subtotalCents,
+    processingCents,
+    taxCents,
+    deliveryCents,
+    expressCents,
+    tipCents,
+    computedTotal,
+    reportedTotalCents,
+  };
 }
 
 function sanitizeItemName(value) {
@@ -386,6 +449,7 @@ function createDannysWokPayRouter({ stripe, allowedOrigins = [], menuOrigin = nu
     }
 
     const hasBreakdown =
+      Object.prototype.hasOwnProperty.call(req.body || {}, 'order') ||
       Object.prototype.hasOwnProperty.call(req.body || {}, 'total') ||
       Object.prototype.hasOwnProperty.call(req.body || {}, 'subtotal') ||
       Object.prototype.hasOwnProperty.call(req.body || {}, 'fees') ||
@@ -393,35 +457,51 @@ function createDannysWokPayRouter({ stripe, allowedOrigins = [], menuOrigin = nu
 
     let amount = null;
     if (hasBreakdown) {
-      const subtotalCents = toNonNegativeInteger(req.body?.subtotal);
-      if (subtotalCents === null) {
-        return res.status(400).json({ error: 'invalid_subtotal' });
-      }
-
-      const { total: feesTotal, error: feeErrorKey } = normalizeFeeMap(req.body?.fees);
-      if (feeErrorKey) {
-        return res.status(400).json({
-          error: 'invalid_fee',
-          message: `Invalid fee amount for "${feeErrorKey}"`,
-        });
-      }
-
-      const computedTotal = subtotalCents + feesTotal;
-      if (!Number.isFinite(computedTotal) || computedTotal <= 0) {
-        return res.status(400).json({ error: 'invalid_total' });
-      }
-
-      const requestedTotal = toNonNegativeInteger(req.body?.total);
-      if (requestedTotal === null) {
-        return res.status(400).json({ error: 'invalid_total' });
-      }
-
-      if (requestedTotal > 0 && Math.abs(requestedTotal - computedTotal) <= 1) {
-        amount = computedTotal;
-      } else if (requestedTotal > 0) {
-        amount = requestedTotal;
+      const orderBreakdown = normalizeOrderTotals(req.body?.order);
+      if (orderBreakdown) {
+        const { computedTotal, reportedTotalCents } = orderBreakdown;
+        if (!Number.isFinite(computedTotal) || computedTotal <= 0) {
+          return res.status(400).json({ error: 'invalid_total' });
+        }
+        const requestedTotal = toNonNegativeInteger(req.body?.total);
+        if (requestedTotal !== null && requestedTotal > 0 && Math.abs(requestedTotal - computedTotal) > 1) {
+          amount = requestedTotal;
+        } else if (reportedTotalCents && Math.abs(reportedTotalCents - computedTotal) <= 1) {
+          amount = computedTotal;
+        } else {
+          amount = computedTotal;
+        }
       } else {
-        amount = computedTotal;
+        const subtotalCents = toNonNegativeInteger(req.body?.subtotal);
+        if (subtotalCents === null) {
+          return res.status(400).json({ error: 'invalid_subtotal' });
+        }
+
+        const { total: feesTotal, error: feeErrorKey } = normalizeFeeMap(req.body?.fees);
+        if (feeErrorKey) {
+          return res.status(400).json({
+            error: 'invalid_fee',
+            message: `Invalid fee amount for "${feeErrorKey}"`,
+          });
+        }
+
+        const computedTotal = subtotalCents + feesTotal;
+        if (!Number.isFinite(computedTotal) || computedTotal <= 0) {
+          return res.status(400).json({ error: 'invalid_total' });
+        }
+
+        const requestedTotal = toNonNegativeInteger(req.body?.total);
+        if (requestedTotal === null) {
+          return res.status(400).json({ error: 'invalid_total' });
+        }
+
+        if (requestedTotal > 0 && Math.abs(requestedTotal - computedTotal) <= 1) {
+          amount = computedTotal;
+        } else if (requestedTotal > 0) {
+          amount = requestedTotal;
+        } else {
+          amount = computedTotal;
+        }
       }
     }
 
