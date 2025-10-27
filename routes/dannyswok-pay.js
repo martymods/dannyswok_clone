@@ -126,7 +126,20 @@ function buildCheckoutLineItems(order) {
   rawItems.slice(0, 30).forEach((rawItem) => {
     const name = sanitizeItemName(rawItem?.name);
     const quantity = toPositiveInteger(rawItem?.quantity);
-    const unitAmount = toCurrencyCents(rawItem?.unitPrice ?? rawItem?.price);
+    const lineTotalCents = toCurrencyCents(rawItem?.total);
+    let unitAmount = toCurrencyCents(rawItem?.unitPrice ?? rawItem?.price);
+
+    if (lineTotalCents && quantity) {
+      const expectedLineTotal = unitAmount ? unitAmount * quantity : null;
+      const dividesEvenly = lineTotalCents % quantity === 0;
+      if (!unitAmount || (expectedLineTotal !== lineTotalCents && dividesEvenly)) {
+        const derivedUnit = Math.round(lineTotalCents / quantity);
+        if (derivedUnit > 0) {
+          unitAmount = derivedUnit;
+        }
+      }
+    }
+
     if (!name || !quantity || !unitAmount) {
       return;
     }
@@ -138,7 +151,8 @@ function buildCheckoutLineItems(order) {
       },
       quantity,
     });
-    totalCents += unitAmount * quantity;
+    const lineTotal = lineTotalCents && lineTotalCents > 0 ? lineTotalCents : unitAmount * quantity;
+    totalCents += lineTotal;
   });
 
   const tipCents = toCurrencyCents(order?.tipAmount);
