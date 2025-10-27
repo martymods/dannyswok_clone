@@ -2440,66 +2440,52 @@ document.addEventListener('DOMContentLoaded', () => {
     return metadata;
   }
 
-  function serializeOrderForBackend(order) {
-    const items = Array.isArray(order.items) ? order.items : [];
-    return {
-      fulfilment: order.fulfilment,
-      isDelivery: order.isDelivery,
-      subtotal: order.subtotal,
-      tipAmount: order.tipAmount,
-      expressFee: order.expressFee,
-      grandTotal: order.grandTotal,
-      scheduleDescription: order.scheduleDescription,
-      notes: Array.isArray(order.notes) ? order.notes.slice() : [],
-      customer: order.customer,
-      items: items.map((item) => ({
-        name: item.name,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        total: item.total,
-      })),
-    };
-  }
-
   async function createPaymentIntent(order) {
-    const calculatedAmount = Math.round(order.grandTotal * 100);
-    if (!Number.isFinite(calculatedAmount) || calculatedAmount <= 0) {
+    const amount = Math.round(order.grandTotal * 100);
+    if (!Number.isFinite(amount) || amount <= 0) {
       throw new Error('Your cart total must be greater than zero.');
     }
-    const payload = {
-      order: serializeOrderForBackend(order),
-      amount: calculatedAmount,
-      currency: 'usd',
-      description: `${order.fulfilment} order at Danny's Wok`,
-      metadata: buildPaymentMetadata(order),
-    };
     const response = await fetch(`${API_BASE}/api/dannyswok/create-payment-intent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        amount,
+        currency: 'usd',
+        description: `${order.fulfilment} order at Danny's Wok`,
+        metadata: buildPaymentMetadata(order),
+      }),
     });
-    let data = null;
-    try {
-      data = await response.json();
-    } catch (error) {
-      // Ignore parse errors so we can surface a generic message below.
-    }
-    if (!response.ok || !data?.clientSecret) {
-      const message = data?.message || data?.error || 'Unable to start payment.';
-      throw new Error(message);
+    const data = await response.json();
+    if (!response.ok || !data.clientSecret) {
+      throw new Error(data.message || data.error || 'Unable to start payment.');
     }
     currentPaymentIntent = {
       clientSecret: data.clientSecret,
       id: data.paymentIntentId || data.id,
-      amount: Number.isInteger(data.amount) ? data.amount : calculatedAmount,
-      currency: typeof data.currency === 'string' ? data.currency : 'usd',
+      amount,
     };
   }
 
   async function createCheckoutSession(order) {
     const payload = {
-      order: serializeOrderForBackend(order),
+      order: {
+        fulfilment: order.fulfilment,
+        isDelivery: order.isDelivery,
+        subtotal: order.subtotal,
+        tipAmount: order.tipAmount,
+        expressFee: order.expressFee,
+        grandTotal: order.grandTotal,
+        scheduleDescription: order.scheduleDescription,
+        notes: order.notes,
+        customer: order.customer,
+        items: order.items.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          total: item.total,
+        })),
+      },
       metadata: buildPaymentMetadata(order),
     };
     const response = await fetch(`${API_BASE}/api/dannyswok/create-checkout-session`, {
