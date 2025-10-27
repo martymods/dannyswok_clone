@@ -1413,16 +1413,19 @@
         }
         const totalsSection = document.querySelector('.totals');
         if (totalsSection) {
+          const feesAndEstimatedTax =
+            (Math.round((Number(storedOrder.processingFee) || 0) * 100) +
+              Math.round((Number(storedOrder.taxAmount) || 0) * 100)) /
+            100;
           const totals = [
             `<div><span>Subtotal</span><span>${formatCurrency(storedOrder.subtotal)}</span></div>`,
-            `<div><span>Processing fee</span><span>${formatCurrency(storedOrder.processingFee)}</span></div>`,
+            `<div><span>Fees &amp; Estimated Tax</span><span>${formatCurrency(feesAndEstimatedTax)}</span></div>`,
             storedOrder.deliveryFee > 0
               ? `<div><span>Delivery</span><span>${formatCurrency(storedOrder.deliveryFee)}</span></div>`
               : '',
             storedOrder.expressFee > 0
               ? `<div><span>Express</span><span>${formatCurrency(storedOrder.expressFee)}</span></div>`
               : '',
-            `<div><span>Sales tax</span><span>${formatCurrency(storedOrder.taxAmount)}</span></div>`,
             storedOrder.tipAmount > 0
               ? `<div><span>Tip</span><span>${formatCurrency(storedOrder.tipAmount)}</span></div>`
               : '',
