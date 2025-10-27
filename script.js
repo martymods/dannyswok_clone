@@ -35,7 +35,10 @@ function resolveApiBase() {
   }
   const origin = globalObject?.location?.origin;
   if (typeof origin === 'string' && origin.trim()) {
-    return origin.trim();
+    const trimmedOrigin = origin.trim();
+    if (/localhost|127\.0\.0\.1|::1/.test(trimmedOrigin)) {
+      return trimmedOrigin;
+    }
   }
   return 'https://www.delcotechdivision.com';
 }
@@ -2485,7 +2488,6 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       metadata: buildPaymentMetadata(order),
     };
-    const requestStartedAt = Date.now();
     const response = await fetch(`${API_BASE}/api/dannyswok/create-checkout-session`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2500,19 +2502,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (!response.ok || !data?.id || !data?.url) {
       const message = data?.message || data?.error || 'Unable to start Apple Pay checkout.';
-      console.error('Failed to create checkout session', {
-        status: response.status,
-        statusText: response.statusText,
-        durationMs: Date.now() - requestStartedAt,
-        response: data,
-      });
       throw new Error(message);
     }
-    console.info('Created checkout session', {
-      sessionId: data.id,
-      redirectUrl: data.url,
-      durationMs: Date.now() - requestStartedAt,
-    });
     return data;
   }
 
