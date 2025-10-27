@@ -1,6 +1,6 @@
 # Danny's Wok Clone
 
-This project now includes a Stripe-powered checkout experience that supports standard card payments as well as Apple Pay (via the Payment Request API).
+This project now includes a Stripe-powered checkout experience that supports standard card payments, an Apple Pay button that redirects to Stripe Checkout, and the Payment Request API wallet button for compatible browsers.
 
 ## Getting started
 
@@ -15,6 +15,6 @@ This project now includes a Stripe-powered checkout experience that supports sta
    ```bash
    npm start
    ```
-4. Visit `http://localhost:3000` to explore the menu and place an order. When you press **Place order**, a secure Stripe checkout modal will appear.
+4. Visit `http://localhost:3000` to explore the menu and place an order. When you press **Place order**, a secure payment dialog will appear with options to use the new Apple Pay button (hosted on checkout.stripe.com) or enter card details directly.
 
 > **Note:** Apple Pay availability depends on browser and device support. When unavailable, the standard card payment option will still be shown.

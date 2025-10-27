@@ -86,6 +86,122 @@ function sanitizeEmail(value) {
   return trimmed;
 }
 
+function toPositiveInteger(value) {
+  const number = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(number)) {
+    return null;
+  }
+  const integer = Math.round(number);
+  return integer > 0 ? integer : null;
+}
+
+function toCurrencyCents(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  const number = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(number)) {
+    return null;
+  }
+  const cents = Math.round(number * 100);
+  return cents > 0 ? cents : null;
+}
+
+function sanitizeItemName(value) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+  return trimmed.slice(0, 80);
+}
+
+function buildCheckoutLineItems(order) {
+  const rawItems = Array.isArray(order?.items) ? order.items : [];
+  const lineItems = [];
+  let totalCents = 0;
+
+  rawItems.slice(0, 30).forEach((rawItem) => {
+    const name = sanitizeItemName(rawItem?.name);
+    const quantity = toPositiveInteger(rawItem?.quantity);
+    const unitAmount = toCurrencyCents(rawItem?.unitPrice ?? rawItem?.price);
+    if (!name || !quantity || !unitAmount) {
+      return;
+    }
+    lineItems.push({
+      price_data: {
+        currency: 'usd',
+        product_data: { name },
+        unit_amount: unitAmount,
+      },
+      quantity,
+    });
+    totalCents += unitAmount * quantity;
+  });
+
+  const tipCents = toCurrencyCents(order?.tipAmount);
+  if (tipCents) {
+    lineItems.push({
+      price_data: {
+        currency: 'usd',
+        product_data: { name: 'Tip' },
+        unit_amount: tipCents,
+      },
+      quantity: 1,
+    });
+    totalCents += tipCents;
+  }
+
+  const expressCents = toCurrencyCents(order?.expressFee);
+  if (expressCents) {
+    lineItems.push({
+      price_data: {
+        currency: 'usd',
+        product_data: { name: 'Express delivery fee' },
+        unit_amount: expressCents,
+      },
+      quantity: 1,
+    });
+    totalCents += expressCents;
+  }
+
+  return { lineItems, totalCents };
+}
+
+function resolveBaseUrl(req, fallbackOrigins = []) {
+  const originHeader = typeof req.headers.origin === 'string' ? req.headers.origin.trim() : '';
+  if (originHeader) {
+    return originHeader.replace(/\/$/, '');
+  }
+
+  const refererHeader = typeof req.headers.referer === 'string' ? req.headers.referer.trim() : '';
+  if (refererHeader) {
+    try {
+      const refererUrl = new URL(refererHeader);
+      return refererUrl.origin.replace(/\/$/, '');
+    } catch (error) {
+      // ignore invalid referer
+    }
+  }
+
+  if (Array.isArray(fallbackOrigins)) {
+    for (const candidate of fallbackOrigins) {
+      if (typeof candidate === 'string' && candidate.trim()) {
+        return candidate.trim().replace(/\/$/, '');
+      }
+    }
+  }
+
+  const host = req.get('host');
+  if (host) {
+    return `${req.protocol}://${host}`.replace(/\/$/, '');
+  }
+
+  return '';
+}
+
 function createDannysWokPayRouter({ stripe, allowedOrigins = [], menuOrigin = null } = {}) {
   const router = express.Router();
   const normalizedOrigins = normalizeOrigins(allowedOrigins);
@@ -150,6 +266,58 @@ function createDannysWokPayRouter({ stripe, allowedOrigins = [], menuOrigin = nu
       res.status(statusCode).json({
         error: 'stripe_error',
         message: error?.message || 'Unable to create payment intent',
+      });
+    }
+  });
+
+  router.post('/create-checkout-session', async (req, res) => {
+    if (!stripe || typeof stripe.checkout?.sessions?.create !== 'function') {
+      return res.status(503).json({ error: 'stripe_unavailable' });
+    }
+
+    const order = req.body?.order;
+    const { lineItems, totalCents } = buildCheckoutLineItems(order);
+    if (!lineItems.length || !Number.isFinite(totalCents) || totalCents <= 0) {
+      return res.status(400).json({
+        error: 'invalid_order',
+        message: 'A valid order is required to start checkout.',
+      });
+    }
+
+    const metadata = sanitizeMetadata(req.body?.metadata);
+    const baseUrl = resolveBaseUrl(req, combinedOrigins) || `${req.protocol}://${req.get('host')}`;
+    const normalizedBaseUrl = typeof baseUrl === 'string' ? baseUrl.replace(/\/$/, '') : '';
+    const successUrl = `${normalizedBaseUrl}/thankyou.html`;
+    const cancelUrl = `${normalizedBaseUrl}/menu.html`;
+
+    const sessionParams = {
+      mode: 'payment',
+      submit_type: 'pay',
+      line_items: lineItems,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      phone_number_collection: { enabled: true },
+    };
+
+    if (metadata) {
+      sessionParams.metadata = metadata;
+      sessionParams.payment_intent_data = { metadata };
+    }
+
+    if (order?.isDelivery) {
+      sessionParams.shipping_address_collection = { allowed_countries: ['US'] };
+    }
+
+    try {
+      const session = await stripe.checkout.sessions.create(sessionParams);
+      res.json({ id: session.id, url: session.url });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to create Danny's Wok checkout session", error);
+      const statusCode = error?.statusCode || error?.status || 500;
+      res.status(statusCode).json({
+        error: 'stripe_error',
+        message: error?.message || 'Unable to create checkout session',
       });
     }
   });

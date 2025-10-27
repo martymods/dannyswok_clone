@@ -2055,6 +2055,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const paymentSummaryContainer = document.getElementById('payment-order-summary');
   const confirmPaymentBtn = document.getElementById('confirm-payment');
   const paymentStatusEl = document.getElementById('payment-status');
+  const applePayCheckoutBtn = document.getElementById('apple-pay-checkout');
   const paymentRequestWrapper = document.getElementById('payment-request-button-wrapper');
   const walletHint = document.getElementById('wallet-hint');
   const cardholderNameInput = document.getElementById('cardholder-name');
@@ -2071,6 +2072,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentPaymentIntent = null;
   let currentOrderDetails = null;
   let paymentProcessing = false;
+  let checkoutRedirecting = false;
 
   function getStripePublishableKeyFromDom() {
     if (typeof window !== 'undefined') {
@@ -2283,6 +2285,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function setApplePayCheckoutState({ loading = false, disabled = false } = {}) {
+    if (!applePayCheckoutBtn) {
+      return;
+    }
+    if (loading) {
+      applePayCheckoutBtn.classList.add('is-loading');
+    } else {
+      applePayCheckoutBtn.classList.remove('is-loading');
+    }
+    applePayCheckoutBtn.disabled = Boolean(disabled || loading);
+  }
+
+  function resetApplePayCheckoutState() {
+    checkoutRedirecting = false;
+    setApplePayCheckoutState({ loading: false, disabled: false });
+  }
+
   function closePaymentModal() {
     if (paymentModal) {
       paymentModal.classList.add('hidden');
@@ -2292,6 +2311,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentOrderDetails = null;
     currentPaymentIntent = null;
     paymentProcessing = false;
+    resetApplePayCheckoutState();
     resetPaymentStatus();
     if (confirmPaymentBtn) {
       confirmPaymentBtn.disabled = false;
@@ -2447,6 +2467,46 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+  async function createCheckoutSession(order) {
+    const payload = {
+      order: {
+        fulfilment: order.fulfilment,
+        isDelivery: order.isDelivery,
+        subtotal: order.subtotal,
+        tipAmount: order.tipAmount,
+        expressFee: order.expressFee,
+        grandTotal: order.grandTotal,
+        scheduleDescription: order.scheduleDescription,
+        notes: order.notes,
+        customer: order.customer,
+        items: order.items.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          total: item.total,
+        })),
+      },
+      metadata: buildPaymentMetadata(order),
+    };
+    const response = await fetch(`${API_BASE}/api/dannyswok/create-checkout-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    });
+    let data = null;
+    try {
+      data = await response.json();
+    } catch (error) {
+      // Ignore parse errors so we can surface a generic message below.
+    }
+    if (!response.ok || !data?.id || !data?.url) {
+      const message = data?.message || data?.error || 'Unable to start Apple Pay checkout.';
+      throw new Error(message);
+    }
+    return data;
+  }
+
   function renderPaymentSummary(order) {
     if (!paymentSummaryContainer) {
       return;
@@ -2600,9 +2660,13 @@ document.addEventListener('DOMContentLoaded', () => {
     paymentAmountEl.textContent = formatCurrency(order.grandTotal);
     renderPaymentSummary(order);
     resetPaymentStatus();
+    resetApplePayCheckoutState();
     if (confirmPaymentBtn) {
       confirmPaymentBtn.disabled = true;
       confirmPaymentBtn.classList.add('is-loading');
+    }
+    if (applePayCheckoutBtn) {
+      setApplePayCheckoutState({ loading: true });
     }
     try {
       await ensureStripeInitialized();
@@ -2613,12 +2677,18 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmPaymentBtn.disabled = false;
         confirmPaymentBtn.classList.remove('is-loading');
       }
+      if (applePayCheckoutBtn) {
+        setApplePayCheckoutState({ loading: false, disabled: false });
+      }
       setPaymentStatus('Enter your payment details to finish.');
     } catch (error) {
       setPaymentStatus(error.message || 'Unable to start payment.', 'error');
       if (confirmPaymentBtn) {
         confirmPaymentBtn.disabled = true;
         confirmPaymentBtn.classList.remove('is-loading');
+      }
+      if (applePayCheckoutBtn) {
+        setApplePayCheckoutState({ loading: false, disabled: true });
       }
     }
   }
@@ -2665,8 +2735,36 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmPaymentBtn.disabled = false;
         confirmPaymentBtn.classList.remove('is-loading');
       }
+      if (applePayCheckoutBtn) {
+        setApplePayCheckoutState({ loading: false, disabled: false });
+      }
     } finally {
       paymentProcessing = false;
+    }
+  }
+
+  async function handleApplePayCheckout() {
+    if (!applePayCheckoutBtn || checkoutRedirecting) {
+      return;
+    }
+    if (!currentOrderDetails) {
+      setPaymentStatus('Payment is not ready yet. Please try again.', 'error');
+      return;
+    }
+    checkoutRedirecting = true;
+    setApplePayCheckoutState({ loading: true });
+    setPaymentStatus('Redirecting to Apple Pay checkout…');
+    try {
+      await ensureStripeInitialized();
+      const session = await createCheckoutSession(currentOrderDetails);
+      const { error } = await stripeInstance.redirectToCheckout({ sessionId: session.id });
+      if (error) {
+        throw new Error(error.message || 'Stripe Checkout redirect failed.');
+      }
+    } catch (error) {
+      checkoutRedirecting = false;
+      setApplePayCheckoutState({ loading: false, disabled: false });
+      setPaymentStatus(error.message || 'Unable to start Apple Pay checkout.', 'error');
     }
   }
 
@@ -2687,6 +2785,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   if (confirmPaymentBtn) {
     confirmPaymentBtn.addEventListener('click', handleConfirmPayment);
+  }
+  if (applePayCheckoutBtn) {
+    applePayCheckoutBtn.addEventListener('click', handleApplePayCheckout);
   }
   const placeOrderBtn = document.getElementById('place-order');
   if (placeOrderBtn) {

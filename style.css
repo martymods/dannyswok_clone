@@ -2836,6 +2836,52 @@ body.modal-open {
   display: none;
 }
 
+.apple-pay-checkout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 18px;
+  background-color: #000;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.apple-pay-checkout-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
+}
+
+.apple-pay-checkout-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
+}
+
+.apple-pay-checkout-btn:disabled,
+.apple-pay-checkout-btn.is-loading {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.apple-pay-checkout-btn__logo {
+  font-size: 1.4rem;
+  line-height: 1;
+  font-family: 'SF Pro Display', 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.apple-pay-checkout-btn__text {
+  font-size: 1rem;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
 .wallet-hint {
   margin: 0;
   font-size: 0.85rem;
