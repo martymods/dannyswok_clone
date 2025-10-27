@@ -34,13 +34,13 @@ function resolveApiBase() {
     }
   }
   const origin = globalObject?.location?.origin;
-  if (typeof origin === 'string' && origin.trim()) {
+  if (typeof origin === 'string') {
     const trimmedOrigin = origin.trim();
-    if (/localhost|127\.0\.0\.1|::1/.test(trimmedOrigin)) {
+    if (trimmedOrigin) {
       return trimmedOrigin;
     }
   }
-  return 'https://www.delcotechdivision.com';
+  return '';
 }
 
 const API_BASE = resolveApiBase();
