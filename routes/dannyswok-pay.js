@@ -1,4 +1,5 @@
 const express = require('express');
+const { sendOrderNotification } = require('../services/telegram');
 
 function normalizeOrigins(origins) {
   if (!origins) return [];
@@ -288,6 +289,7 @@ function createDannysWokPayRouter({ stripe, allowedOrigins = [], menuOrigin = nu
     const description = sanitizeDescription(req.body?.description);
     const receiptEmail = sanitizeEmail(req.body?.receiptEmail || req.body?.email);
     const metadata = sanitizeMetadata(req.body?.metadata);
+    const order = req.body?.order && typeof req.body.order === 'object' ? req.body.order : null;
 
     try {
       const intent = await stripe.paymentIntents.create({
@@ -298,6 +300,18 @@ function createDannysWokPayRouter({ stripe, allowedOrigins = [], menuOrigin = nu
         receipt_email: receiptEmail,
         metadata,
       });
+
+      if (order) {
+        try {
+          await sendOrderNotification(order, {
+            metadata,
+            context: { paymentIntentId: intent.id, source: 'payment_intent' },
+          });
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error('Failed to send Telegram notification for payment intent', error);
+        }
+      }
 
       res.json({
         id: intent.id,
@@ -355,6 +369,19 @@ function createDannysWokPayRouter({ stripe, allowedOrigins = [], menuOrigin = nu
 
     try {
       const session = await stripe.checkout.sessions.create(sessionParams);
+
+      if (order) {
+        try {
+          await sendOrderNotification(order, {
+            metadata,
+            context: { checkoutSessionId: session.id, source: 'checkout_session' },
+          });
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error('Failed to send Telegram notification for checkout session', error);
+        }
+      }
+
       res.json({ id: session.id, url: session.url });
     } catch (error) {
       // eslint-disable-next-line no-console
