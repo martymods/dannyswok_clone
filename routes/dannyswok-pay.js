@@ -160,7 +160,11 @@ function buildCheckoutLineItems(order) {
 
   const processingCents = toCurrencyCents(order?.processingFee);
   const taxCents = toCurrencyCents(order?.taxAmount);
-  const feesAndTaxCents = (processingCents || 0) + (taxCents || 0);
+  let feesAndTaxCents = toCurrencyCents(order?.feesAndEstimatedTax);
+  if (!feesAndTaxCents) {
+    feesAndTaxCents = (processingCents || 0) + (taxCents || 0);
+  }
+  let feesLineItemAdded = false;
   if (feesAndTaxCents) {
     lineItems.push({
       price_data: {
@@ -171,6 +175,7 @@ function buildCheckoutLineItems(order) {
       quantity: 1,
     });
     totalCents += feesAndTaxCents;
+    feesLineItemAdded = true;
   }
 
   const deliveryCents = toCurrencyCents(order?.deliveryFee);
@@ -210,6 +215,24 @@ function buildCheckoutLineItems(order) {
       quantity: 1,
     });
     totalCents += expressCents;
+  }
+
+  const grandTotalCents = toCurrencyCents(order?.grandTotal);
+  if (grandTotalCents && grandTotalCents > totalCents) {
+    const missingCents = grandTotalCents - totalCents;
+    if (missingCents > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: feesLineItemAdded ? 'Additional charges' : 'Fees & Estimated Tax',
+          },
+          unit_amount: missingCents,
+        },
+        quantity: 1,
+      });
+      totalCents += missingCents;
+    }
   }
 
   return { lineItems, totalCents };
