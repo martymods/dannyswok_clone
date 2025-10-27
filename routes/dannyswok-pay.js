@@ -228,19 +228,44 @@ function createDannysWokPayRouter({ stripe, allowedOrigins = [], menuOrigin = nu
       return res.status(503).json({ error: 'stripe_unavailable' });
     }
 
-    const amountRaw = req.body?.amount;
-    const amount = typeof amountRaw === 'number' ? amountRaw : Number(amountRaw);
+    const order = req.body?.order;
+    let amount = null;
 
-    if (!Number.isFinite(amount) || amount <= 0) {
+    if (order) {
+      const { lineItems, totalCents } = buildCheckoutLineItems(order);
+      if (!lineItems.length || !Number.isFinite(totalCents) || totalCents <= 0) {
+        return res.status(400).json({
+          error: 'invalid_order',
+          message: 'A valid order is required to start payment.',
+        });
+      }
+      amount = totalCents;
+    }
+
+    if (amount === null) {
+      const amountRaw = req.body?.amount;
+      const parsedAmount = typeof amountRaw === 'number' ? amountRaw : Number(amountRaw);
+
+      if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+        return res.status(400).json({ error: 'invalid_amount' });
+      }
+
+      if (!Number.isInteger(parsedAmount)) {
+        return res.status(400).json({ error: 'amount_must_be_integer' });
+      }
+
+      amount = parsedAmount;
+    }
+
+    if (!Number.isInteger(amount) || amount <= 0) {
       return res.status(400).json({ error: 'invalid_amount' });
     }
 
-    if (!Number.isInteger(amount)) {
-      return res.status(400).json({ error: 'amount_must_be_integer' });
-    }
-
     const currency = sanitizeCurrency(req.body?.currency);
-    const description = sanitizeDescription(req.body?.description);
+    let description = sanitizeDescription(req.body?.description);
+    if (!description && typeof order?.fulfilment === 'string' && order.fulfilment.trim()) {
+      description = `${order.fulfilment.trim()} order at Danny's Wok`;
+    }
     const receiptEmail = sanitizeEmail(req.body?.receiptEmail || req.body?.email);
     const metadata = sanitizeMetadata(req.body?.metadata);
 
@@ -258,6 +283,8 @@ function createDannysWokPayRouter({ stripe, allowedOrigins = [], menuOrigin = nu
         id: intent.id,
         clientSecret: intent.client_secret,
         status: intent.status,
+        amount: intent.amount,
+        currency: intent.currency,
       });
     } catch (error) {
       // eslint-disable-next-line no-console
