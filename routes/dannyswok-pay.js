@@ -127,17 +127,20 @@ function buildCheckoutLineItems(order) {
     const name = sanitizeItemName(rawItem?.name);
     const quantity = toPositiveInteger(rawItem?.quantity);
     const lineTotalCents = toCurrencyCents(rawItem?.total);
-    let unitAmount = toCurrencyCents(rawItem?.unitPrice ?? rawItem?.price);
 
+    let unitAmount = null;
     if (lineTotalCents && quantity) {
-      const expectedLineTotal = unitAmount ? unitAmount * quantity : null;
       const dividesEvenly = lineTotalCents % quantity === 0;
-      if (!unitAmount || (expectedLineTotal !== lineTotalCents && dividesEvenly)) {
+      if (dividesEvenly) {
         const derivedUnit = Math.round(lineTotalCents / quantity);
         if (derivedUnit > 0) {
           unitAmount = derivedUnit;
         }
       }
+    }
+
+    if (!unitAmount) {
+      unitAmount = toCurrencyCents(rawItem?.unitPrice ?? rawItem?.price);
     }
 
     if (!name || !quantity || !unitAmount) {
