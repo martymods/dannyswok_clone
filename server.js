@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const createDannysWokPayRouter = require('./routes/dannyswok-pay');
 const createAnalyticsRouter = require('./routes/analytics');
+const createNotificationsRouter = require('./routes/notifications');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -52,6 +53,7 @@ app.use(
 );
 
 app.use('/api/analytics', createAnalyticsRouter());
+app.use('/api/notifications', createNotificationsRouter());
 
 app.get('/api/config', (req, res) => {
   const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
