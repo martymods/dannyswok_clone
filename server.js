@@ -10,10 +10,23 @@ const port = process.env.PORT || 3000;
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: '2024-06-20' }) : null;
 
-const DANNYSWOK_ALLOWED_ORIGINS = (process.env.DANNYSWOK_ALLOWED_ORIGINS || '')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+const DEFAULT_DANNYSWOK_ALLOWED_ORIGINS = [
+  'https://dannyswok.com',
+  'https://www.dannyswok.com',
+  'https://dannyswok-clone.onrender.com',
+];
+
+const DANNYSWOK_ALLOWED_ORIGINS = (() => {
+  const raw = process.env.DANNYSWOK_ALLOWED_ORIGINS;
+  if (!raw) {
+    return DEFAULT_DANNYSWOK_ALLOWED_ORIGINS;
+  }
+
+  return raw
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+})();
 const DANNYSWOK_MENU_ORIGIN = process.env.DANNYSWOK_MENU_ORIGIN || null;
 
 app.use(express.json());
