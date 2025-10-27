@@ -3086,15 +3086,16 @@ function buildOrderDetailsForPayment() {
     }
     const itemsPayload = order.items.map((item) => ({
       name: item.name,
-      unit: toStripeMinorUnits(item.unitPrice),
-      qty: item.quantity,
+      unitPriceCents: toStripeMinorUnits(item.unitPrice),
+      unit_amount: toStripeMinorUnits(item.unitPrice),
+      quantity: item.quantity,
     }));
     const feesPayload = {
-      tax: breakdown.taxCents,
-      delivery: breakdown.deliveryCents,
-      express: breakdown.expressCents,
-      tip: breakdown.tipCents,
-      service: breakdown.serviceCents,
+      taxCents: breakdown.taxCents,
+      deliveryCents: breakdown.deliveryCents,
+      expressCents: breakdown.expressCents,
+      tipCents: breakdown.tipCents,
+      serviceFeeCents: breakdown.serviceCents,
     };
     const response = await fetch(`${API_BASE}/api/dannyswok/create-payment-intent`, {
       method: 'POST',
@@ -3107,8 +3108,10 @@ function buildOrderDetailsForPayment() {
         metadata: buildPaymentMetadata(order),
         items: itemsPayload,
         fees: feesPayload,
-        subtotal: breakdown.subtotalCents,
-        total: breakdown.total,
+        subtotal: order.subtotal,
+        subtotalCents: breakdown.subtotalCents,
+        total: order.grandTotal,
+        totalCents: breakdown.total,
         fulfillment: order.isDelivery ? 'delivery' : 'pickup',
       }),
     });
@@ -3124,6 +3127,7 @@ function buildOrderDetailsForPayment() {
   }
 
   async function createCheckoutSession(order) {
+    const breakdown = buildPaymentRequestBreakdown(order);
     const payload = {
       order: {
         fulfilment: order.fulfilment,
@@ -3147,6 +3151,15 @@ function buildOrderDetailsForPayment() {
         })),
       },
       metadata: buildPaymentMetadata(order),
+      fees: {
+        taxCents: breakdown.taxCents,
+        serviceFeeCents: breakdown.serviceCents,
+        deliveryCents: breakdown.deliveryCents,
+        expressCents: breakdown.expressCents,
+        tipCents: breakdown.tipCents,
+      },
+      subtotalCents: breakdown.subtotalCents,
+      totalCents: breakdown.total,
     };
     const response = await fetch(`${API_BASE}/api/dannyswok/create-checkout-session`, {
       method: 'POST',
