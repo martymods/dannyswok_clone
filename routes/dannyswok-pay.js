@@ -52,10 +52,6 @@ function createCorsMiddleware(allowedOrigins) {
   };
 }
 
-function generateRequestId() {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
 function sanitizeCurrency(value, fallback = 'usd') {
   if (typeof value !== 'string') return fallback;
   const normalized = value.trim().toLowerCase();
@@ -275,28 +271,13 @@ function createDannysWokPayRouter({ stripe, allowedOrigins = [], menuOrigin = nu
   });
 
   router.post('/create-checkout-session', async (req, res) => {
-    const requestId = generateRequestId();
-    const startedAt = Date.now();
-    // eslint-disable-next-line no-console
-    console.info("[dannyswok] Received checkout session request", {
-      requestId,
-      userAgent: req.get('user-agent') || 'unknown',
-    });
     if (!stripe || typeof stripe.checkout?.sessions?.create !== 'function') {
-      // eslint-disable-next-line no-console
-      console.error("[dannyswok] Stripe unavailable for checkout session", { requestId });
       return res.status(503).json({ error: 'stripe_unavailable' });
     }
 
     const order = req.body?.order;
     const { lineItems, totalCents } = buildCheckoutLineItems(order);
     if (!lineItems.length || !Number.isFinite(totalCents) || totalCents <= 0) {
-      // eslint-disable-next-line no-console
-      console.warn("[dannyswok] Invalid checkout session order", {
-        requestId,
-        totalCents,
-        itemCount: lineItems.length,
-      });
       return res.status(400).json({
         error: 'invalid_order',
         message: 'A valid order is required to start checkout.',
@@ -329,22 +310,10 @@ function createDannysWokPayRouter({ stripe, allowedOrigins = [], menuOrigin = nu
 
     try {
       const session = await stripe.checkout.sessions.create(sessionParams);
-      // eslint-disable-next-line no-console
-      console.info("[dannyswok] Checkout session created", {
-        requestId,
-        sessionId: session.id,
-        totalCents,
-        itemCount: lineItems.length,
-        durationMs: Date.now() - startedAt,
-      });
       res.json({ id: session.id, url: session.url });
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error("Failed to create Danny's Wok checkout session", {
-        requestId,
-        durationMs: Date.now() - startedAt,
-        error,
-      });
+      console.error("Failed to create Danny's Wok checkout session", error);
       const statusCode = error?.statusCode || error?.status || 500;
       res.status(statusCode).json({
         error: 'stripe_error',
