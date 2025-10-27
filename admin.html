@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Danny's Wok Admin</title>
+  <link rel="icon" type="image/png" href="images/favi.png">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header class="admin-header">
+    <div class="admin-header__brand">
+      <img src="images/logos_icon.png" alt="Danny's Wok chef logo">
+      <h1>Danny's Wok Admin Console</h1>
+    </div>
+    <p class="admin-header__note">Manage menu pricing &amp; photography, update store locations, and review customer activity.</p>
+  </header>
+  <main class="admin-main">
+    <section class="admin-section" id="menu-admin">
+      <div class="admin-section__header">
+        <h2>Menu management</h2>
+        <p>Edit pricing or upload custom imagery for each menu item. Changes are saved instantly.</p>
+      </div>
+      <div id="menu-admin-status" class="admin-status" aria-live="polite"></div>
+      <div id="menu-admin-container" class="menu-admin-container" role="list"></div>
+    </section>
+
+    <section class="admin-section" id="stores-admin">
+      <div class="admin-section__header">
+        <h2>Store locations</h2>
+        <p>Drag pins to adjust map placement. Coordinates update immediately and sync to the public map.</p>
+      </div>
+      <div id="store-admin-status" class="admin-status" aria-live="polite"></div>
+      <div class="store-admin-layout">
+        <div id="store-map" class="store-admin-map" role="application" aria-label="Danny's Wok store locations"></div>
+        <div id="store-list" class="store-admin-list" role="list"></div>
+      </div>
+    </section>
+
+    <section class="admin-section" id="analytics-admin">
+      <div class="admin-section__header">
+        <h2>Customer activity</h2>
+        <p>Review customer profiles, captured events, and recent checkout sessions.</p>
+      </div>
+      <div class="analytics-columns">
+        <div class="analytics-card" id="profiles-card">
+          <h3>User profiles</h3>
+          <div id="profiles-status" class="admin-status" aria-live="polite"></div>
+          <ul id="profiles-list" class="analytics-list"></ul>
+        </div>
+        <div class="analytics-card" id="orders-card">
+          <h3>Recent orders</h3>
+          <div id="orders-status" class="admin-status" aria-live="polite"></div>
+          <div class="orders-table-wrapper">
+            <table id="orders-table" class="orders-table" aria-describedby="orders-card">
+              <thead>
+                <tr>
+                  <th scope="col">Placed</th>
+                  <th scope="col">Fulfilment</th>
+                  <th scope="col">Total</th>
+                  <th scope="col">Items</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="analytics-detail" id="profile-detail" hidden>
+        <button type="button" id="close-profile-detail" class="admin-button admin-button--secondary">Close profile</button>
+        <h3 id="profile-detail-title">Profile details</h3>
+        <div id="profile-detail-content"></div>
+      </div>
+    </section>
+  </main>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

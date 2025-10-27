@@ -1,0 +1,31 @@
+{
+  "stores": [
+    {
+      "id": "southwest",
+      "label": "Southwest",
+      "address": "5750 BALTIMORE AVE, PHILADELPHIA PA 19143",
+      "shortAddress": "5750 BALTIMORE AVE",
+      "phone": "215-471-9020",
+      "latitude": 39.94346,
+      "longitude": -75.23863
+    },
+    {
+      "id": "olney",
+      "label": "One & Olney Plaza",
+      "address": "5675 N Front St Unit 280, PHILADELPHIA, PA, 19120",
+      "shortAddress": "5675 N FRONT",
+      "phone": "215-276-8885",
+      "latitude": 40.039947,
+      "longitude": -75.122995
+    },
+    {
+      "id": "hunting-park",
+      "label": "Hunting Park",
+      "address": "4322 North Broad Street, Philadelphia, PA 19140",
+      "shortAddress": "4322 NORTH BROAD STREET",
+      "phone": "267-331-6699",
+      "latitude": 40.016985,
+      "longitude": -75.145408
+    }
+  ]
+}

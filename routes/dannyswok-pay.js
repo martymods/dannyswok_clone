@@ -1,4 +1,5 @@
 const express = require('express');
+const { getDatabase } = require('../services/mongo');
 
 function normalizeOrigins(origins) {
   if (!origins) return [];
@@ -77,6 +78,65 @@ function sanitizeMetadata(raw) {
     metadata[normalizedKey] = typeof value === 'string' ? value : String(value);
   }
   return Object.keys(metadata).length ? metadata : undefined;
+}
+
+function sanitizeOrderItem(rawItem) {
+  if (!rawItem || typeof rawItem !== 'object') {
+    return null;
+  }
+  const quantity = Number(rawItem.quantity);
+  const unitPrice = Number(rawItem.unitPrice ?? rawItem.price);
+  const total = Number(rawItem.total);
+  return {
+    name: typeof rawItem.name === 'string' ? rawItem.name.slice(0, 120) : 'Item',
+    quantity: Number.isFinite(quantity) ? quantity : null,
+    unitPrice: Number.isFinite(unitPrice) ? unitPrice : null,
+    total: Number.isFinite(total) ? total : null,
+  };
+}
+
+async function logCheckoutSession(order, session, totalCents, metadata) {
+  try {
+    const db = await getDatabase();
+    if (!db) {
+      return;
+    }
+    const orders = db.collection('orders');
+    const document = {
+      sessionId: session?.id || null,
+      sessionUrl: session?.url || null,
+      createdAt: new Date(),
+      totalCents: Number.isFinite(totalCents) ? totalCents : null,
+      fulfilment: order?.fulfilment || null,
+      isDelivery: Boolean(order?.isDelivery),
+      subtotal: Number.isFinite(order?.subtotal) ? Number(order.subtotal) : null,
+      grandTotal: Number.isFinite(order?.grandTotal) ? Number(order.grandTotal) : null,
+      metadata: metadata || null,
+    };
+    if (order?.customer) {
+      document.customer = {
+        name: typeof order.customer.name === 'string' ? order.customer.name.slice(0, 120) : null,
+        phone: typeof order.customer.phone === 'string' ? order.customer.phone.slice(0, 60) : null,
+        address:
+          typeof order.customer.address === 'string' ? order.customer.address.slice(0, 200) : null,
+      };
+    }
+    if (metadata?.tracking_id) {
+      document.trackingId = metadata.tracking_id;
+    }
+    if (Array.isArray(order?.items) && order.items.length) {
+      document.items = order.items
+        .slice(0, 50)
+        .map((item) => sanitizeOrderItem(item))
+        .filter(Boolean);
+    } else {
+      document.items = [];
+    }
+    await orders.insertOne(document);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to log checkout session', error);
+  }
 }
 
 const SESSION_METADATA_EXCLUDE_KEYS = new Set([
@@ -511,6 +571,7 @@ function createDannysWokPayRouter({ stripe, allowedOrigins = [], menuOrigin = nu
 
     try {
       const session = await stripe.checkout.sessions.create(sessionParams);
+      await logCheckoutSession(order, session, totalCents, metadata).catch(() => {});
       res.json({ id: session.id, url: session.url });
     } catch (error) {
       // eslint-disable-next-line no-console
