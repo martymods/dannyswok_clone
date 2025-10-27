@@ -1391,62 +1391,175 @@
     ];
 
     const analyticsApi = window.DannysAnalytics;
-    if (analyticsApi) {
+    const LAST_ORDER_STORAGE_KEY =
+      analyticsApi?.storageKeys?.lastOrder || 'dwkLastOrderSummary';
+
+    if (analyticsApi?.sendEvent) {
       analyticsApi.sendEvent(
         'page_view',
         { page: 'thankyou' },
         { keepalive: true }
       );
-      const storedOrder = analyticsApi.getStoredJson(analyticsApi.storageKeys.lastOrder);
-      if (storedOrder) {
-        const formatCurrency = (amount) => `$${Number(amount || 0).toFixed(2)}`;
-        const summarySection = document.querySelector('.order-summary');
-        if (summarySection && Array.isArray(storedOrder.items) && storedOrder.items.length) {
-          summarySection.innerHTML = storedOrder.items
-            .map(
-              (item) =>
-                `<div class="order-item"><span>${item.quantity || 0}× ${item.name || ''}</span><span>${formatCurrency(
-                  item.total,
-                )}</span></div>`
-            )
-            .join('');
-        }
-        const totalsSection = document.querySelector('.totals');
-        if (totalsSection) {
-          const feesAndEstimatedTax =
-            (Math.round((Number(storedOrder.processingFee) || 0) * 100) +
-              Math.round((Number(storedOrder.taxAmount) || 0) * 100)) /
-            100;
-          const totals = [
-            `<div><span>Subtotal</span><span>${formatCurrency(storedOrder.subtotal)}</span></div>`,
-            `<div><span>Fees &amp; Estimated Tax</span><span>${formatCurrency(feesAndEstimatedTax)}</span></div>`,
-            storedOrder.deliveryFee > 0
-              ? `<div><span>Delivery</span><span>${formatCurrency(storedOrder.deliveryFee)}</span></div>`
-              : '',
-            storedOrder.expressFee > 0
-              ? `<div><span>Express</span><span>${formatCurrency(storedOrder.expressFee)}</span></div>`
-              : '',
-            storedOrder.tipAmount > 0
-              ? `<div><span>Tip</span><span>${formatCurrency(storedOrder.tipAmount)}</span></div>`
-              : '',
-            `<div><span>Total Paid</span><span>${formatCurrency(storedOrder.grandTotal)}</span></div>`,
-          ]
-            .filter(Boolean)
-            .join('');
-          totalsSection.innerHTML = totals;
-        }
-        if (!storedOrder.reported) {
-          analyticsApi.sendEvent(
-            'purchase_complete',
-            {
-              ...storedOrder,
-              page: 'thankyou',
-            },
-            { keepalive: true }
-          );
-        }
-        analyticsApi.setStoredJson(analyticsApi.storageKeys.lastOrder, null);
+    }
+
+    const currencyFormatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+    function normalizeMoney(value) {
+      const number = typeof value === 'number' ? value : Number(value);
+      if (!Number.isFinite(number)) {
+        return 0;
       }
+      return Math.round((number + Number.EPSILON) * 100) / 100;
+    }
+
+    function formatMoney(value) {
+      return currencyFormatter.format(normalizeMoney(value));
+    }
+
+    function toDisplayQuantity(value) {
+      const number = typeof value === 'number' ? value : Number(value);
+      if (!Number.isFinite(number) || number <= 0) {
+        return 1;
+      }
+      const rounded = Math.round(number);
+      return rounded > 0 ? rounded : 1;
+    }
+
+    function getStoredOrder() {
+      if (analyticsApi?.getStoredJson) {
+        const stored = analyticsApi.getStoredJson(LAST_ORDER_STORAGE_KEY);
+        if (stored) {
+          return stored;
+        }
+      }
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          const raw = window.localStorage.getItem(LAST_ORDER_STORAGE_KEY);
+          if (raw) {
+            return JSON.parse(raw);
+          }
+        } catch (error) {
+          // Ignore storage access issues
+        }
+      }
+      return null;
+    }
+
+    function clearStoredOrder() {
+      if (analyticsApi?.setStoredJson) {
+        analyticsApi.setStoredJson(LAST_ORDER_STORAGE_KEY, null);
+        return;
+      }
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          window.localStorage.removeItem(LAST_ORDER_STORAGE_KEY);
+        } catch (error) {
+          // Ignore storage access issues
+        }
+      }
+    }
+
+    function normalizeOrder(order) {
+      if (!order || typeof order !== 'object') {
+        return null;
+      }
+      const normalized = { ...order };
+      const subtotal = normalizeMoney(order.subtotal);
+      const processingFee = normalizeMoney(order.processingFee);
+      const taxAmount = normalizeMoney(order.taxAmount);
+      const deliveryFee = normalizeMoney(order.deliveryFee);
+      const expressFee = normalizeMoney(order.expressFee);
+      const tipAmount = normalizeMoney(order.tipAmount);
+      const grandTotal = normalizeMoney(order.grandTotal);
+      const feesAndEstimatedTax =
+        'feesAndEstimatedTax' in order
+          ? normalizeMoney(order.feesAndEstimatedTax)
+          : normalizeMoney(processingFee + taxAmount);
+
+      normalized.subtotal = subtotal;
+      normalized.processingFee = processingFee;
+      normalized.taxAmount = taxAmount;
+      normalized.deliveryFee = deliveryFee;
+      normalized.expressFee = expressFee;
+      normalized.tipAmount = tipAmount;
+      normalized.grandTotal = grandTotal;
+      normalized.feesAndEstimatedTax = feesAndEstimatedTax;
+      normalized.items = Array.isArray(order.items)
+        ? order.items.slice(0, 50).map((item) => ({
+            name: typeof item?.name === 'string' ? item.name : 'Menu item',
+            quantity: toDisplayQuantity(item?.quantity),
+            total: normalizeMoney(item?.total),
+          }))
+        : [];
+
+      return normalized;
+    }
+
+    function renderReceipt(order) {
+      if (!order) {
+        return;
+      }
+      const summarySection = document.querySelector('.order-summary');
+      if (summarySection) {
+        summarySection.innerHTML = '';
+        const fragment = document.createDocumentFragment();
+        if (order.items.length) {
+          order.items.forEach((item) => {
+            const row = document.createElement('div');
+            row.className = 'order-item';
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = `${toDisplayQuantity(item.quantity)}× ${item.name}`;
+            const priceSpan = document.createElement('span');
+            priceSpan.textContent = formatMoney(item.total);
+            row.append(nameSpan, priceSpan);
+            fragment.appendChild(row);
+          });
+        }
+        summarySection.appendChild(fragment);
+      }
+
+      const totalsSection = document.querySelector('.totals');
+      if (totalsSection) {
+        const totals = [
+          { label: 'Subtotal', amount: order.subtotal, always: true },
+          { label: 'Taxes & Fees', amount: order.feesAndEstimatedTax, always: true },
+          { label: 'Delivery', amount: order.deliveryFee },
+          { label: 'Express Delivery', amount: order.expressFee },
+          { label: 'Tip', amount: order.tipAmount },
+          { label: 'Total Paid', amount: order.grandTotal, always: true },
+        ];
+        totalsSection.innerHTML = '';
+        const fragment = document.createDocumentFragment();
+        totals.forEach(({ label, amount, always }) => {
+          const value = normalizeMoney(amount);
+          if (!always && value <= 0) {
+            return;
+          }
+          const row = document.createElement('div');
+          const labelSpan = document.createElement('span');
+          labelSpan.textContent = label;
+          const amountSpan = document.createElement('span');
+          amountSpan.textContent = formatMoney(value);
+          row.append(labelSpan, amountSpan);
+          fragment.appendChild(row);
+        });
+        totalsSection.appendChild(fragment);
+      }
+    }
+
+    const storedOrder = normalizeOrder(getStoredOrder());
+    if (storedOrder) {
+      renderReceipt(storedOrder);
+      if (analyticsApi?.sendEvent && !storedOrder.reported) {
+        const eventPayload = { ...storedOrder, page: 'thankyou' };
+        analyticsApi.sendEvent('purchase_complete', eventPayload, { keepalive: true });
+      }
+      clearStoredOrder();
     }
 
     const FORTUNE_REVEAL_DELAY = 2000;
