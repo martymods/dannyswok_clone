@@ -10,10 +10,32 @@ const port = process.env.PORT || 3000;
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: '2024-06-20' }) : null;
 
-const DANNYSWOK_ALLOWED_ORIGINS = (process.env.DANNYSWOK_ALLOWED_ORIGINS || '')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+const DEFAULT_DANNYSWOK_ALLOWED_ORIGINS = [
+  'https://dannyswok.com',
+  'https://www.dannyswok.com',
+  'https://delcotechdivision.com',
+  'https://www.delcotechdivision.com',
+];
+
+function parseOrigins(value) {
+  if (!value) {
+    return [];
+  }
+
+  const origins = Array.isArray(value) ? value : String(value).split(',');
+  return Array.from(
+    new Set(
+      origins
+        .map((origin) => (typeof origin === 'string' ? origin.trim() : ''))
+        .filter(Boolean),
+    ),
+  );
+}
+
+const parsedDannysWokAllowedOrigins = parseOrigins(process.env.DANNYSWOK_ALLOWED_ORIGINS);
+const DANNYSWOK_ALLOWED_ORIGINS = parsedDannysWokAllowedOrigins.length
+  ? parsedDannysWokAllowedOrigins
+  : DEFAULT_DANNYSWOK_ALLOWED_ORIGINS;
 const DANNYSWOK_MENU_ORIGIN = process.env.DANNYSWOK_MENU_ORIGIN || null;
 
 app.use(express.json());
