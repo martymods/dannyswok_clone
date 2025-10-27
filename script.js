@@ -2967,6 +2967,7 @@ function buildOrderDetailsForPayment() {
   const processingFee = ORDER_PROCESSING_FEE;
   const taxableAmount = subtotal + processingFee + deliveryFee + expressFee;
   const taxAmount = roundCurrency(taxableAmount * STATE_SALES_TAX_RATE);
+  const feesAndEstimatedTax = roundCurrency(processingFee + taxAmount);
   const items = Object.keys(cart).map((id) => {
     const item = cart[id];
     return {
@@ -3034,6 +3035,7 @@ function buildOrderDetailsForPayment() {
     expressFee,
     deliveryFee,
     processingFee,
+    feesAndEstimatedTax,
     taxAmount,
     grandTotal,
     items,
@@ -3051,6 +3053,7 @@ function buildOrderDetailsForPayment() {
     express_fee: order.expressFee.toFixed(2),
     delivery_fee: order.deliveryFee.toFixed(2),
     processing_fee: order.processingFee.toFixed(2),
+    fees_estimated_tax: order.feesAndEstimatedTax.toFixed(2),
     tax: order.taxAmount.toFixed(2),
     total: order.grandTotal.toFixed(2),
   };
@@ -3112,6 +3115,7 @@ function buildOrderDetailsForPayment() {
         expressFee: order.expressFee,
         deliveryFee: order.deliveryFee,
         processingFee: order.processingFee,
+        feesAndEstimatedTax: order.feesAndEstimatedTax,
         taxAmount: order.taxAmount,
         grandTotal: order.grandTotal,
         scheduleDescription: order.scheduleDescription,
@@ -3320,6 +3324,7 @@ function buildOrderDetailsForPayment() {
         processingFee: order.processingFee,
         deliveryFee: order.deliveryFee,
         expressFee: order.expressFee,
+        feesAndEstimatedTax: order.feesAndEstimatedTax,
         taxAmount: order.taxAmount,
         tipAmount: order.tipAmount,
         items: order.items.slice(0, 20).map((item) => ({
@@ -3337,6 +3342,7 @@ function buildOrderDetailsForPayment() {
       processingFee: order.processingFee,
       deliveryFee: order.deliveryFee,
       expressFee: order.expressFee,
+      feesAndEstimatedTax: order.feesAndEstimatedTax,
       taxAmount: order.taxAmount,
       tipAmount: order.tipAmount,
       grandTotal: order.grandTotal,
