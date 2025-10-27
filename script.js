@@ -3044,10 +3044,10 @@ function buildOrderDetailsForPayment() {
   }
 
   function buildPaymentMetadata(order) {
-  const metadata = {
-    fulfilment: order.fulfilment,
-    subtotal: order.subtotal.toFixed(2),
-    tip: order.tipAmount.toFixed(2),
+    const metadata = {
+      fulfilment: order.fulfilment,
+      subtotal: order.subtotal.toFixed(2),
+      tip: order.tipAmount.toFixed(2),
     express_fee: order.expressFee.toFixed(2),
     delivery_fee: order.deliveryFee.toFixed(2),
     processing_fee: order.processingFee.toFixed(2),
@@ -3075,11 +3075,43 @@ function buildOrderDetailsForPayment() {
     return metadata;
   }
 
+  function buildOrderPayload(order) {
+    if (!order || typeof order !== 'object') {
+      return null;
+    }
+
+    const items = Array.isArray(order.items)
+      ? order.items.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          total: item.total,
+        }))
+      : [];
+
+    return {
+      fulfilment: order.fulfilment,
+      isDelivery: order.isDelivery,
+      subtotal: order.subtotal,
+      tipAmount: order.tipAmount,
+      expressFee: order.expressFee,
+      deliveryFee: order.deliveryFee,
+      processingFee: order.processingFee,
+      taxAmount: order.taxAmount,
+      grandTotal: order.grandTotal,
+      scheduleDescription: order.scheduleDescription,
+      notes: Array.isArray(order.notes) ? order.notes : [],
+      customer: order.customer,
+      items,
+    };
+  }
+
   async function createPaymentIntent(order) {
     const amount = Math.round(order.grandTotal * 100);
     if (!Number.isFinite(amount) || amount <= 0) {
       throw new Error('Your cart total must be greater than zero.');
     }
+    const orderPayload = buildOrderPayload(order);
     const response = await fetch(`${API_BASE}/api/dannyswok/create-payment-intent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3089,6 +3121,7 @@ function buildOrderDetailsForPayment() {
         currency: 'usd',
         description: `${order.fulfilment} order at Danny's Wok`,
         metadata: buildPaymentMetadata(order),
+        order: orderPayload,
       }),
     });
     const data = await response.json();
@@ -3104,26 +3137,7 @@ function buildOrderDetailsForPayment() {
 
   async function createCheckoutSession(order) {
     const payload = {
-      order: {
-        fulfilment: order.fulfilment,
-        isDelivery: order.isDelivery,
-        subtotal: order.subtotal,
-        tipAmount: order.tipAmount,
-        expressFee: order.expressFee,
-        deliveryFee: order.deliveryFee,
-        processingFee: order.processingFee,
-        taxAmount: order.taxAmount,
-        grandTotal: order.grandTotal,
-        scheduleDescription: order.scheduleDescription,
-        notes: order.notes,
-        customer: order.customer,
-        items: order.items.map((item) => ({
-          name: item.name,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          total: item.total,
-        })),
-      },
+      order: buildOrderPayload(order),
       metadata: buildPaymentMetadata(order),
     };
     const response = await fetch(`${API_BASE}/api/dannyswok/create-checkout-session`, {
