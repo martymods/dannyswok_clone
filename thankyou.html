@@ -1359,6 +1359,7 @@
     </div>
   </div>
 
+  <script src="analytics-client.js"></script>
   <script>
     const quotes = [
       "Radiate your strength into the world.",
@@ -1388,6 +1389,62 @@
       "Rekindle your purpose; the world revolves in your favor.",
       "Respect your journey—the world is watching with wonder."
     ];
+
+    const analyticsApi = window.DannysAnalytics;
+    if (analyticsApi) {
+      analyticsApi.sendEvent(
+        'page_view',
+        { page: 'thankyou' },
+        { keepalive: true }
+      );
+      const storedOrder = analyticsApi.getStoredJson(analyticsApi.storageKeys.lastOrder);
+      if (storedOrder) {
+        const formatCurrency = (amount) => `$${Number(amount || 0).toFixed(2)}`;
+        const summarySection = document.querySelector('.order-summary');
+        if (summarySection && Array.isArray(storedOrder.items) && storedOrder.items.length) {
+          summarySection.innerHTML = storedOrder.items
+            .map(
+              (item) =>
+                `<div class="order-item"><span>${item.quantity || 0}× ${item.name || ''}</span><span>${formatCurrency(
+                  item.total,
+                )}</span></div>`
+            )
+            .join('');
+        }
+        const totalsSection = document.querySelector('.totals');
+        if (totalsSection) {
+          const totals = [
+            `<div><span>Subtotal</span><span>${formatCurrency(storedOrder.subtotal)}</span></div>`,
+            `<div><span>Processing fee</span><span>${formatCurrency(storedOrder.processingFee)}</span></div>`,
+            storedOrder.deliveryFee > 0
+              ? `<div><span>Delivery</span><span>${formatCurrency(storedOrder.deliveryFee)}</span></div>`
+              : '',
+            storedOrder.expressFee > 0
+              ? `<div><span>Express</span><span>${formatCurrency(storedOrder.expressFee)}</span></div>`
+              : '',
+            `<div><span>Sales tax</span><span>${formatCurrency(storedOrder.taxAmount)}</span></div>`,
+            storedOrder.tipAmount > 0
+              ? `<div><span>Tip</span><span>${formatCurrency(storedOrder.tipAmount)}</span></div>`
+              : '',
+            `<div><span>Total Paid</span><span>${formatCurrency(storedOrder.grandTotal)}</span></div>`,
+          ]
+            .filter(Boolean)
+            .join('');
+          totalsSection.innerHTML = totals;
+        }
+        if (!storedOrder.reported) {
+          analyticsApi.sendEvent(
+            'purchase_complete',
+            {
+              ...storedOrder,
+              page: 'thankyou',
+            },
+            { keepalive: true }
+          );
+        }
+        analyticsApi.setStoredJson(analyticsApi.storageKeys.lastOrder, null);
+      }
+    }
 
     const FORTUNE_REVEAL_DELAY = 2000;
     const CONFETTI_DELAY = 2000;

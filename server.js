@@ -4,6 +4,7 @@ const Stripe = require('stripe');
 require('dotenv').config();
 
 const createDannysWokPayRouter = require('./routes/dannyswok-pay');
+const createAnalyticsRouter = require('./routes/analytics');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -49,6 +50,8 @@ app.use(
     menuOrigin: DANNYSWOK_MENU_ORIGIN,
   }),
 );
+
+app.use('/api/analytics', createAnalyticsRouter());
 
 app.get('/api/config', (req, res) => {
   const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;

@@ -48,16 +48,67 @@ const API_BASE = resolveApiBase();
 const STORE_LOCATIONS = {
   southwest: {
     shortAddress: '5750 BALTIMORE AVE',
+    label: 'Southwest',
+    latitude: 39.94346,
+    longitude: -75.23863,
   },
   olney: {
     shortAddress: '5675 N FRONT',
+    label: 'One & Olney Plaza',
+    latitude: 40.039947,
+    longitude: -75.122995,
   },
   'hunting-park': {
     shortAddress: '4322 NORTH BROAD STREET',
+    label: 'Hunting Park',
+    latitude: 40.016985,
+    longitude: -75.145408,
   },
 };
 
+const STATE_SALES_TAX_RATE = 0.09;
+const ORDER_PROCESSING_FEE = 2;
+const DELIVERY_DISTANCE_LIMIT_MILES = 10;
+const DELIVERY_FEE_BRACKETS = [
+  { max: 0.7, amount: 3 },
+  { max: 2, amount: 5 },
+  { max: 4, amount: 7.99 },
+  { max: 6, amount: 11.99 },
+  { max: 8, amount: 17.99 },
+  { max: 10, amount: 25.99 },
+];
+
 let headerFulfilmentMode = 'pickup';
+
+const analyticsApi = typeof window !== 'undefined' ? window.DannysAnalytics || null : null;
+const LOCATION_STORAGE_KEY = analyticsApi?.storageKeys?.location || 'dwkUserLocation';
+const LAST_ORDER_STORAGE_KEY = analyticsApi?.storageKeys?.lastOrder || 'dwkLastOrderSummary';
+
+let activeStoreId = null;
+let deliveryMap = null;
+let deliveryMapReady = false;
+let storeMarker = null;
+let userMarker = null;
+let deliveryPathLine = null;
+let pendingGeocodeController = null;
+let locationLoadedFromCache = false;
+
+const deliveryLocationState = {
+  lat: null,
+  lng: null,
+  accuracy: null,
+  source: null,
+  addressLine1: '',
+  city: '',
+  postalCode: '',
+};
+
+const deliveryQuoteState = {
+  distanceMiles: null,
+  fee: 0,
+  withinRange: true,
+  needsLocation: true,
+};
 
 if (cartAddSound) {
   cartAddSound.preload = 'auto';
@@ -98,6 +149,458 @@ function handleGlobalButtonHover(event) {
 
 document.addEventListener('mouseover', handleGlobalButtonHover);
 
+function trackEvent(type, payload = {}, options = {}) {
+  if (!analyticsApi || typeof analyticsApi.sendEvent !== 'function') {
+    return;
+  }
+  analyticsApi.sendEvent(type, payload, { ensureProfile: true, ...options });
+}
+
+function readLocationStorage() {
+  if (analyticsApi?.getStoredJson) {
+    return analyticsApi.getStoredJson(LOCATION_STORAGE_KEY);
+  }
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return null;
+  }
+  try {
+    const raw = window.localStorage.getItem(LOCATION_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function writeLocationStorage(value) {
+  if (analyticsApi?.setStoredJson) {
+    analyticsApi.setStoredJson(LOCATION_STORAGE_KEY, value);
+    return;
+  }
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return;
+  }
+  try {
+    if (value === null || value === undefined) {
+      window.localStorage.removeItem(LOCATION_STORAGE_KEY);
+    } else {
+      window.localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(value));
+    }
+  } catch (error) {
+    // Ignore storage errors (e.g. private browsing)
+  }
+}
+
+function applyLocationToFormFields(location, { overwrite = false } = {}) {
+  const addressInput = document.getElementById('delivery-address');
+  const cityInput = document.getElementById('delivery-city');
+  const zipInput = document.getElementById('delivery-zip');
+  if (!addressInput || !cityInput || !zipInput) {
+    return;
+  }
+  if (location.addressLine1 && (overwrite || !addressInput.value.trim())) {
+    addressInput.value = location.addressLine1;
+  }
+  if (location.city && (overwrite || !cityInput.value.trim())) {
+    cityInput.value = location.city;
+  }
+  if (location.postalCode && (overwrite || !zipInput.value.trim())) {
+    zipInput.value = location.postalCode;
+  }
+}
+
+function getActiveStore() {
+  return activeStoreId ? STORE_LOCATIONS[activeStoreId] || null : null;
+}
+
+function setActiveStore(storeId) {
+  activeStoreId = normalizeStoreId(storeId);
+  refreshDeliveryQuote();
+  updateDeliverySummaryDisplay();
+  updateMapMarkers();
+  updateCheckoutView();
+  if (activeStoreId) {
+    const store = getActiveStore();
+    trackEvent('active_store_set', {
+      storeId: activeStoreId,
+      label: store?.label,
+    });
+    if (analyticsApi?.ensureProfile) {
+      analyticsApi.ensureProfile({
+        storeId: activeStoreId,
+        storeLabel: store?.label,
+        storeLat: store?.latitude,
+        storeLng: store?.longitude,
+      });
+    }
+  }
+}
+
+function loadCachedDeliveryLocation() {
+  const stored = readLocationStorage();
+  if (!stored || !Number.isFinite(stored.lat) || !Number.isFinite(stored.lng)) {
+    return false;
+  }
+  deliveryLocationState.lat = stored.lat;
+  deliveryLocationState.lng = stored.lng;
+  deliveryLocationState.accuracy = Number.isFinite(stored.accuracy) ? stored.accuracy : null;
+  deliveryLocationState.source = stored.source || 'cache';
+  deliveryLocationState.addressLine1 = stored.addressLine1 || '';
+  deliveryLocationState.city = stored.city || '';
+  deliveryLocationState.postalCode = stored.postalCode || '';
+  locationLoadedFromCache = true;
+  applyLocationToFormFields(deliveryLocationState, { overwrite: true });
+  refreshDeliveryQuote();
+  trackEvent('delivery_location_loaded', {
+    source: stored.source || 'cache',
+    lat: deliveryLocationState.lat,
+    lng: deliveryLocationState.lng,
+  });
+  updateDeliverySummaryDisplay();
+  return true;
+}
+
+function persistDeliveryLocationState() {
+  if (!Number.isFinite(deliveryLocationState.lat) || !Number.isFinite(deliveryLocationState.lng)) {
+    writeLocationStorage(null);
+    return;
+  }
+  writeLocationStorage({
+    lat: deliveryLocationState.lat,
+    lng: deliveryLocationState.lng,
+    accuracy: deliveryLocationState.accuracy,
+    source: deliveryLocationState.source,
+    addressLine1: deliveryLocationState.addressLine1,
+    city: deliveryLocationState.city,
+    postalCode: deliveryLocationState.postalCode,
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+function calculateDistanceMiles(lat1, lon1, lat2, lon2) {
+  const toRadians = (degrees) => (degrees * Math.PI) / 180;
+  const earthRadiusMiles = 3958.8;
+  const deltaLat = toRadians(lat2 - lat1);
+  const deltaLon = toRadians(lon2 - lon1);
+  const a =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(deltaLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return earthRadiusMiles * c;
+}
+
+function determineDeliveryFee(distanceMiles) {
+  for (const bracket of DELIVERY_FEE_BRACKETS) {
+    if (distanceMiles <= bracket.max) {
+      return bracket.amount;
+    }
+  }
+  return DELIVERY_FEE_BRACKETS[DELIVERY_FEE_BRACKETS.length - 1].amount;
+}
+
+function refreshDeliveryQuote() {
+  const store = getActiveStore();
+  if (!store || !Number.isFinite(store.latitude) || !Number.isFinite(store.longitude)) {
+    deliveryQuoteState.distanceMiles = null;
+    deliveryQuoteState.fee = 0;
+    deliveryQuoteState.withinRange = false;
+    deliveryQuoteState.needsLocation = true;
+    return deliveryQuoteState;
+  }
+  if (!Number.isFinite(deliveryLocationState.lat) || !Number.isFinite(deliveryLocationState.lng)) {
+    deliveryQuoteState.distanceMiles = null;
+    deliveryQuoteState.fee = 0;
+    deliveryQuoteState.withinRange = true;
+    deliveryQuoteState.needsLocation = true;
+    return deliveryQuoteState;
+  }
+  const distance = calculateDistanceMiles(
+    store.latitude,
+    store.longitude,
+    deliveryLocationState.lat,
+    deliveryLocationState.lng,
+  );
+  deliveryQuoteState.distanceMiles = distance;
+  deliveryQuoteState.needsLocation = false;
+  if (distance > DELIVERY_DISTANCE_LIMIT_MILES) {
+    deliveryQuoteState.fee = 0;
+    deliveryQuoteState.withinRange = false;
+  } else {
+    deliveryQuoteState.fee = determineDeliveryFee(distance);
+    deliveryQuoteState.withinRange = true;
+  }
+  return deliveryQuoteState;
+}
+
+function updateDeliverySummaryDisplay() {
+  const summary = document.getElementById('delivery-distance-summary');
+  if (!summary) {
+    return;
+  }
+  summary.classList.remove('is-error', 'is-warning', 'is-success');
+  const store = getActiveStore();
+  if (!store) {
+    summary.textContent = 'Select a store to calculate delivery distance.';
+    summary.classList.add('is-warning');
+    return;
+  }
+  if (deliveryQuoteState.needsLocation) {
+    summary.textContent = 'Share your location to calculate delivery fees.';
+    summary.classList.add('is-warning');
+    return;
+  }
+  if (!deliveryQuoteState.withinRange) {
+    const distanceText = deliveryQuoteState.distanceMiles
+      ? `${deliveryQuoteState.distanceMiles.toFixed(2)} miles away.`
+      : 'outside our delivery range.';
+    summary.textContent = `Delivery is available within ${DELIVERY_DISTANCE_LIMIT_MILES} miles. You're ${distanceText}`;
+    summary.classList.add('is-error');
+    return;
+  }
+  const distanceText = deliveryQuoteState.distanceMiles
+    ? `${deliveryQuoteState.distanceMiles.toFixed(2)} miles`
+    : 'within range';
+  summary.textContent = `Approximately ${distanceText} from the store. Delivery fee ${formatCurrency(
+    deliveryQuoteState.fee,
+  )}.`;
+  summary.classList.add('is-success');
+}
+
+function ensureDeliveryMapInitialized() {
+  const container = document.getElementById('delivery-map');
+  if (!container || typeof L === 'undefined') {
+    return false;
+  }
+  if (deliveryMap) {
+    return true;
+  }
+  deliveryMap = L.map(container, {
+    zoomControl: false,
+    attributionControl: false,
+    dragging: true,
+    scrollWheelZoom: false,
+  });
+  const streetLayer = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    { maxZoom: 18 },
+  );
+  streetLayer.addTo(deliveryMap);
+  deliveryMapReady = true;
+  deliveryMap.on('click', (event) => {
+    setLocationFromCoordinates(event.latlng.lat, event.latlng.lng, 'map');
+  });
+  return true;
+}
+
+function updateMapMarkers() {
+  if (!deliveryMap || !deliveryMapReady) {
+    return;
+  }
+  const store = getActiveStore();
+  if (store && Number.isFinite(store.latitude) && Number.isFinite(store.longitude)) {
+    const storeLatLng = [store.latitude, store.longitude];
+    if (!storeMarker) {
+      const storeIcon = L.divIcon({
+        className: 'delivery-map__store-pin',
+        html: '<span class="delivery-map__store-pin-inner" aria-hidden="true"></span>',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      });
+      storeMarker = L.marker(storeLatLng, { icon: storeIcon, interactive: false }).addTo(deliveryMap);
+    } else {
+      storeMarker.setLatLng(storeLatLng);
+    }
+  } else if (storeMarker) {
+    storeMarker.remove();
+    storeMarker = null;
+  }
+
+  if (Number.isFinite(deliveryLocationState.lat) && Number.isFinite(deliveryLocationState.lng)) {
+    const userLatLng = [deliveryLocationState.lat, deliveryLocationState.lng];
+    if (!userMarker) {
+      const userIcon = L.divIcon({
+        className: 'delivery-map__user-pin',
+        html: '<span class="delivery-map__user-pin-inner" aria-hidden="true"></span>',
+        iconSize: [28, 28],
+        iconAnchor: [14, 26],
+      });
+      userMarker = L.marker(userLatLng, { icon: userIcon, draggable: true }).addTo(deliveryMap);
+      userMarker.on('dragend', () => {
+        const { lat, lng } = userMarker.getLatLng();
+        setLocationFromCoordinates(lat, lng, 'pin');
+      });
+    } else {
+      userMarker.setLatLng(userLatLng);
+    }
+  } else if (userMarker) {
+    userMarker.remove();
+    userMarker = null;
+  }
+
+  if (storeMarker && userMarker) {
+    const storeLatLng = storeMarker.getLatLng();
+    const userLatLng = userMarker.getLatLng();
+    if (!deliveryPathLine) {
+      deliveryPathLine = L.polyline([storeLatLng, userLatLng], {
+        color: '#c0392b',
+        weight: 3,
+        dashArray: '8 8',
+      }).addTo(deliveryMap);
+    } else {
+      deliveryPathLine.setLatLngs([storeLatLng, userLatLng]);
+    }
+    const bounds = L.latLngBounds([storeLatLng, userLatLng]);
+    deliveryMap.fitBounds(bounds, { padding: [24, 48] });
+  } else if (deliveryPathLine) {
+    deliveryPathLine.remove();
+    deliveryPathLine = null;
+    if (storeMarker) {
+      deliveryMap.setView(storeMarker.getLatLng(), 13);
+    }
+  } else if (storeMarker) {
+    deliveryMap.setView(storeMarker.getLatLng(), 13);
+  }
+
+  window.setTimeout(() => {
+    deliveryMap.invalidateSize();
+  }, 200);
+}
+
+async function fetchAddressForLocation(lat, lng, source = 'manual') {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return;
+  }
+  if (pendingGeocodeController) {
+    pendingGeocodeController.abort();
+  }
+  const controller = new AbortController();
+  pendingGeocodeController = controller;
+  try {
+    const url = new URL('https://nominatim.openstreetmap.org/reverse');
+    url.searchParams.set('lat', lat);
+    url.searchParams.set('lon', lng);
+    url.searchParams.set('format', 'jsonv2');
+    url.searchParams.set('addressdetails', '1');
+    const response = await fetch(url.toString(), {
+      headers: { Accept: 'application/json' },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error(`Reverse geocode failed with status ${response.status}`);
+    }
+    const data = await response.json();
+    const address = data?.address || {};
+    const streetName =
+      address.road ||
+      address.pedestrian ||
+      address.highway ||
+      address.residential ||
+      address.neighbourhood ||
+      '';
+    const houseNumber = address.house_number || '';
+    const line1 = [houseNumber, streetName].filter(Boolean).join(' ').trim();
+    const city =
+      address.city ||
+      address.town ||
+      address.village ||
+      address.borough ||
+      address.hamlet ||
+      address.municipality ||
+      '';
+    const postalCode = address.postcode || '';
+    if (line1) {
+      deliveryLocationState.addressLine1 = line1;
+    }
+    if (city) {
+      deliveryLocationState.city = city;
+    }
+    if (postalCode) {
+      deliveryLocationState.postalCode = postalCode;
+    }
+    applyLocationToFormFields(deliveryLocationState, { overwrite: source !== 'manual' });
+    persistDeliveryLocationState();
+    trackEvent('delivery_reverse_geocode', {
+      success: true,
+      source,
+      lat,
+      lng,
+      addressLine1: deliveryLocationState.addressLine1,
+      city: deliveryLocationState.city,
+      postalCode: deliveryLocationState.postalCode,
+    });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      return;
+    }
+    trackEvent('delivery_reverse_geocode', {
+      success: false,
+      source,
+      error: error?.message || 'unknown_error',
+    });
+  } finally {
+    if (pendingGeocodeController === controller) {
+      pendingGeocodeController = null;
+    }
+  }
+}
+
+function setLocationFromCoordinates(lat, lng, source = 'manual', accuracy = null) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return;
+  }
+  deliveryLocationState.lat = lat;
+  deliveryLocationState.lng = lng;
+  deliveryLocationState.accuracy = Number.isFinite(accuracy) ? accuracy : null;
+  deliveryLocationState.source = source;
+  locationLoadedFromCache = true;
+  refreshDeliveryQuote();
+  updateDeliverySummaryDisplay();
+  updateMapMarkers();
+  applyLocationToFormFields(deliveryLocationState, { overwrite: source !== 'manual' });
+  persistDeliveryLocationState();
+  fetchAddressForLocation(lat, lng, source);
+  trackEvent('delivery_location_updated', {
+    source,
+    lat,
+    lng,
+    accuracy: deliveryLocationState.accuracy,
+    distanceMiles: deliveryQuoteState.distanceMiles,
+  });
+  updateCheckoutView();
+}
+
+function requestBrowserLocation() {
+  if (Number.isFinite(deliveryLocationState.lat) && Number.isFinite(deliveryLocationState.lng)) {
+    return;
+  }
+  if (typeof navigator === 'undefined' || !navigator.geolocation) {
+    trackEvent('delivery_location_permission', { status: 'unsupported' });
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      setLocationFromCoordinates(
+        position.coords.latitude,
+        position.coords.longitude,
+        'geolocation',
+        position.coords.accuracy,
+      );
+      trackEvent('delivery_location_permission', {
+        status: 'granted',
+        accuracy: position.coords.accuracy,
+      });
+    },
+    (error) => {
+      trackEvent('delivery_location_permission', {
+        status: 'denied',
+        code: error?.code || null,
+        message: error?.message || null,
+      });
+      updateDeliverySummaryDisplay();
+    },
+    { enableHighAccuracy: true, maximumAge: 60000 },
+  );
+}
+
 function normalizeStoreId(storeId) {
   if (!storeId) {
     return null;
@@ -124,10 +627,12 @@ function applySelectedStoreFromQuery() {
     addressElement.textContent = shortAddress;
     displayWrapper.dataset.storeId = matchedStoreId;
     displayWrapper.classList.remove('menu-header__selected-store--empty');
+    setActiveStore(matchedStoreId);
   } else {
     addressElement.textContent = getHeaderFulfilmentPlaceholder();
     displayWrapper.classList.add('menu-header__selected-store--empty');
     displayWrapper.removeAttribute('data-store-id');
+    setActiveStore(null);
   }
 
   updateHeaderFulfilmentDisplay();
@@ -1173,8 +1678,16 @@ function updateItemQuantity(id, quantity) {
     return;
   }
   if (cart[id]) {
+    const previousQuantity = cart[id].quantity;
     cart[id].quantity = Math.floor(numericQuantity);
     updateCart();
+    if (cart[id].quantity !== previousQuantity) {
+      trackEvent('cart_quantity_updated', {
+        itemId: id,
+        previousQuantity,
+        quantity: cart[id].quantity,
+      });
+    }
   }
 }
 
@@ -1196,6 +1709,7 @@ function activateTab(targetId) {
       pane.classList.remove('active');
     }
   });
+  trackEvent('menu_tab_viewed', { tabId: targetId });
 }
 
 // Render the menu on the page.
@@ -1431,6 +1945,12 @@ function addToCart(item, options = {}) {
   celebrateCartScore(options.imageElement);
   animateItemImage(options.imageElement);
   playCartSound();
+  trackEvent('cart_item_added', {
+    itemId: item.id,
+    name: item.name,
+    price: item.price,
+    quantity: cart[item.id].quantity,
+  });
 }
 
 function playCartSound() {
@@ -1544,8 +2064,16 @@ function celebrateCartScore(imageElement) {
 
 // Remove an item from the cart entirely
 function removeFromCart(id) {
+  const removed = cart[id];
   delete cart[id];
   updateCart();
+  if (removed) {
+    trackEvent('cart_item_removed', {
+      itemId: id,
+      name: removed.name,
+      quantity: removed.quantity,
+    });
+  }
 }
 
 // Update the cart display and totals
@@ -1577,6 +2105,25 @@ function toggleDeliveryFields(isDelivery) {
   const deliveryFields = document.getElementById('delivery-fields');
   if (deliveryFields) {
     deliveryFields.classList.toggle('hidden', !isDelivery);
+  }
+  const mapContainer = document.getElementById('delivery-map-container');
+  if (mapContainer) {
+    mapContainer.classList.toggle('hidden', !isDelivery);
+    if (isDelivery) {
+      if (ensureDeliveryMapInitialized()) {
+        updateMapMarkers();
+      }
+      updateDeliverySummaryDisplay();
+      if (!locationLoadedFromCache) {
+        requestBrowserLocation();
+      }
+    } else {
+      const summary = document.getElementById('delivery-distance-summary');
+      if (summary) {
+        summary.textContent = '';
+        summary.classList.remove('is-error', 'is-warning', 'is-success');
+      }
+    }
   }
   const pickupWrapper = document.getElementById('pickup-time-wrapper');
   if (pickupWrapper) {
@@ -1615,6 +2162,7 @@ function toggleDeliveryFields(isDelivery) {
       setPickupTimePreference(selectedPickupTimeOption);
     }
   }
+  trackEvent('fulfilment_changed', { mode: isDelivery ? 'delivery' : 'pickup' });
   updateCheckoutView();
 }
 
@@ -1650,6 +2198,9 @@ function toggleCheckoutPanel(open) {
     }
     const panelTop = checkoutPanel.getBoundingClientRect().top + window.scrollY;
     window.scrollTo({ top: panelTop - 16, behavior: 'smooth' });
+    trackEvent('checkout_panel_opened', { itemCount: Object.keys(cart).length });
+  } else {
+    trackEvent('checkout_panel_closed');
   }
 }
 
@@ -1662,17 +2213,23 @@ function updateCheckoutView() {
   }
   checkoutItems.innerHTML = '';
   const entries = Object.keys(cart);
+  const subtotalEl = document.getElementById('checkout-subtotal-amount');
+  const tipSummaryEl = document.getElementById('tip-amount');
+  const tipAmountEl = document.getElementById('checkout-tip-amount');
+  const deliveryDistanceRow = document.getElementById('delivery-distance-row');
+  const deliveryDistanceAmount = document.getElementById('delivery-distance-amount');
+  const expressFeeRow = document.getElementById('express-fee-row');
+  const expressFeeAmount = document.getElementById('express-fee-amount');
+  const processingFeeRow = document.getElementById('processing-fee-row');
+  const processingFeeAmount = document.getElementById('processing-fee-amount');
+  const taxTotalRow = document.getElementById('tax-total-row');
+  const taxAmountEl = document.getElementById('tax-amount');
   if (!entries.length) {
     const empty = document.createElement('p');
     empty.classList.add('cart-empty');
     empty.textContent = 'Add a few dishes to begin your order.';
     checkoutItems.appendChild(empty);
     checkoutTotal.textContent = '$0.00';
-    const subtotalEl = document.getElementById('checkout-subtotal-amount');
-    const tipSummaryEl = document.getElementById('tip-amount');
-    const tipAmountEl = document.getElementById('checkout-tip-amount');
-    const deliveryFeeRow = document.getElementById('delivery-fee-row');
-    const deliveryFeeAmount = document.getElementById('delivery-fee-amount');
     if (subtotalEl) {
       subtotalEl.textContent = '$0.00';
     }
@@ -1682,11 +2239,17 @@ function updateCheckoutView() {
     if (tipAmountEl) {
       tipAmountEl.textContent = '$0.00';
     }
-    if (deliveryFeeRow) {
-      deliveryFeeRow.classList.add('hidden');
+    if (deliveryDistanceRow) {
+      deliveryDistanceRow.classList.add('hidden');
     }
-    if (deliveryFeeAmount) {
-      deliveryFeeAmount.textContent = formatCurrency(EXPRESS_DELIVERY_FEE);
+    if (expressFeeRow) {
+      expressFeeRow.classList.add('hidden');
+    }
+    if (processingFeeAmount) {
+      processingFeeAmount.textContent = formatCurrency(0);
+    }
+    if (taxAmountEl) {
+      taxAmountEl.textContent = formatCurrency(0);
     }
     if (placeOrderBtn) {
       placeOrderBtn.disabled = true;
@@ -1830,12 +2393,32 @@ function updateCheckoutView() {
 
   const { total } = calculateCartTotals();
   const subtotal = roundCurrency(total);
-  const subtotalEl = document.getElementById('checkout-subtotal-amount');
   if (subtotalEl) {
     subtotalEl.textContent = formatCurrency(subtotal);
   }
-  const delivery = document.getElementById('fulfilment-delivery');
-  const isDelivery = Boolean(delivery && delivery.checked);
+  const deliveryRadio = document.getElementById('fulfilment-delivery');
+  const isDelivery = Boolean(deliveryRadio && deliveryRadio.checked);
+  const quote = isDelivery ? refreshDeliveryQuote() : deliveryQuoteState;
+  let deliveryFee = 0;
+  let canDeliver = true;
+  if (isDelivery) {
+    const store = getActiveStore();
+    if (!store || quote.needsLocation || !quote.withinRange) {
+      canDeliver = false;
+    } else {
+      deliveryFee = roundCurrency(quote.fee);
+    }
+  }
+  if (deliveryDistanceRow) {
+    if (isDelivery) {
+      deliveryDistanceRow.classList.remove('hidden');
+      if (deliveryDistanceAmount) {
+        deliveryDistanceAmount.textContent = formatCurrency(Math.max(deliveryFee, 0));
+      }
+    } else {
+      deliveryDistanceRow.classList.add('hidden');
+    }
+  }
   let tipAmount = 0;
   if (entries.length && isDelivery) {
     if (selectedTipType === 'custom') {
@@ -1845,32 +2428,68 @@ function updateCheckoutView() {
       tipAmount = roundCurrency(subtotal * rawTip);
     }
   }
-  const tipSummaryEl = document.getElementById('tip-amount');
   if (tipSummaryEl) {
     tipSummaryEl.textContent = formatCurrency(tipAmount);
   }
-  const tipAmountEl = document.getElementById('checkout-tip-amount');
   if (tipAmountEl) {
     tipAmountEl.textContent = formatCurrency(tipAmount);
   }
-  const deliveryFeeRow = document.getElementById('delivery-fee-row');
-  const deliveryFeeAmount = document.getElementById('delivery-fee-amount');
   const expressFee = isDelivery && selectedDeliverySpeed === 'express' ? EXPRESS_DELIVERY_FEE : 0;
-  if (deliveryFeeRow && deliveryFeeAmount) {
+  if (expressFeeRow && expressFeeAmount) {
     if (expressFee > 0) {
-      deliveryFeeRow.classList.remove('hidden');
-      deliveryFeeAmount.textContent = formatCurrency(expressFee);
+      expressFeeRow.classList.remove('hidden');
+      expressFeeAmount.textContent = formatCurrency(expressFee);
     } else {
-      deliveryFeeRow.classList.add('hidden');
+      expressFeeRow.classList.add('hidden');
     }
   }
-  const grandTotal = roundCurrency(subtotal + tipAmount + expressFee);
+  const processingFee = ORDER_PROCESSING_FEE;
+  if (processingFeeAmount) {
+    processingFeeAmount.textContent = formatCurrency(processingFee);
+  }
+  if (processingFeeRow) {
+    processingFeeRow.classList.remove('hidden');
+  }
+  const taxableAmount = subtotal + processingFee + (isDelivery ? deliveryFee : 0) + expressFee;
+  const taxAmount = roundCurrency(taxableAmount * STATE_SALES_TAX_RATE);
+  if (taxAmountEl) {
+    taxAmountEl.textContent = formatCurrency(taxAmount);
+  }
+  if (taxTotalRow) {
+    taxTotalRow.classList.remove('hidden');
+  }
+  const grandTotal = roundCurrency(
+    subtotal + processingFee + (isDelivery ? deliveryFee : 0) + expressFee + taxAmount + tipAmount,
+  );
   checkoutTotal.textContent = formatCurrency(grandTotal);
+  if (placeOrderBtn) {
+    if (isDelivery && !canDeliver) {
+      placeOrderBtn.disabled = true;
+    } else {
+      placeOrderBtn.disabled = false;
+    }
+  }
 }
 
 // Kick off the rendering once the DOM has loaded
 document.addEventListener('DOMContentLoaded', () => {
+  if (analyticsApi) {
+    trackEvent('page_view', { page: 'menu' }, { keepalive: true });
+  }
   applySelectedStoreFromQuery();
+  loadCachedDeliveryLocation();
+  if (analyticsApi?.ensureProfile) {
+    analyticsApi.ensureProfile(
+      activeStoreId
+        ? {
+            storeId: activeStoreId,
+            storeLabel: getActiveStore()?.label,
+            storeLat: getActiveStore()?.latitude,
+            storeLng: getActiveStore()?.longitude,
+          }
+        : {},
+    );
+  }
   const storeDisplay = document.getElementById('selected-store-display');
   if (storeDisplay) {
     storeDisplay.addEventListener('click', handleHeaderFulfilmentToggle);
@@ -2319,30 +2938,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function buildOrderDetailsForPayment() {
-    const { total: subtotal, count } = calculateCartTotals();
-    if (!count) {
-      return null;
-    }
+function buildOrderDetailsForPayment() {
+  const { total: subtotal, count } = calculateCartTotals();
+  if (!count) {
+    return null;
+  }
     const fulfilmentRadio = document.querySelector('input[name="fulfilment"]:checked');
     const fulfilmentValue = fulfilmentRadio ? fulfilmentRadio.value : 'pickup';
-    const fulfilment = fulfilmentValue === 'delivery' ? 'Delivery' : 'Pickup';
-    const isDelivery = fulfilment === 'Delivery';
-    let tipAmount = 0;
-    if (isDelivery) {
-      if (selectedTipType === 'custom') {
-        tipAmount = roundCurrency(Math.max(customTipAmount, 0));
-      } else {
-        const tipPercent = Number.isFinite(selectedTipPercent) ? selectedTipPercent : 0;
-        tipAmount = roundCurrency(subtotal * tipPercent);
-      }
+  const fulfilment = fulfilmentValue === 'delivery' ? 'Delivery' : 'Pickup';
+  const isDelivery = fulfilment === 'Delivery';
+  const quote = isDelivery ? refreshDeliveryQuote() : deliveryQuoteState;
+  if (isDelivery) {
+    const store = getActiveStore();
+    if (!store) {
+      throw new Error('Select a store before requesting delivery.');
     }
-    const expressFee = isDelivery && selectedDeliverySpeed === 'express' ? EXPRESS_DELIVERY_FEE : 0;
-    const items = Object.keys(cart).map((id) => {
-      const item = cart[id];
-      return {
-        id,
-        name: item.name,
+    if (quote.needsLocation) {
+      throw new Error('Share your delivery location to continue.');
+    }
+    if (!quote.withinRange) {
+      throw new Error(`Delivery is limited to ${DELIVERY_DISTANCE_LIMIT_MILES} miles from the store.`);
+    }
+  }
+  let tipAmount = 0;
+  if (isDelivery) {
+    if (selectedTipType === 'custom') {
+      tipAmount = roundCurrency(Math.max(customTipAmount, 0));
+    } else {
+      const tipPercent = Number.isFinite(selectedTipPercent) ? selectedTipPercent : 0;
+      tipAmount = roundCurrency(subtotal * tipPercent);
+    }
+  }
+  const expressFee = isDelivery && selectedDeliverySpeed === 'express' ? EXPRESS_DELIVERY_FEE : 0;
+  const deliveryFee = isDelivery ? roundCurrency(Math.max(quote.fee, 0)) : 0;
+  const processingFee = ORDER_PROCESSING_FEE;
+  const taxableAmount = subtotal + processingFee + deliveryFee + expressFee;
+  const taxAmount = roundCurrency(taxableAmount * STATE_SALES_TAX_RATE);
+  const items = Object.keys(cart).map((id) => {
+    const item = cart[id];
+    return {
+      id,
+      name: item.name,
         quantity: item.quantity,
         unitPrice: item.price,
         total: roundCurrency(item.price * item.quantity),
@@ -2381,15 +3017,15 @@ document.addEventListener('DOMContentLoaded', () => {
       scheduleDescription = 'Pickup window: 10 – 15 mins';
       notes.push(scheduleDescription);
     }
-    if (isDelivery && tipAmount > 0) {
-      notes.push(`Tip: ${formatCurrency(tipAmount)}`);
-    }
-    const grandTotal = roundCurrency(subtotal + tipAmount + expressFee);
-    const deliveryName = document.getElementById('delivery-name');
-    const deliveryPhone = document.getElementById('delivery-phone');
-    const deliveryAddress = document.getElementById('delivery-address');
-    const deliveryCity = document.getElementById('delivery-city');
-    const deliveryZip = document.getElementById('delivery-zip');
+  if (isDelivery && tipAmount > 0) {
+    notes.push(`Tip: ${formatCurrency(tipAmount)}`);
+  }
+  const grandTotal = roundCurrency(subtotal + processingFee + deliveryFee + expressFee + taxAmount + tipAmount);
+  const deliveryName = document.getElementById('delivery-name');
+  const deliveryPhone = document.getElementById('delivery-phone');
+  const deliveryAddress = document.getElementById('delivery-address');
+  const deliveryCity = document.getElementById('delivery-city');
+  const deliveryZip = document.getElementById('delivery-zip');
     const customer = {
       name: deliveryName ? deliveryName.value.trim() : '',
       phone: deliveryPhone ? deliveryPhone.value.trim() : '',
@@ -2398,27 +3034,33 @@ document.addEventListener('DOMContentLoaded', () => {
         .join(', '),
     };
     return {
-      fulfilment,
-      isDelivery,
-      subtotal: roundCurrency(subtotal),
-      tipAmount,
-      expressFee,
-      grandTotal,
-      items,
-      notes,
-      scheduleDescription,
-      customer,
+    fulfilment,
+    isDelivery,
+    subtotal: roundCurrency(subtotal),
+    tipAmount,
+    expressFee,
+    deliveryFee,
+    processingFee,
+    taxAmount,
+    grandTotal,
+    items,
+    notes,
+    scheduleDescription,
+    customer,
     };
   }
 
   function buildPaymentMetadata(order) {
-    const metadata = {
-      fulfilment: order.fulfilment,
-      subtotal: order.subtotal.toFixed(2),
-      tip: order.tipAmount.toFixed(2),
-      express_fee: order.expressFee.toFixed(2),
-      total: order.grandTotal.toFixed(2),
-    };
+  const metadata = {
+    fulfilment: order.fulfilment,
+    subtotal: order.subtotal.toFixed(2),
+    tip: order.tipAmount.toFixed(2),
+    express_fee: order.expressFee.toFixed(2),
+    delivery_fee: order.deliveryFee.toFixed(2),
+    processing_fee: order.processingFee.toFixed(2),
+    tax: order.taxAmount.toFixed(2),
+    total: order.grandTotal.toFixed(2),
+  };
     if (order.scheduleDescription) {
       metadata.schedule = order.scheduleDescription;
     }
@@ -2475,6 +3117,9 @@ document.addEventListener('DOMContentLoaded', () => {
         subtotal: order.subtotal,
         tipAmount: order.tipAmount,
         expressFee: order.expressFee,
+        deliveryFee: order.deliveryFee,
+        processingFee: order.processingFee,
+        taxAmount: order.taxAmount,
         grandTotal: order.grandTotal,
         scheduleDescription: order.scheduleDescription,
         notes: order.notes,
@@ -2519,10 +3164,15 @@ document.addEventListener('DOMContentLoaded', () => {
       .join('');
     const totals = [
       `<div><span>Subtotal</span><span>${formatCurrency(order.subtotal)}</span></div>`,
+      `<div><span>Processing fee</span><span>${formatCurrency(order.processingFee)}</span></div>`,
+      order.deliveryFee > 0
+        ? `<div><span>Delivery fee</span><span>${formatCurrency(order.deliveryFee)}</span></div>`
+        : '',
       order.tipAmount > 0 ? `<div><span>Tip</span><span>${formatCurrency(order.tipAmount)}</span></div>` : '',
       order.expressFee > 0
         ? `<div><span>Express delivery</span><span>${formatCurrency(order.expressFee)}</span></div>`
         : '',
+      `<div><span>Sales tax</span><span>${formatCurrency(order.taxAmount)}</span></div>`,
       `<div class="payment-order-summary__grand"><span>Total</span><span>${formatCurrency(order.grandTotal)}</span></div>`,
     ]
       .filter(Boolean)
@@ -2585,6 +3235,21 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           event.complete('success');
           setPaymentStatus('Payment successful! Redirecting…', 'success');
+          trackEvent(
+            'purchase_complete',
+            {
+              method: 'payment_request',
+              amount: currentOrderDetails?.grandTotal,
+              fulfilment: currentOrderDetails?.fulfilment,
+              paymentIntentId: paymentIntent?.id || currentPaymentIntent?.id || null,
+            },
+            { keepalive: true },
+          );
+          if (analyticsApi?.getStoredJson && analyticsApi?.setStoredJson) {
+            const lastOrder = analyticsApi.getStoredJson(LAST_ORDER_STORAGE_KEY) || {};
+            lastOrder.reported = true;
+            analyticsApi.setStoredJson(LAST_ORDER_STORAGE_KEY, lastOrder);
+          }
           setTimeout(() => {
             closePaymentModal();
             window.location.href = 'thankyou.html';
@@ -2653,6 +3318,38 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!paymentModal || !paymentAmountEl) {
       throw new Error('Payment modal is unavailable.');
     }
+    if (analyticsApi?.setStoredJson) {
+      const orderSnapshot = {
+        storeId: activeStoreId,
+        fulfilment: order.fulfilment,
+        grandTotal: order.grandTotal,
+        subtotal: order.subtotal,
+        processingFee: order.processingFee,
+        deliveryFee: order.deliveryFee,
+        expressFee: order.expressFee,
+        taxAmount: order.taxAmount,
+        tipAmount: order.tipAmount,
+        items: order.items.slice(0, 20).map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          total: item.total,
+        })),
+        timestamp: new Date().toISOString(),
+        reported: false,
+      };
+      analyticsApi.setStoredJson(LAST_ORDER_STORAGE_KEY, orderSnapshot);
+    }
+    trackEvent('checkout_started', {
+      subtotal: order.subtotal,
+      processingFee: order.processingFee,
+      deliveryFee: order.deliveryFee,
+      expressFee: order.expressFee,
+      taxAmount: order.taxAmount,
+      tipAmount: order.tipAmount,
+      grandTotal: order.grandTotal,
+      fulfilment: order.fulfilment,
+      itemCount: order.items.length,
+    });
     currentOrderDetails = order;
     paymentModal.classList.remove('hidden');
     paymentModal.setAttribute('aria-hidden', 'false');
@@ -2725,6 +3422,21 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error(result.error.message || 'Payment failed.');
       }
       setPaymentStatus('Payment successful! Redirecting…', 'success');
+      trackEvent(
+        'purchase_complete',
+        {
+          method: 'card',
+          amount: currentOrderDetails.grandTotal,
+          fulfilment: currentOrderDetails.fulfilment,
+          paymentIntentId: result.paymentIntent?.id || currentPaymentIntent?.id || null,
+        },
+        { keepalive: true },
+      );
+      if (analyticsApi?.getStoredJson && analyticsApi?.setStoredJson) {
+        const lastOrder = analyticsApi.getStoredJson(LAST_ORDER_STORAGE_KEY) || {};
+        lastOrder.reported = true;
+        analyticsApi.setStoredJson(LAST_ORDER_STORAGE_KEY, lastOrder);
+      }
       setTimeout(() => {
         closePaymentModal();
         window.location.href = 'thankyou.html';
@@ -2792,11 +3504,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const placeOrderBtn = document.getElementById('place-order');
   if (placeOrderBtn) {
     placeOrderBtn.addEventListener('click', async () => {
-      const orderDetails = buildOrderDetailsForPayment();
+      let orderDetails = null;
+      try {
+        orderDetails = buildOrderDetailsForPayment();
+      } catch (error) {
+        alert(error.message || 'Unable to prepare your order.');
+        return;
+      }
       if (!orderDetails) {
         alert('Add items to your cart before placing an order.');
         return;
       }
+      trackEvent('place_order_clicked', {
+        fulfilment: orderDetails.fulfilment,
+        itemCount: orderDetails.items.length,
+        grandTotal: orderDetails.grandTotal,
+      });
       try {
         await openPaymentModal(orderDetails);
       } catch (error) {
