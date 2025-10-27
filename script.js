@@ -3078,6 +3078,30 @@ function buildOrderDetailsForPayment() {
     return metadata;
   }
 
+  function serializeOrderForApi(order) {
+    return {
+      fulfilment: order.fulfilment,
+      isDelivery: order.isDelivery,
+      subtotal: order.subtotal,
+      tipAmount: order.tipAmount,
+      expressFee: order.expressFee,
+      deliveryFee: order.deliveryFee,
+      processingFee: order.processingFee,
+      feesAndEstimatedTax: order.feesAndEstimatedTax,
+      taxAmount: order.taxAmount,
+      grandTotal: order.grandTotal,
+      scheduleDescription: order.scheduleDescription,
+      notes: order.notes,
+      customer: order.customer,
+      items: order.items.map((item) => ({
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        total: item.total,
+      })),
+    };
+  }
+
   async function createPaymentIntent(order) {
     const breakdown = buildPaymentRequestBreakdown(order);
     const amount = breakdown.total;
@@ -3090,13 +3114,6 @@ function buildOrderDetailsForPayment() {
       unit_amount: toStripeMinorUnits(item.unitPrice),
       quantity: item.quantity,
     }));
-    const feesPayload = {
-      taxCents: breakdown.taxCents,
-      deliveryCents: breakdown.deliveryCents,
-      expressCents: breakdown.expressCents,
-      tipCents: breakdown.tipCents,
-      serviceFeeCents: breakdown.serviceCents,
-    };
     const response = await fetch(`${API_BASE}/api/dannyswok/create-payment-intent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3106,8 +3123,8 @@ function buildOrderDetailsForPayment() {
         currency: 'usd',
         description: `${order.fulfilment} order at Danny's Wok`,
         metadata: buildPaymentMetadata(order),
+        order: serializeOrderForApi(order),
         items: itemsPayload,
-        fees: feesPayload,
         subtotal: order.subtotal,
         subtotalCents: breakdown.subtotalCents,
         total: order.grandTotal,
@@ -3129,35 +3146,8 @@ function buildOrderDetailsForPayment() {
   async function createCheckoutSession(order) {
     const breakdown = buildPaymentRequestBreakdown(order);
     const payload = {
-      order: {
-        fulfilment: order.fulfilment,
-        isDelivery: order.isDelivery,
-        subtotal: order.subtotal,
-        tipAmount: order.tipAmount,
-        expressFee: order.expressFee,
-        deliveryFee: order.deliveryFee,
-        processingFee: order.processingFee,
-        feesAndEstimatedTax: order.feesAndEstimatedTax,
-        taxAmount: order.taxAmount,
-        grandTotal: order.grandTotal,
-        scheduleDescription: order.scheduleDescription,
-        notes: order.notes,
-        customer: order.customer,
-        items: order.items.map((item) => ({
-          name: item.name,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          total: item.total,
-        })),
-      },
+      order: serializeOrderForApi(order),
       metadata: buildPaymentMetadata(order),
-      fees: {
-        taxCents: breakdown.taxCents,
-        serviceFeeCents: breakdown.serviceCents,
-        deliveryCents: breakdown.deliveryCents,
-        expressCents: breakdown.expressCents,
-        tipCents: breakdown.tipCents,
-      },
       subtotalCents: breakdown.subtotalCents,
       totalCents: breakdown.total,
     };
