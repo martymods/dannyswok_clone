@@ -37,6 +37,47 @@ const DANNYSWOK_ALLOWED_ORIGINS = parsedDannysWokAllowedOrigins.length
   ? parsedDannysWokAllowedOrigins
   : DEFAULT_DANNYSWOK_ALLOWED_ORIGINS;
 const DANNYSWOK_MENU_ORIGIN = process.env.DANNYSWOK_MENU_ORIGIN || null;
+const parsedDannysWokMenuOrigins = parseOrigins(DANNYSWOK_MENU_ORIGIN);
+const COMBINED_ALLOWED_ORIGINS = Array.from(
+  new Set([...DANNYSWOK_ALLOWED_ORIGINS, ...parsedDannysWokMenuOrigins]),
+);
+
+const combinedAllowedOriginsSet = new Set(COMBINED_ALLOWED_ORIGINS);
+
+app.use((req, res, next) => {
+  const originHeader = typeof req.headers.origin === 'string' ? req.headers.origin.trim() : '';
+  const requestOrigin = originHeader || '';
+  const hasAllowedOrigin = requestOrigin && combinedAllowedOriginsSet.has(requestOrigin);
+
+  if (hasAllowedOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  } else if (requestOrigin) {
+    const requestedHeaders = req.headers['access-control-request-headers'];
+    res.setHeader('Access-Control-Allow-Headers', requestedHeaders || 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+
+    if (req.method === 'OPTIONS') {
+      res.status(403).end();
+      return;
+    }
+
+    res.status(403).json({ error: 'cors_not_allowed' });
+    return;
+  }
+
+  const requestedHeaders = req.headers['access-control-request-headers'];
+  res.setHeader('Access-Control-Allow-Headers', requestedHeaders || 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
+
+  next();
+});
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
@@ -45,7 +86,7 @@ app.use(
   '/api/dannyswok',
   createDannysWokPayRouter({
     stripe,
-    allowedOrigins: DANNYSWOK_ALLOWED_ORIGINS,
+    allowedOrigins: COMBINED_ALLOWED_ORIGINS,
     menuOrigin: DANNYSWOK_MENU_ORIGIN,
   }),
 );
