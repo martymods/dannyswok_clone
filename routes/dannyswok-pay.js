@@ -3,47 +3,52 @@ const express = require('express');
 function normalizeOrigins(origins) {
   if (!origins) return [];
   if (Array.isArray(origins)) {
-    return origins
-      .map((origin) => (typeof origin === 'string' ? origin.trim() : ''))
-      .filter(Boolean);
+    return Array.from(
+      new Set(
+        origins
+          .map((origin) => (typeof origin === 'string' ? origin.trim() : ''))
+          .filter(Boolean),
+      ),
+    );
   }
   if (typeof origins === 'string') {
-    return origins
-      .split(',')
-      .map((origin) => origin.trim())
-      .filter(Boolean);
+    return normalizeOrigins(origins.split(','));
   }
   return [];
 }
 
 function createCorsMiddleware(allowedOrigins) {
   const origins = normalizeOrigins(allowedOrigins);
+  const allowAll = origins.includes('*');
   if (origins.length === 0) {
     return null;
   }
 
   return function corsMiddleware(req, res, next) {
     const requestOrigin = req.headers.origin;
-    if (!requestOrigin || origins.includes(requestOrigin)) {
+    if (allowAll) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    } else if (!requestOrigin || origins.includes(requestOrigin)) {
       if (requestOrigin) {
         res.setHeader('Access-Control-Allow-Origin', requestOrigin);
         res.setHeader('Vary', 'Origin');
       }
       res.setHeader('Access-Control-Allow-Credentials', 'true');
-      const requestedHeaders = req.headers['access-control-request-headers'];
-      res.setHeader('Access-Control-Allow-Headers', requestedHeaders || 'Content-Type, Authorization');
-      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-
-      if (req.method === 'OPTIONS') {
-        res.status(204).end();
-        return;
-      }
-
-      next();
+    } else {
+      res.status(403).json({ error: 'cors_not_allowed' });
       return;
     }
 
-    res.status(403).json({ error: 'cors_not_allowed' });
+    const requestedHeaders = req.headers['access-control-request-headers'];
+    res.setHeader('Access-Control-Allow-Headers', requestedHeaders || 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+
+    if (req.method === 'OPTIONS') {
+      res.status(204).end();
+      return;
+    }
+
+    next();
   };
 }
 
@@ -84,8 +89,10 @@ function sanitizeEmail(value) {
 function createDannysWokPayRouter({ stripe, allowedOrigins = [], menuOrigin = null } = {}) {
   const router = express.Router();
   const normalizedOrigins = normalizeOrigins(allowedOrigins);
+  const normalizedMenuOrigins = normalizeOrigins(menuOrigin);
+  const combinedOrigins = Array.from(new Set([...normalizedOrigins, ...normalizedMenuOrigins]));
 
-  const corsMiddleware = createCorsMiddleware(normalizedOrigins);
+  const corsMiddleware = createCorsMiddleware(combinedOrigins);
   if (corsMiddleware) {
     router.use(corsMiddleware);
   }
@@ -96,7 +103,7 @@ function createDannysWokPayRouter({ stripe, allowedOrigins = [], menuOrigin = nu
       stripePublishableKey,
       stripePk: stripePublishableKey,
       menuOrigin: menuOrigin || null,
-      allowedOrigins: normalizedOrigins,
+      allowedOrigins: corsMiddleware ? combinedOrigins : [],
     });
   });
 
