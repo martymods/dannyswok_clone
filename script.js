@@ -3079,10 +3079,23 @@ function buildOrderDetailsForPayment() {
   }
 
   async function createPaymentIntent(order) {
-    const amount = Math.round(order.grandTotal * 100);
+    const breakdown = buildPaymentRequestBreakdown(order);
+    const amount = breakdown.total;
     if (!Number.isFinite(amount) || amount <= 0) {
       throw new Error('Your cart total must be greater than zero.');
     }
+    const itemsPayload = order.items.map((item) => ({
+      name: item.name,
+      unit: toStripeMinorUnits(item.unitPrice),
+      qty: item.quantity,
+    }));
+    const feesPayload = {
+      tax: breakdown.taxCents,
+      delivery: breakdown.deliveryCents,
+      express: breakdown.expressCents,
+      tip: breakdown.tipCents,
+      service: breakdown.serviceCents,
+    };
     const response = await fetch(`${API_BASE}/api/dannyswok/create-payment-intent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3092,6 +3105,11 @@ function buildOrderDetailsForPayment() {
         currency: 'usd',
         description: `${order.fulfilment} order at Danny's Wok`,
         metadata: buildPaymentMetadata(order),
+        items: itemsPayload,
+        fees: feesPayload,
+        subtotal: breakdown.subtotalCents,
+        total: breakdown.total,
+        fulfillment: order.isDelivery ? 'delivery' : 'pickup',
       }),
     });
     const data = await response.json();
@@ -3183,19 +3201,65 @@ function buildOrderDetailsForPayment() {
     `;
   }
 
+  function toStripeMinorUnits(value) {
+    const number = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(number)) {
+      return 0;
+    }
+    const cents = Math.round((number + Number.EPSILON) * 100);
+    return cents >= 0 ? cents : 0;
+  }
+
+  function buildPaymentRequestBreakdown(order) {
+    const subtotalCents = toStripeMinorUnits(order.subtotal);
+    const taxCents = toStripeMinorUnits(order.taxAmount);
+    const serviceCents = toStripeMinorUnits(order.processingFee);
+    const deliveryCents = order.deliveryFee > 0 ? toStripeMinorUnits(order.deliveryFee) : 0;
+    const expressCents = order.expressFee > 0 ? toStripeMinorUnits(order.expressFee) : 0;
+    const tipCents = order.tipAmount > 0 ? toStripeMinorUnits(order.tipAmount) : 0;
+    const feesAndEstimatedTaxCents = taxCents + serviceCents;
+    const computedTotal =
+      subtotalCents + feesAndEstimatedTaxCents + deliveryCents + expressCents + tipCents;
+    let grandTotalCents = toStripeMinorUnits(order.grandTotal);
+    if (computedTotal > 0 && Math.abs(computedTotal - grandTotalCents) <= 1) {
+      grandTotalCents = computedTotal;
+    }
+
+    const displayItems = [
+      { label: 'Subtotal', amount: subtotalCents },
+      { label: 'Fees & Estimated Tax', amount: feesAndEstimatedTaxCents },
+      ...(deliveryCents ? [{ label: 'Delivery fee', amount: deliveryCents }] : []),
+      ...(expressCents ? [{ label: 'Express delivery', amount: expressCents }] : []),
+      ...(tipCents ? [{ label: 'Tip', amount: tipCents }] : []),
+    ];
+
+    return {
+      total: grandTotalCents,
+      displayItems,
+      subtotalCents,
+      taxCents,
+      serviceCents,
+      deliveryCents,
+      expressCents,
+      tipCents,
+    };
+  }
+
   async function updatePaymentRequest(order) {
     if (!stripeInstance || !paymentRequestWrapper) {
       return;
     }
-    const amount = Math.round(order.grandTotal * 100);
+    const breakdown = buildPaymentRequestBreakdown(order);
+    const { total: amount, displayItems } = breakdown;
     if (!paymentRequest) {
       paymentRequest = stripeInstance.paymentRequest({
         country: 'US',
         currency: 'usd',
         total: {
-          label: "Danny's Wok order",
+          label: 'Dreamworld LLC',
           amount,
         },
+        displayItems,
         requestPayerName: true,
         requestPayerEmail: true,
         requestPayerPhone: true,
@@ -3295,9 +3359,10 @@ function buildOrderDetailsForPayment() {
     } else {
       paymentRequest.update({
         total: {
-          label: "Danny's Wok order",
+          label: 'Dreamworld LLC',
           amount,
         },
+        displayItems,
       });
     }
 
