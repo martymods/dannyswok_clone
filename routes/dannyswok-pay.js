@@ -6,7 +6,14 @@ function normalizeOrigins(origins) {
     return Array.from(
       new Set(
         origins
-          .map((origin) => (typeof origin === 'string' ? origin.trim() : ''))
+          .map((origin) => {
+            if (typeof origin !== 'string') {
+              return '';
+            }
+            const trimmed = origin.trim();
+            const withoutTrailingSlash = trimmed.replace(/\/+$/, '');
+            return withoutTrailingSlash || '';
+          })
           .filter(Boolean),
       ),
     );
