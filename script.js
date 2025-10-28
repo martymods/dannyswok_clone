@@ -13,6 +13,48 @@ const fallbackImage = 'images/chinesemenu/store_interior.jpg';
 const cartAddSound = typeof Audio === 'function' ? new Audio('audio/wok_register.mp3') : null;
 const hoverSound = typeof Audio === 'function' ? new Audio('audio/scroll_hover_over_sound.mp3') : null;
 
+const easternTimeZone = 'America/New_York';
+const minutesPerHour = 60;
+const storeStatusUpdateInterval = 60 * 1000;
+
+const storeHoursByDay = {
+  0: { open: 11 * minutesPerHour + 30, close: 22 * minutesPerHour + 30 },
+  1: { open: 11 * minutesPerHour, close: 22 * minutesPerHour + 30 },
+  2: { open: 11 * minutesPerHour, close: 22 * minutesPerHour + 30 },
+  3: { open: 11 * minutesPerHour, close: 22 * minutesPerHour + 30 },
+  4: { open: 11 * minutesPerHour, close: 22 * minutesPerHour + 30 },
+  5: { open: 11 * minutesPerHour, close: 23 * minutesPerHour + 30 },
+  6: { open: 11 * minutesPerHour, close: 23 * minutesPerHour + 30 },
+};
+
+function getEasternNow() {
+  const localeString = new Date().toLocaleString('en-US', { timeZone: easternTimeZone });
+  return new Date(localeString);
+}
+
+function calculateStoreOperatingStatus() {
+  const now = getEasternNow();
+  const day = now.getDay();
+  const currentMinutes = now.getHours() * minutesPerHour + now.getMinutes();
+  const hours = storeHoursByDay[day];
+
+  if (!hours) {
+    return {
+      isOpen: false,
+      text: 'Closed · Order ahead for pickup',
+      state: 'closed',
+    };
+  }
+
+  const isOpen = currentMinutes >= hours.open && currentMinutes < hours.close;
+
+  return {
+    isOpen,
+    text: isOpen ? 'Open' : 'Closed · Order ahead for pickup',
+    state: isOpen ? 'open' : 'closed',
+  };
+}
+
 function resolveApiBase() {
   const globalObject = typeof window !== 'undefined' ? window : globalThis;
   if (globalObject && typeof globalObject.DELCO_BACKEND_BASE === 'string') {
@@ -90,6 +132,8 @@ applyStoreData(DEFAULT_STORE_DATA);
 
 let storeDataLoaded = false;
 let storeDataPromise = null;
+let pickupScheduleLockActive = false;
+let pickupScheduleIntervalId = null;
 
 function getStoreById(storeId) {
   if (!storeId) {
@@ -283,6 +327,7 @@ function setActiveStore(storeId) {
   updateDeliverySummaryDisplay();
   updateMapMarkers();
   updateCheckoutView();
+  updatePickupScheduleLock();
   if (activeStoreId) {
     const store = getActiveStore();
     trackEvent('active_store_set', {
@@ -297,6 +342,63 @@ function setActiveStore(storeId) {
         storeLng: store?.longitude,
       });
     }
+  }
+}
+
+function updatePickupScheduleLock() {
+  const pickupWrapper = document.getElementById('pickup-time-wrapper');
+  const standardRadio = document.getElementById('pickup-time-standard');
+  const scheduleRadio = document.getElementById('pickup-time-schedule');
+  const lockMessage = document.getElementById('pickup-time-lock-message');
+  if (!pickupWrapper || !standardRadio || !scheduleRadio || !lockMessage) {
+    return;
+  }
+
+  const status = calculateStoreOperatingStatus();
+  const shouldLock = !status.isOpen;
+  const standardLabel = standardRadio.closest('label');
+  const scheduleLabel = scheduleRadio.closest('label');
+
+  if (shouldLock) {
+    const wasLocked = pickupScheduleLockActive;
+    if (!pickupScheduleLockActive) {
+      standardRadio.disabled = true;
+      standardRadio.checked = false;
+      standardRadio.setAttribute('aria-disabled', 'true');
+      if (standardLabel) {
+        standardLabel.classList.add('is-disabled');
+      }
+      if (scheduleLabel) {
+        scheduleLabel.classList.add('is-locked');
+      }
+      pickupWrapper.classList.add('is-locked');
+      pickupScheduleLockActive = true;
+    }
+    if (!scheduleRadio.checked) {
+      scheduleRadio.checked = true;
+    }
+    if (!wasLocked || selectedPickupTimeOption !== 'schedule') {
+      setPickupTimePreference('schedule');
+    }
+    scheduleRadio.disabled = false;
+    scheduleRadio.removeAttribute('aria-disabled');
+    lockMessage.textContent = "We're closed right now. Schedule ahead for pickup to place your order.";
+    lockMessage.hidden = false;
+  } else {
+    if (pickupScheduleLockActive) {
+      standardRadio.disabled = false;
+      standardRadio.removeAttribute('aria-disabled');
+      if (standardLabel) {
+        standardLabel.classList.remove('is-disabled');
+      }
+      if (scheduleLabel) {
+        scheduleLabel.classList.remove('is-locked');
+      }
+      pickupWrapper.classList.remove('is-locked');
+      pickupScheduleLockActive = false;
+    }
+    lockMessage.textContent = '';
+    lockMessage.hidden = true;
   }
 }
 
@@ -2393,6 +2495,7 @@ function toggleCheckoutPanel(open) {
 
   let syncedFulfilment = false;
   if (open) {
+    updatePickupScheduleLock();
     syncedFulfilment = applyHeaderFulfilmentToCheckout();
   }
   checkoutPanel.classList.toggle('hidden', !open);
@@ -2676,6 +2779,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   await Promise.all([ensureStoreDataLoaded(), ensureMenuDataLoaded()]);
   applySelectedStoreFromQuery();
+  updatePickupScheduleLock();
+  if (pickupScheduleIntervalId) {
+    clearInterval(pickupScheduleIntervalId);
+  }
+  pickupScheduleIntervalId = window.setInterval(updatePickupScheduleLock, storeStatusUpdateInterval);
   loadCachedDeliveryLocation();
   if (analyticsApi?.ensureProfile) {
     analyticsApi.ensureProfile(
