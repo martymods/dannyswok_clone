@@ -2551,7 +2551,16 @@
               throw new Error(message);
             }
 
-            const data = await response.json();
+            const rawBody = await response.text();
+            let data = {};
+            if (rawBody) {
+              try {
+                data = JSON.parse(rawBody);
+              } catch (parseError) {
+                throw new Error('Received an unexpected response from checkout. Please try again.');
+              }
+            }
+
             const redirectUrl = data?.url || null;
             if (redirectUrl) {
               if (merchFeedback) {
