@@ -502,8 +502,9 @@
   }
 
   async function fetchJson(url, options = {}) {
+    const resolvedUrl = resolveFetchUrl(url);
     try {
-      const response = await fetch(url, options);
+      const response = await fetch(resolvedUrl, options);
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
         const err = new Error(error.message || error.error || response.statusText || 'Request failed');
