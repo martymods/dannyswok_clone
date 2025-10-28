@@ -6,76 +6,865 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Danny's Wok Admin</title>
   <link rel="icon" type="image/png" href="images/favi.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
   <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-  <header class="admin-header">
-    <div class="admin-header__brand">
-      <img src="images/logos_icon.png" alt="Danny's Wok chef logo">
-      <h1>Danny's Wok Admin Console</h1>
-    </div>
-    <p class="admin-header__note">Manage menu pricing &amp; photography, update store locations, and review customer activity.</p>
-  </header>
-  <main class="admin-main">
-    <section class="admin-section" id="menu-admin">
-      <div class="admin-section__header">
-        <h2>Menu management</h2>
-        <p>Edit pricing or upload custom imagery for each menu item. Changes are saved instantly.</p>
+  <div class="layout has-sidebar fixed-sidebar fixed-header">
+    <aside id="sidebar" class="sidebar break-point-sm has-bg-image">
+      <a id="btn-collapse" class="sidebar-collapser" aria-label="Collapse sidebar">
+        <i class="ri-arrow-left-s-line"></i>
+      </a>
+      <div class="image-wrapper" aria-hidden="true">
+        <img src="images/front_store.png" alt="" />
       </div>
-      <div id="menu-admin-status" class="admin-status" aria-live="polite"></div>
-      <div id="menu-admin-container" class="menu-admin-container" role="list"></div>
-    </section>
-
-    <section class="admin-section" id="stores-admin">
-      <div class="admin-section__header">
-        <h2>Store locations</h2>
-        <p>Drag pins to adjust map placement. Coordinates update immediately and sync to the public map.</p>
-      </div>
-      <div id="store-admin-status" class="admin-status" aria-live="polite"></div>
-      <div class="store-admin-layout">
-        <div id="store-map" class="store-admin-map" role="application" aria-label="Danny's Wok store locations"></div>
-        <div id="store-list" class="store-admin-list" role="list"></div>
-      </div>
-    </section>
-
-    <section class="admin-section" id="analytics-admin">
-      <div class="admin-section__header">
-        <h2>Customer activity</h2>
-        <p>Review customer profiles, captured events, and recent checkout sessions.</p>
-      </div>
-      <div class="analytics-columns">
-        <div class="analytics-card" id="profiles-card">
-          <h3>User profiles</h3>
-          <div id="profiles-status" class="admin-status" aria-live="polite"></div>
-          <ul id="profiles-list" class="analytics-list"></ul>
+      <div class="sidebar-layout">
+        <div class="sidebar-header">
+          <div class="pro-sidebar-logo">
+            <div>D</div>
+            <h5>Danny's Wok Admin</h5>
+          </div>
         </div>
-        <div class="analytics-card" id="orders-card">
-          <h3>Recent orders</h3>
-          <div id="orders-status" class="admin-status" aria-live="polite"></div>
-          <div class="orders-table-wrapper">
-            <table id="orders-table" class="orders-table" aria-describedby="orders-card">
-              <thead>
-                <tr>
-                  <th scope="col">Placed</th>
-                  <th scope="col">Fulfilment</th>
-                  <th scope="col">Total</th>
-                  <th scope="col">Items</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+        <div class="sidebar-content">
+          <nav class="menu open-current-submenu icon-shape-rounded" aria-label="Admin navigation">
+            <ul>
+              <li class="menu-header"><span>OVERVIEW</span></li>
+              <li class="menu-item">
+                <a href="#home-overview" data-panel-target="home-overview">
+                  <span class="menu-icon"><i class="ri-home-5-line"></i></span>
+                  <span class="menu-title">Home</span>
+                </a>
+              </li>
+              <li class="menu-item sub-menu">
+                <a href="#">
+                  <span class="menu-icon"><i class="ri-lightbulb-flash-line"></i></span>
+                  <span class="menu-title">Insights</span>
+                  <span class="menu-suffix"><span class="badge primary">New</span></span>
+                </a>
+                <div class="sub-menu-list">
+                  <ul>
+                    <li class="menu-item">
+                      <a href="#insights-sales" data-panel-target="insights-sales">
+                        <span class="menu-title">Sales</span>
+                      </a>
+                    </li>
+                    <li class="menu-item">
+                      <a href="#insights-operations" data-panel-target="insights-operations">
+                        <span class="menu-title">Operations quality</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+              <li class="menu-item sub-menu">
+                <a href="#">
+                  <span class="menu-icon"><i class="ri-user-star-line"></i></span>
+                  <span class="menu-title">Customers</span>
+                </a>
+                <div class="sub-menu-list">
+                  <ul>
+                    <li class="menu-item">
+                      <a href="#customers-insights" data-panel-target="customers-insights">
+                        <span class="menu-title">Customer insights</span>
+                      </a>
+                    </li>
+                    <li class="menu-item">
+                      <a href="#customers-ratings" data-panel-target="customers-ratings">
+                        <span class="menu-title">Ratings &amp; reviews</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+              <li class="menu-item">
+                <a href="#orders-panel" data-panel-target="orders-panel">
+                  <span class="menu-icon"><i class="ri-file-list-3-line"></i></span>
+                  <span class="menu-title">Orders</span>
+                </a>
+              </li>
+              <li class="menu-item sub-menu">
+                <a href="#">
+                  <span class="menu-icon"><i class="ri-megaphone-line"></i></span>
+                  <span class="menu-title">Marketing</span>
+                </a>
+                <div class="sub-menu-list">
+                  <ul>
+                    <li class="menu-item">
+                      <a href="#marketing-run" data-panel-target="marketing-run">
+                        <span class="menu-title">Run a campaign</span>
+                      </a>
+                    </li>
+                    <li class="menu-item">
+                      <a href="#marketing-campaigns" data-panel-target="marketing-campaigns">
+                        <span class="menu-title">Campaigns</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+              <li class="menu-header"><span>OPERATIONS</span></li>
+              <li class="menu-item">
+                <a href="#menu-admin" data-panel-target="menu-admin">
+                  <span class="menu-icon"><i class="ri-restaurant-line"></i></span>
+                  <span class="menu-title">Menu management</span>
+                </a>
+              </li>
+              <li class="menu-item">
+                <a href="#stores-admin" data-panel-target="stores-admin">
+                  <span class="menu-icon"><i class="ri-map-pin-line"></i></span>
+                  <span class="menu-title">Store locations</span>
+                </a>
+              </li>
+              <li class="menu-item">
+                <a href="#analytics-admin" data-panel-target="analytics-admin">
+                  <span class="menu-icon"><i class="ri-group-line"></i></span>
+                  <span class="menu-title">Customer activity</span>
+                </a>
+              </li>
+              <li class="menu-item">
+                <a href="#store-availability" data-panel-target="store-availability">
+                  <span class="menu-icon"><i class="ri-timer-2-line"></i></span>
+                  <span class="menu-title">Store availability</span>
+                </a>
+              </li>
+              <li class="menu-header"><span>FINANCIALS</span></li>
+              <li class="menu-item">
+                <a href="#financial-transactions" data-panel-target="financial-transactions">
+                  <span class="menu-icon"><i class="ri-exchange-dollar-line"></i></span>
+                  <span class="menu-title">Transactions</span>
+                </a>
+              </li>
+              <li class="menu-item">
+                <a href="#financial-statements" data-panel-target="financial-statements">
+                  <span class="menu-icon"><i class="ri-file-chart-line"></i></span>
+                  <span class="menu-title">Statements</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        <div class="sidebar-footer">
+          <div class="footer-box" aria-label="Danny's Wok values">
+            <div class="footer-icon">🍜</div>
+            <div>
+              <span class="footer-text">Delighting Philly since 1990</span>
+              <p>Rooted in community, energized by flavor, and committed to service.</p>
+            </div>
           </div>
         </div>
       </div>
-      <div class="analytics-detail" id="profile-detail" hidden>
-        <button type="button" id="close-profile-detail" class="admin-button admin-button--secondary">Close profile</button>
-        <h3 id="profile-detail-title">Profile details</h3>
-        <div id="profile-detail-content"></div>
-      </div>
-    </section>
-  </main>
+    </aside>
+    <div id="overlay" class="overlay" role="presentation"></div>
+    <div class="layout">
+      <main class="content" id="main-content">
+        <a id="btn-toggle" href="#" class="sidebar-toggler break-point-sm" aria-label="Toggle sidebar">
+          <i class="ri-menu-line ri-xl"></i>
+        </a>
+
+        <section id="home-overview" class="panel-section is-active" data-panel>
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Today's overview</p>
+              <h1>Welcome back, Food</h1>
+            </div>
+            <div class="section-meta">
+              <span class="meta-chip">Last refreshed just now</span>
+            </div>
+          </header>
+          <div class="dashboard-grid highlight">
+            <article class="dashboard-card">
+              <header>
+                <h2>Gross sales</h2>
+                <span class="muted">Last 24 hours</span>
+              </header>
+              <p class="stat-value">$0.00</p>
+            </article>
+            <article class="dashboard-card">
+              <header>
+                <h2>Total orders</h2>
+                <span class="muted">Last 24 hours</span>
+              </header>
+              <p class="stat-value">0</p>
+            </article>
+            <article class="dashboard-card">
+              <header>
+                <h2>Average ticket size</h2>
+                <span class="muted">Last 24 hours</span>
+              </header>
+              <p class="stat-value">$0.00</p>
+            </article>
+          </div>
+          <div class="dashboard-grid split">
+            <article class="dashboard-card stretch">
+              <header>
+                <div>
+                  <h2>Sales including digital channels</h2>
+                  <span class="muted">Tracked across marketplace and direct ordering</span>
+                </div>
+              </header>
+              <div class="chart-wrapper">
+                <canvas id="home-sales-chart" aria-label="Sales line chart" role="img"></canvas>
+              </div>
+            </article>
+            <article class="dashboard-card stack">
+              <header>
+                <h2>More about your store</h2>
+              </header>
+              <div class="metric-list">
+                <div>
+                  <h3>Gross sales</h3>
+                  <p>$0.00</p>
+                </div>
+                <div>
+                  <h3>Sales</h3>
+                  <p>$0.00</p>
+                </div>
+                <div>
+                  <h3>Total orders</h3>
+                  <p>0</p>
+                </div>
+                <div>
+                  <h3>Average ticket size</h3>
+                  <p>$0.00</p>
+                </div>
+              </div>
+              <div class="metric-list">
+                <h3>Operations</h3>
+                <p>Avoidable cancellations rate <strong>0.0%</strong></p>
+                <p>Avoidable wait <strong>0 mins</strong></p>
+                <p>Missing &amp; incorrect rate <strong>0.0%</strong></p>
+                <p>Downtime <strong>0.0%</strong></p>
+              </div>
+              <div class="metric-list">
+                <h3>Ratings</h3>
+                <p>0 / 5</p>
+              </div>
+              <div class="metric-list">
+                <h3>Customers</h3>
+                <p>New <strong>1</strong></p>
+                <p>Occasional <strong>0</strong></p>
+                <p>Frequent <strong>0</strong></p>
+                <p>Total customers <strong>1</strong></p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section id="insights-sales" class="panel-section" data-panel>
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Sales insight</p>
+              <h1>Sales overview</h1>
+            </div>
+            <div class="section-meta">
+              <span class="meta-chip">Last updated on Oct 28, 2025, 8:59 AM EDT</span>
+            </div>
+          </header>
+          <div class="insight-grid">
+            <article class="dashboard-card">
+              <header>
+                <h2>Gross sales</h2>
+                <span class="muted">vs. 7 days prior</span>
+              </header>
+              <p class="stat-value">$0.00</p>
+              <p class="trend muted">—%</p>
+            </article>
+            <article class="dashboard-card">
+              <header>
+                <h2>Total orders</h2>
+                <span class="muted">vs. 7 days prior</span>
+              </header>
+              <p class="stat-value">0</p>
+              <p class="trend muted">—%</p>
+            </article>
+            <article class="dashboard-card">
+              <header>
+                <h2>Average ticket size</h2>
+                <span class="muted">vs. 7 days prior</span>
+              </header>
+              <p class="stat-value">$0.00</p>
+              <p class="trend muted">—%</p>
+            </article>
+          </div>
+          <div class="insight-stack">
+            <article class="dashboard-card stretch">
+              <header>
+                <h2>Sales over time</h2>
+                <span class="muted">Last 7 days (Wed, Oct 22 - Tue, Oct 28, 2025) vs. 7 days prior</span>
+              </header>
+              <div class="timeline">
+                <div>
+                  <h3>Time</h3>
+                  <p>Gross sales</p>
+                </div>
+                <div>
+                  <h3>Last 7 days</h3>
+                  <p>$0.00</p>
+                </div>
+                <div>
+                  <h3>7 days prior</h3>
+                  <p>$0.00</p>
+                </div>
+              </div>
+            </article>
+            <article class="dashboard-card">
+              <header>
+                <h2>By day of week</h2>
+                <span class="muted">Last 7 days vs. prior week</span>
+              </header>
+              <p class="muted">No sales recorded yet</p>
+            </article>
+            <article class="dashboard-card">
+              <header>
+                <h2>By hour of day</h2>
+                <span class="muted">Last 7 days vs. prior week</span>
+              </header>
+              <p class="muted">No sales recorded yet</p>
+            </article>
+            <article class="dashboard-card">
+              <header>
+                <h2>Sales breakdown</h2>
+                <span class="muted">% of gross sales</span>
+              </header>
+              <p class="muted">Gross sales</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="insights-operations" class="panel-section" data-panel>
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Operational excellence</p>
+              <h1>Operations quality</h1>
+            </div>
+            <div class="section-meta">
+              <span class="meta-chip">Last updated on Oct 26, 2025</span>
+            </div>
+          </header>
+          <p class="section-intro">A measure of how good of an experience you are providing to your customers. Improve these metrics to create a great customer experience.</p>
+          <div class="operations-grid">
+            <article class="dashboard-card attention">
+              <header>
+                <h2>Ratings</h2>
+                <span class="status-tag warning">Needs attention</span>
+              </header>
+              <p class="muted">A measure of how you are rated by your customers on delivery apps.</p>
+              <dl class="data-list">
+                <div><dt>Average rating</dt><dd>— out of 5</dd></div>
+                <div><dt>Ratings received</dt><dd>0</dd></div>
+              </dl>
+              <p class="muted">There were no ratings received. Try adjusting your filters.</p>
+            </article>
+            <article class="dashboard-card success">
+              <header>
+                <h2>Wait time</h2>
+                <span class="status-tag success">On track</span>
+              </header>
+              <dl class="data-list">
+                <div><dt>Avoidable wait</dt><dd>0 mins</dd></div>
+                <div><dt>Total Dasher wait</dt><dd>0 mins</dd></div>
+              </dl>
+              <p class="muted">There were no stores with late orders. Nice work!</p>
+            </article>
+            <article class="dashboard-card success">
+              <header>
+                <h2>Cancellations</h2>
+                <span class="status-tag success">On track</span>
+              </header>
+              <dl class="data-list">
+                <div><dt>Avoidable cancellation rate</dt><dd>0.0%</dd></div>
+                <div><dt>Sales lost</dt><dd>$0.00</dd></div>
+              </dl>
+              <p class="muted">There were no avoidable cancellations. Nice work!</p>
+            </article>
+            <article class="dashboard-card success">
+              <header>
+                <h2>Order accuracy</h2>
+                <span class="status-tag success">On track</span>
+              </header>
+              <dl class="data-list">
+                <div><dt>Missing or incorrect rate</dt><dd>0.0%</dd></div>
+                <div><dt>Error charges</dt><dd>$0.00</dd></div>
+              </dl>
+              <p class="muted">There were no items reported missing or incorrect. Keep it up!</p>
+            </article>
+            <article class="dashboard-card success">
+              <header>
+                <h2>Downtime</h2>
+                <span class="status-tag success">On track</span>
+              </header>
+              <dl class="data-list">
+                <div><dt>Downtime</dt><dd>0.0% (3 m)</dd></div>
+              </dl>
+              <p class="muted">There were no temporary deactivations. Nice work!</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="customers-insights" class="panel-section" data-panel>
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Customer insights</p>
+              <h1>Understand and grow your customer base</h1>
+            </div>
+            <div class="section-meta">
+              <span class="meta-chip">Last updated on Oct 26, 2025</span>
+            </div>
+          </header>
+          <div class="insight-stack">
+            <article class="dashboard-card">
+              <header>
+                <h2>Overview</h2>
+                <span class="muted">Oct 1 – 26, 2025 compared to Sep 3 – 28, 2025</span>
+              </header>
+              <div class="metric-grid">
+                <div>
+                  <h3>Total customers</h3>
+                  <p>1 <span class="muted">0%</span></p>
+                </div>
+                <div>
+                  <h3>New</h3>
+                  <p>1 (100%) <span class="muted">0%</span></p>
+                </div>
+                <div>
+                  <h3>Occasional</h3>
+                  <p>0 (0%) <span class="muted">0%</span></p>
+                </div>
+                <div>
+                  <h3>Frequent</h3>
+                  <p>0 (0%) <span class="muted">0%</span></p>
+                </div>
+              </div>
+              <div class="metric-list">
+                <h3>New</h3>
+                <p>100% of total sales · $11.00 average order value · 0% DashPass customers</p>
+                <h3>Occasional</h3>
+                <p>0% of total sales · $0.00 average order value · 0% DashPass customers</p>
+                <h3>Frequent</h3>
+                <p>0% of total sales · $0.00 average order value · 0% DashPass customers</p>
+              </div>
+              <p class="muted">DashPass is a loyalty subscription service for customers. DashPass customers frequently place high-value orders.</p>
+              <div class="promo-banner">
+                <div>
+                  <h3>Get $100 in free credits to run a Danny's Wok ad</h3>
+                  <p>It's a risk-free way to boost your sales. After your free trial, you only pay if your ad leads to an order.</p>
+                </div>
+              </div>
+            </article>
+            <article class="dashboard-card stretch">
+              <header>
+                <h2>Top delivery destinations</h2>
+                <span class="muted">Customer locations appear as pins on the map</span>
+              </header>
+              <div id="customer-locations-map" class="insights-map" role="img" aria-label="Customer delivery destinations"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="customers-ratings" class="panel-section" data-panel>
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Ratings &amp; reviews</p>
+              <h1>Track feedback and respond quickly</h1>
+            </div>
+            <div class="section-meta">
+              <span class="meta-chip">Data between 10/20/2025 – 10/26/2025</span>
+            </div>
+          </header>
+          <p class="section-intro">Respond to customer feedback within 7 days of receiving it to show your appreciation, and encourage them to come back.</p>
+          <article class="dashboard-card">
+            <header>
+              <h2>Ratings during this period</h2>
+            </header>
+            <p class="muted">You didn't receive any ratings for the selected store(s) and timeframe.</p>
+            <dl class="data-list">
+              <div><dt>NA</dt><dd>Not available due to 0 ratings</dd></div>
+              <div><dt>Total ratings</dt><dd>0</dd></div>
+            </dl>
+          </article>
+          <article class="dashboard-card">
+            <header>
+              <h2>Lifetime rating</h2>
+            </header>
+            <p class="stat-value">5 / 5 stars</p>
+            <div class="rating-distribution">
+              <div><span>5 stars</span><span>100%</span></div>
+              <div><span>4 stars</span><span>0%</span></div>
+              <div><span>3 stars</span><span>0%</span></div>
+              <div><span>2 stars</span><span>0%</span></div>
+              <div><span>1 star</span><span>0%</span></div>
+            </div>
+            <p class="muted">Coming soon: respond directly to reviews to thank customers or make things right.</p>
+          </article>
+        </section>
+
+        <section id="orders-panel" class="panel-section" data-panel>
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Orders</p>
+              <h1>Track activity in real time</h1>
+            </div>
+            <div class="section-meta">
+              <span class="meta-chip">Last updated 7 seconds ago</span>
+            </div>
+          </header>
+          <article class="dashboard-card stretch">
+            <header>
+              <h2>Order channels</h2>
+              <p class="muted">Monitor, filter, and action every ticket from this unified queue.</p>
+            </header>
+            <div class="tab-group" role="tablist" aria-label="Order status">
+              <button type="button" class="tab-button is-active" data-orders-tab="active" role="tab" aria-selected="true">Active</button>
+              <button type="button" class="tab-button" data-orders-tab="scheduled" role="tab">Scheduled</button>
+              <button type="button" class="tab-button" data-orders-tab="history" role="tab">History</button>
+            </div>
+            <div class="tab-panels">
+              <div class="tab-panel is-active" data-orders-panel="active">
+                <p>Track all your active orders from every channel in real time.</p>
+              </div>
+              <div class="tab-panel" data-orders-panel="scheduled">
+                <p>View scheduled orders, confirm prep windows, and plan staffing.</p>
+              </div>
+              <div class="tab-panel" data-orders-panel="history">
+                <p>Review past orders or go deeper in <a href="#financial-transactions" data-panel-target="financial-transactions">Transactions</a>.</p>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section id="marketing-run" class="panel-section" data-panel>
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Marketing</p>
+              <h1>Run a campaign</h1>
+            </div>
+            <div class="section-meta">
+              <span class="meta-chip">Boost your reach across channels</span>
+            </div>
+          </header>
+          <div class="tab-group" role="tablist" aria-label="Marketing channels">
+            <button type="button" class="tab-button is-active" data-run-tab="marketplace" role="tab" aria-selected="true">Marketplace</button>
+            <button type="button" class="tab-button" data-run-tab="online" role="tab">Online Ordering</button>
+          </div>
+          <div class="tab-panels">
+            <div class="tab-panel is-active" data-run-panel="marketplace">
+              <article class="dashboard-card">
+                <header>
+                  <h2>Boost your sales with DoorDash ads</h2>
+                  <span class="muted">$100 credits per eligible store</span>
+                </header>
+                <p>Launch your campaign with a few clicks. It's risk-free — you pay only if your ad leads to an order.</p>
+                <div class="campaign-highlight">
+                  <span class="badge secondary">Sponsored</span>
+                  <h3>Dreamworld</h3>
+                  <p>Recommended for you</p>
+                </div>
+                <div class="campaign-grid">
+                  <div>
+                    <h4>Advertise to new customers</h4>
+                    <p>You could be featured prominently on delivery apps and seen by more customers. You only pay for ads when you receive an order.</p>
+                    <p class="muted">Free trial · $100 credits per store</p>
+                  </div>
+                  <div>
+                    <h4>Smart campaign</h4>
+                    <p>We personalize each discount in real-time to maximize performance.</p>
+                    <p class="muted">Free trial · $100 credits per store</p>
+                  </div>
+                  <div>
+                    <h4>Buy 1, get 1 free promotion</h4>
+                    <p>Encourage repeat business and sales of high-margin items by offering a free item with the purchase of the same item.</p>
+                  </div>
+                </div>
+                <div class="campaign-list">
+                  <h3>More ways to help you grow</h3>
+                  <ul>
+                    <li>Advertise to all customers — pay only when you receive an order. Free trial · $100 credits per store.</li>
+                    <li>Discount for lapsed customers — win back guests who haven’t ordered in 6+ months.</li>
+                    <li>Pay customer's delivery fee — differentiate your restaurant by covering delivery fees.</li>
+                  </ul>
+                </div>
+              </article>
+            </div>
+            <div class="tab-panel" data-run-panel="online">
+              <article class="dashboard-card">
+                <header>
+                  <h2>Online ordering promotions</h2>
+                </header>
+                <p>Boost sales for specific items by running an item promotion on your website. Launch with a few clicks.</p>
+                <div class="campaign-grid">
+                  <div>
+                    <h4>Boost sales for signature items</h4>
+                    <p>Market specific items on holidays and special occasions.</p>
+                  </div>
+                  <div>
+                    <h4>Drive customers to your website</h4>
+                    <p>Various promos you can use to attract customers to order directly from you.</p>
+                  </div>
+                  <div>
+                    <h4>Discount for customers</h4>
+                    <p>Attract customers with our most effective program to grow sales faster.</p>
+                    <p class="muted">No fee · Avg $5.00 sales per marketing dollar spent</p>
+                  </div>
+                  <div>
+                    <h4>$0 delivery fee</h4>
+                    <p>Stand out by covering delivery fees for customers.</p>
+                    <p class="muted">No fee · Avg $6.00 sales per marketing dollar spent</p>
+                  </div>
+                  <div>
+                    <h4>Run item promotion</h4>
+                    <p>Boost sales for specific items by running a Storefront promo.</p>
+                  </div>
+                  <div>
+                    <h4>Discount for larger orders</h4>
+                    <p>Incentivize customers to place larger orders and grow your average ticket size.</p>
+                  </div>
+                  <div>
+                    <h4>$0 delivery fee on larger orders</h4>
+                    <p>Offer free delivery to customers who place larger orders. Great for boosting broad sales.</p>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="marketing-campaigns" class="panel-section" data-panel>
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Active marketing</p>
+              <h1>Campaigns</h1>
+            </div>
+            <div class="section-meta">
+              <span class="meta-chip">Monitor live and scheduled campaigns</span>
+            </div>
+          </header>
+          <article class="dashboard-card">
+            <p>You don't have any campaigns running right now. When you launch a campaign, it will appear here with performance metrics and controls.</p>
+          </article>
+        </section>
+
+        <section id="menu-admin" class="panel-section" data-panel>
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Menu</p>
+              <h1>Menu management</h1>
+            </div>
+            <div class="section-meta">
+              <span class="meta-chip">Edit pricing &amp; photography</span>
+            </div>
+          </header>
+          <div id="menu-admin-status" class="admin-status" aria-live="polite"></div>
+          <div id="menu-admin-container" class="menu-admin-container" role="list"></div>
+        </section>
+
+        <section id="stores-admin" class="panel-section" data-panel>
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Stores</p>
+              <h1>Store locations</h1>
+            </div>
+            <div class="section-meta">
+              <span class="meta-chip">Drag pins to adjust placement</span>
+            </div>
+          </header>
+          <div id="store-admin-status" class="admin-status" aria-live="polite"></div>
+          <div class="store-admin-layout">
+            <div id="store-map" class="store-admin-map" role="application" aria-label="Danny's Wok store locations"></div>
+            <div id="store-list" class="store-admin-list" role="list"></div>
+          </div>
+        </section>
+
+        <section id="analytics-admin" class="panel-section" data-panel>
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Customer activity</p>
+              <h1>Real-time behavior</h1>
+            </div>
+            <div class="section-meta">
+              <span class="meta-chip">Profiles, orders, and sessions</span>
+            </div>
+          </header>
+          <div class="analytics-columns">
+            <div class="analytics-card" id="profiles-card">
+              <h2>User profiles</h2>
+              <div id="profiles-status" class="admin-status" aria-live="polite"></div>
+              <ul id="profiles-list" class="analytics-list"></ul>
+            </div>
+            <div class="analytics-card" id="orders-card">
+              <h2>Recent orders</h2>
+              <div id="orders-status" class="admin-status" aria-live="polite"></div>
+              <div class="orders-table-wrapper">
+                <table id="orders-table" class="orders-table" aria-describedby="orders-card">
+                  <thead>
+                    <tr>
+                      <th scope="col">Placed</th>
+                      <th scope="col">Fulfilment</th>
+                      <th scope="col">Total</th>
+                      <th scope="col">Items</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="analytics-detail" id="profile-detail" hidden>
+            <button type="button" id="close-profile-detail" class="admin-button admin-button--secondary">Close profile</button>
+            <h2 id="profile-detail-title">Profile details</h2>
+            <div id="profile-detail-content"></div>
+          </div>
+        </section>
+
+        <section id="store-availability" class="panel-section" data-panel>
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Availability</p>
+              <h1>Store availability</h1>
+            </div>
+            <div class="section-meta">
+              <span class="meta-chip">Manage hours &amp; prep time</span>
+            </div>
+          </header>
+          <article class="dashboard-card">
+            <header>
+              <h2>Store status</h2>
+            </header>
+            <div class="status-block">
+              <h3>Marketplace</h3>
+              <p class="status-indicator">Closed</p>
+              <p>This store is currently closed on delivery apps. Customers can schedule orders for when the store opens again.</p>
+              <p class="muted">Unavailable for orders after regular menu hours. Reopens Tuesday.</p>
+            </div>
+            <div class="status-block">
+              <h3>Online ordering</h3>
+              <p class="status-indicator">Closed</p>
+              <p>Unavailable for orders after regular menu hours. Reopens Tuesday.</p>
+            </div>
+          </article>
+          <article class="dashboard-card">
+            <header>
+              <h2>Schedule busy mode</h2>
+              <span class="muted">Choose when to add extra prep time during the week.</span>
+            </header>
+            <p>No schedule yet. Scheduling busy mode can help minimize early Dasher arrivals and reduce wait times at your store.</p>
+          </article>
+          <article class="dashboard-card stretch">
+            <header>
+              <h2>Regular menu hours</h2>
+            </header>
+            <table class="hours-table">
+              <thead>
+                <tr><th>Day</th><th>Menu hours</th><th>Last order</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Monday</td><td>11:00 AM - 08:00 PM</td><td>07:40 PM</td></tr>
+                <tr><td>Tuesday</td><td>11:00 AM - 08:00 PM</td><td>07:40 PM</td></tr>
+                <tr><td>Wednesday</td><td>11:00 AM - 08:00 PM</td><td>07:40 PM</td></tr>
+                <tr><td>Thursday</td><td>11:00 AM - 08:00 PM</td><td>07:40 PM</td></tr>
+                <tr><td>Friday</td><td>11:00 AM - 08:00 PM</td><td>07:40 PM</td></tr>
+                <tr><td>Saturday</td><td>11:00 AM - 08:00 PM</td><td>07:40 PM</td></tr>
+                <tr><td>Sunday</td><td>11:00 AM - 08:00 PM</td><td>07:40 PM</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="dashboard-card">
+            <header>
+              <h2>Special hours and closures</h2>
+              <span class="muted">Add special hours or closures for holidays or events.</span>
+            </header>
+            <table class="hours-table">
+              <thead>
+                <tr><th>Name</th><th>Dates</th><th>Special hours/closure</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Upcoming</td><td>Fri, Oct 31, 2025</td><td>Showing 1 - 1 of 1</td></tr>
+              </tbody>
+            </table>
+          </article>
+        </section>
+
+        <section id="financial-transactions" class="panel-section" data-panel>
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Financials</p>
+              <h1>Transactions</h1>
+            </div>
+            <div class="section-meta">
+              <span class="meta-chip">Monitor charges and payouts</span>
+            </div>
+          </header>
+          <article class="dashboard-card stretch">
+            <p>All charges from every order, campaign, fee, and adjustment associated with your account appear here. To track real-time orders, jump back to <a href="#orders-panel" data-panel-target="orders-panel">Orders</a>.</p>
+            <div class="table-wrapper">
+              <table class="transactions-table">
+                <thead>
+                  <tr>
+                    <th>Transaction ID</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Order ID</th>
+                    <th>Channel</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Subtotal</th>
+                    <th>Tax</th>
+                    <th>Customer fees</th>
+                    <th>Tax (customer fees)</th>
+                    <th>Commission</th>
+                    <th>Merchant fees</th>
+                    <th>Tax (merchant fees)</th>
+                    <th>Error charges</th>
+                    <th>Adjustments</th>
+                    <th>Marketing fees</th>
+                    <th>Customer discounts</th>
+                    <th>Net total</th>
+                    <th>Payout ID</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="20" class="muted">No transactions to show yet.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="financial-statements" class="panel-section" data-panel>
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Financials</p>
+              <h1>Statements</h1>
+            </div>
+            <div class="section-meta">
+              <span class="meta-chip">Monthly statements &amp; tax forms</span>
+            </div>
+          </header>
+          <article class="dashboard-card">
+            <h2>Monthly statements</h2>
+            <p>These are your monthly statements based on business activity. Monthly statements are available by the 5th day of every month.</p>
+          </article>
+          <article class="dashboard-card">
+            <h2>Tax forms</h2>
+            <p>Access your tax documents as soon as they're issued. We'll notify you when new forms are ready.</p>
+          </article>
+          <article class="dashboard-card">
+            <h2>Monthly subtotal tax breakdown</h2>
+            <p>Coming soon — view aggregated taxes, fees, and adjustments across all channels.</p>
+          </article>
+        </section>
+      </main>
+      <div class="overlay"></div>
+    </div>
+  </div>
+  <script src="https://unpkg.com/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYT3zD4xzu1p5cHG6Eys0D8nS6X/g7Sk" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-xroWAtxEvsC0BpvyEuk+qS0bkkCm1cWg5kyKADVY6jwxKF1u9IiMaivGi99Z0eK6" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="admin.js"></script>
+  <script src="admin.js" type="module"></script>
 </body>
 </html>
