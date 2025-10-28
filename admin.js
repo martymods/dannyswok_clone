@@ -452,6 +452,52 @@
     });
   };
 
+  const ADMIN_API_DEFAULT_BASE = 'https://www.delcotechdivision.com';
+
+  function resolveAdminApiBase() {
+    const globalObject = typeof window !== 'undefined' ? window : globalThis;
+    const candidates = [
+      globalObject?.DANNYSWOK_ADMIN_API_BASE,
+      globalObject?.DANNYS_WOK_ADMIN_API_BASE,
+      globalObject?.DELCO_ADMIN_BACKEND_BASE,
+      globalObject?.DELCO_BACKEND_BASE,
+      globalObject?.DANNYS_WOK_BACKEND_BASE,
+      globalObject?.DANNYSWOK_BACKEND_BASE,
+    ];
+    for (const candidate of candidates) {
+      if (typeof candidate === 'string') {
+        const trimmed = candidate.trim();
+        if (trimmed) {
+          return trimmed.replace(/\/+$/, '');
+        }
+      }
+    }
+    const origin = globalObject?.location?.origin;
+    if (typeof origin === 'string' && origin.trim()) {
+      const trimmedOrigin = origin.trim();
+      if (/localhost|127\.0\.0\.1|::1/.test(trimmedOrigin)) {
+        return trimmedOrigin.replace(/\/+$/, '');
+      }
+    }
+    return ADMIN_API_DEFAULT_BASE;
+  }
+
+  const ADMIN_API_BASE = resolveAdminApiBase();
+
+  function resolveFetchUrl(url) {
+    if (!url || typeof url !== 'string') {
+      return url;
+    }
+    if (/^https?:\/\//i.test(url)) {
+      return url;
+    }
+    if (url.startsWith('/api/')) {
+      const normalizedBase = ADMIN_API_BASE.replace(/\/+$/, '');
+      return `${normalizedBase}${url}`;
+    }
+    return url;
+  }
+
   const menuContainer = document.getElementById('menu-admin-container');
   const menuStatus = document.getElementById('menu-admin-status');
   const storeStatus = document.getElementById('store-admin-status');
@@ -502,8 +548,9 @@
   }
 
   async function fetchJson(url, options = {}) {
+    const resolvedUrl = resolveFetchUrl(url);
     try {
-      const response = await fetch(url, options);
+      const response = await fetch(resolvedUrl, options);
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
         const err = new Error(error.message || error.error || response.statusText || 'Request failed');
