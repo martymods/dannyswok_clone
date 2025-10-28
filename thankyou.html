@@ -803,9 +803,9 @@
     }
 
     .merch-size-options input:checked + span {
-      background: linear-gradient(135deg, var(--dw-primary), var(--dw-accent));
+      background: linear-gradient(135deg, var(--dw-primary-dark), var(--dw-primary-strong));
       color: #ffffff;
-      box-shadow: 0 10px 20px var(--dw-glow);
+      box-shadow: 0 10px 20px rgba(192, 57, 43, 0.32);
       transform: translateY(-1px);
     }
 
@@ -814,8 +814,41 @@
     }
 
     .merch-size-options input:focus-visible + span {
-      outline: 3px solid rgba(243, 156, 18, 0.45);
+      outline: 3px solid rgba(231, 76, 60, 0.45);
       outline-offset: 2px;
+    }
+
+    .merch-size-select {
+      display: none;
+      gap: 6px;
+    }
+
+    .merch-size-select-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--dw-text-muted);
+    }
+
+    .merch-size-select select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--dw-border-soft);
+      padding: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--dw-text-dark);
+      background: var(--dw-surface-contrast) url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"%3E%3Cpath fill="%232c1a0a" d="M10.59.59 6 5.17 1.41.59 0 2l6 6 6-6z"/%3E%3C/svg%3E')
+        no-repeat right 12px center;
+      background-size: 12px 8px;
+    }
+
+    .merch-size-select select:focus-visible {
+      outline: none;
+      border-color: var(--dw-primary-strong);
+      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.25);
     }
 
     .merch-form-grid {
@@ -860,7 +893,7 @@
       padding: 12px 24px;
       border-radius: 999px;
       border: none;
-      background: linear-gradient(135deg, var(--dw-primary), var(--dw-accent));
+      background: linear-gradient(135deg, var(--dw-primary-dark), var(--dw-primary-strong));
       color: #ffffff;
       font-weight: 600;
       cursor: pointer;
@@ -871,7 +904,7 @@
     .merch-submit-button:hover,
     .merch-submit-button:focus-visible {
       transform: translateY(-2px);
-      box-shadow: 0 20px 36px rgba(243, 156, 18, 0.36);
+      box-shadow: 0 20px 36px rgba(192, 57, 43, 0.4);
       outline: none;
     }
 
@@ -897,6 +930,55 @@
       font-size: 0.85rem;
       color: var(--dw-text-muted);
       margin: 0;
+    }
+
+    @media (max-width: 600px) {
+      .merch-cart-overlay {
+        padding: 16px;
+      }
+
+      .merch-cart-dialog {
+        width: min(100%, 360px);
+        grid-template-columns: 1fr;
+        padding: 24px 18px;
+        border-radius: 22px;
+        max-height: calc(100vh - 32px);
+        overflow-y: auto;
+      }
+
+      .merch-cart-art {
+        display: none;
+      }
+
+      .merch-cart-content {
+        gap: 14px;
+      }
+
+      .merch-cart-content h3 {
+        font-size: 1.4rem;
+        text-align: center;
+      }
+
+      .merch-cart-product,
+      .merch-cart-summary,
+      .merch-cart-preview,
+      .merch-cart-form {
+        text-align: left;
+      }
+
+      .merch-cart-preview {
+        padding: 10px;
+        max-width: 100%;
+        margin: 0 auto;
+      }
+
+      .merch-size-options {
+        display: none;
+      }
+
+      .merch-size-select {
+        display: grid;
+      }
     }
 
     @media (max-width: 768px) {
@@ -1369,6 +1451,20 @@
                 <span>5XL · $40</span>
               </label>
             </div>
+            <label class="merch-size-select" for="merchSizeSelect">
+              <span class="merch-size-select-label">Choose your size</span>
+              <select id="merchSizeSelect" name="merch-size-select">
+                <option value="XS">XS · $33</option>
+                <option value="S">S · $33</option>
+                <option value="M">M · $33</option>
+                <option value="L">L · $33</option>
+                <option value="XL">XL · $33</option>
+                <option value="2XL">2XL · $35</option>
+                <option value="3XL">3XL · $35</option>
+                <option value="4XL">4XL · $38</option>
+                <option value="5XL">5XL · $40</option>
+              </select>
+            </label>
           </fieldset>
           <fieldset>
             <legend class="visually-hidden">Shipping information</legend>
@@ -2362,10 +2458,35 @@
         });
 
         const sizeInputs = merchForm.querySelectorAll("input[name='merch-size']");
+        const sizeSelect = merchForm.querySelector('#merchSizeSelect');
+
         sizeInputs.forEach((input) => {
           input.addEventListener('change', updateMerchSummary);
           input.addEventListener('input', updateMerchSummary);
+          if (sizeSelect) {
+            input.addEventListener('change', () => {
+              if (input.checked) {
+                sizeSelect.value = input.value;
+              }
+            });
+          }
         });
+
+        if (sizeSelect) {
+          sizeSelect.addEventListener('change', (event) => {
+            const selectedValue = event.target.value;
+            const matchingInput = Array.from(sizeInputs).find((input) => input.value === selectedValue);
+            if (matchingInput) {
+              matchingInput.checked = true;
+              matchingInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          });
+
+          const initialChecked = merchForm.querySelector("input[name='merch-size']:checked");
+          if (initialChecked) {
+            sizeSelect.value = initialChecked.value;
+          }
+        }
 
         if (merchLightboxClose) {
           merchLightboxClose.addEventListener('click', closeMerchLightbox);
