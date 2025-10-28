@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs/promises');
 const express = require('express');
 const Stripe = require('stripe');
 require('dotenv').config();
@@ -12,6 +13,40 @@ const app = express();
 const port = process.env.PORT || 3000;
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: '2024-06-20' }) : null;
+const FORTUNES_FILE_PATH = path.join(__dirname, 'data', 'fortunes.json');
+const MAX_FORTUNE_ENTRIES = 500;
+
+async function readStoredFortunes() {
+  try {
+    const data = await fs.readFile(FORTUNES_FILE_PATH, 'utf8');
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    if (error && error.code === 'ENOENT') {
+      return [];
+    }
+    throw error;
+  }
+}
+
+async function appendFortune(record) {
+  const sanitizedRecord = {
+    fortune: typeof record?.fortune === 'string' ? record.fortune.trim() : '',
+    createdAt: record?.createdAt || new Date().toISOString(),
+    source:
+      typeof record?.source === 'string'
+        ? record.source.trim().slice(0, 120) || 'thankyou'
+        : 'thankyou',
+  };
+  if (!sanitizedRecord.fortune) {
+    return;
+  }
+  await fs.mkdir(path.dirname(FORTUNES_FILE_PATH), { recursive: true });
+  const fortunes = await readStoredFortunes();
+  fortunes.push(sanitizedRecord);
+  const trimmed = fortunes.length > MAX_FORTUNE_ENTRIES ? fortunes.slice(-MAX_FORTUNE_ENTRIES) : fortunes;
+  await fs.writeFile(FORTUNES_FILE_PATH, JSON.stringify(trimmed, null, 2));
+}
 
 const DEFAULT_DANNYSWOK_ALLOWED_ORIGINS = [
   'https://dannyswok.com',
@@ -56,6 +91,39 @@ app.use(
 );
 
 app.use('/api/analytics', createAnalyticsRouter());
+
+app.post('/api/fortunes', async (req, res) => {
+  try {
+    const fortuneText = typeof req.body?.text === 'string' ? req.body.text.trim() : '';
+    if (!fortuneText) {
+      return res.status(400).json({ message: 'Fortune text is required.' });
+    }
+
+    const sanitizedFortune = fortuneText.slice(0, 500);
+    const timestampInput = req.body?.timestamp;
+    let createdAt = new Date();
+    if (typeof timestampInput === 'string') {
+      const parsed = Date.parse(timestampInput);
+      if (!Number.isNaN(parsed)) {
+        createdAt = new Date(parsed);
+      }
+    }
+
+    const source = typeof req.body?.source === 'string' ? req.body.source.trim() : 'thankyou';
+
+    await appendFortune({
+      fortune: sanitizedFortune,
+      createdAt: createdAt.toISOString(),
+      source: source || 'thankyou',
+    });
+
+    return res.status(201).json({ status: 'saved' });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to store fortune', error);
+    return res.status(500).json({ message: 'Unable to save fortune.' });
+  }
+});
 
 app.get('/api/config', (req, res) => {
   const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
