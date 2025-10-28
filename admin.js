@@ -65,7 +65,9 @@
   async function loadMenuData() {
     const [menuData, overridesData] = await Promise.all([
       fetchJson('data/menu-data.json', { cache: 'no-store' }),
-      fetchJson('/api/menu/overrides', { cache: 'no-store' }).catch(() => ({ items: {} })),
+      fetchJson('/api/admin/menu/overrides', { cache: 'no-store' })
+        .catch(() => fetchJson('/api/menu/overrides', { cache: 'no-store' }))
+        .catch(() => ({ items: {} })),
     ]);
     const overrides = overridesData?.items || {};
     return menuData.map((category) => ({
@@ -359,7 +361,9 @@
   }
 
   async function fetchStoreData() {
-    const data = await fetchJson('/api/menu/stores', { cache: 'no-store' }).catch(() => ({ stores: [] }));
+    const data = await fetchJson('/api/admin/stores', { cache: 'no-store' })
+      .catch(() => fetchJson('/api/menu/stores', { cache: 'no-store' }))
+      .catch(() => ({ stores: [] }));
     return Array.isArray(data.stores)
       ? data.stores.map((store) => ({
           id: store.id,
@@ -493,7 +497,13 @@
   async function loadProfiles() {
     setStatus(profilesStatus, 'Loading profiles…');
     try {
-      const data = await fetchJson('/api/admin/analytics/profiles?limit=50', { cache: 'no-store' });
+      const data = await fetchJson('/api/admin/analytics/profiles?limit=50', { cache: 'no-store' })
+        .catch((error) => {
+          if (error && error.status === 404) {
+            return fetchJson('/api/analytics/profiles?limit=50', { cache: 'no-store' });
+          }
+          throw error;
+        });
       const profiles = Array.isArray(data.profiles) ? data.profiles : [];
       renderProfiles(profiles);
       setStatus(profilesStatus, `Loaded ${profiles.length} profiles`, 'success');
@@ -517,6 +527,13 @@
     try {
       const data = await fetchJson(`/api/admin/analytics/profiles/${encodeURIComponent(trackingId)}?limit=80`, {
         cache: 'no-store',
+      }).catch((error) => {
+        if (error && error.status === 404) {
+          return fetchJson(`/api/analytics/profiles/${encodeURIComponent(trackingId)}?limit=80`, {
+            cache: 'no-store',
+          });
+        }
+        throw error;
       });
       const { profile, events } = data;
       profileDetailTitle.textContent = `Profile ${profile?.trackingId || trackingId}`;
