@@ -1,4 +1,457 @@
 (function () {
+  const ANIMATION_DURATION = 300;
+  const SIDEBAR_EL = document.getElementById('sidebar');
+  const OVERLAY_EL = document.getElementById('overlay');
+  const SUB_MENU_ELS = document.querySelectorAll('.menu > ul > .menu-item.sub-menu');
+  const FIRST_SUB_MENUS_BTN = document.querySelectorAll('.menu > ul > .menu-item.sub-menu > a');
+  const INNER_SUB_MENUS_BTN = document.querySelectorAll(
+    '.menu > ul > .menu-item.sub-menu .menu-item.sub-menu > a'
+  );
+
+  class PopperObject {
+    constructor(reference, popperTarget) {
+      this.instance = null;
+      this.reference = null;
+      this.popperTarget = null;
+      this.init(reference, popperTarget);
+    }
+
+    init(reference, popperTarget) {
+      if (!window.Popper) {
+        return;
+      }
+      this.reference = reference;
+      this.popperTarget = popperTarget;
+      this.instance = window.Popper.createPopper(this.reference, this.popperTarget, {
+        placement: 'right',
+        strategy: 'fixed',
+        resize: true,
+        modifiers: [
+          {
+            name: 'computeStyles',
+            options: { adaptive: false },
+          },
+          {
+            name: 'flip',
+            options: { fallbackPlacements: ['left', 'right'] },
+          },
+        ],
+      });
+
+      document.addEventListener(
+        'click',
+        (event) => this.handleDocumentClick(event, this.popperTarget, this.reference),
+        false
+      );
+
+      const resizeObserver = new ResizeObserver(() => {
+        this.instance?.update();
+      });
+
+      resizeObserver.observe(this.popperTarget);
+      resizeObserver.observe(this.reference);
+    }
+
+    handleDocumentClick(event, popperTarget, reference) {
+      if (
+        SIDEBAR_EL?.classList.contains('collapsed') &&
+        !popperTarget.contains(event.target) &&
+        !reference.contains(event.target)
+      ) {
+        this.hide();
+      }
+    }
+
+    hide() {
+      if (this.instance) {
+        this.instance.state.elements.popper.style.visibility = 'hidden';
+      }
+    }
+  }
+
+  class Poppers {
+    constructor() {
+      this.subMenuPoppers = [];
+      this.init();
+    }
+
+    init() {
+      SUB_MENU_ELS.forEach((element) => {
+        const target = element.lastElementChild;
+        if (!target) {
+          return;
+        }
+        this.subMenuPoppers.push(new PopperObject(element, target));
+        this.closePoppers();
+      });
+    }
+
+    togglePopper(target) {
+      if (!target) {
+        return;
+      }
+      const currentVisibility = window.getComputedStyle(target).visibility;
+      target.style.visibility = currentVisibility === 'hidden' ? 'visible' : 'hidden';
+    }
+
+    updatePoppers() {
+      this.subMenuPoppers.forEach((popper) => {
+        if (popper.instance) {
+          popper.instance.state.elements.popper.style.display = 'none';
+          popper.instance.update();
+        }
+      });
+    }
+
+    closePoppers() {
+      this.subMenuPoppers.forEach((popper) => popper.hide());
+    }
+  }
+
+  const slideUp = (target, duration = ANIMATION_DURATION) => {
+    if (!target) {
+      return;
+    }
+    const parent = target.parentElement;
+    parent?.classList.remove('open');
+    target.style.transitionProperty = 'height, margin, padding';
+    target.style.transitionDuration = `${duration}ms`;
+    target.style.boxSizing = 'border-box';
+    target.style.height = `${target.offsetHeight}px`;
+    target.offsetHeight;
+    target.style.overflow = 'hidden';
+    target.style.height = '0';
+    target.style.paddingTop = '0';
+    target.style.paddingBottom = '0';
+    target.style.marginTop = '0';
+    target.style.marginBottom = '0';
+    window.setTimeout(() => {
+      target.style.display = 'none';
+      target.style.removeProperty('height');
+      target.style.removeProperty('padding-top');
+      target.style.removeProperty('padding-bottom');
+      target.style.removeProperty('margin-top');
+      target.style.removeProperty('margin-bottom');
+      target.style.removeProperty('overflow');
+      target.style.removeProperty('transition-duration');
+      target.style.removeProperty('transition-property');
+    }, duration);
+  };
+
+  const slideDown = (target, duration = ANIMATION_DURATION) => {
+    if (!target) {
+      return;
+    }
+    const parent = target.parentElement;
+    parent?.classList.add('open');
+    target.style.removeProperty('display');
+    let { display } = window.getComputedStyle(target);
+    if (display === 'none') {
+      display = 'block';
+    }
+    target.style.display = display;
+    const height = target.offsetHeight;
+    target.style.overflow = 'hidden';
+    target.style.height = '0';
+    target.style.paddingTop = '0';
+    target.style.paddingBottom = '0';
+    target.style.marginTop = '0';
+    target.style.marginBottom = '0';
+    target.offsetHeight;
+    target.style.boxSizing = 'border-box';
+    target.style.transitionProperty = 'height, margin, padding';
+    target.style.transitionDuration = `${duration}ms`;
+    target.style.height = `${height}px`;
+    target.style.removeProperty('padding-top');
+    target.style.removeProperty('padding-bottom');
+    target.style.removeProperty('margin-top');
+    target.style.removeProperty('margin-bottom');
+    window.setTimeout(() => {
+      target.style.removeProperty('height');
+      target.style.removeProperty('overflow');
+      target.style.removeProperty('transition-duration');
+      target.style.removeProperty('transition-property');
+    }, duration);
+  };
+
+  const slideToggle = (target, duration = ANIMATION_DURATION) => {
+    if (!target) {
+      return;
+    }
+    if (window.getComputedStyle(target).display === 'none') {
+      slideDown(target, duration);
+    } else {
+      slideUp(target, duration);
+    }
+  };
+
+  const PoppersInstance = window.Popper ? new Poppers() : null;
+
+  const updatePoppersTimeout = () => {
+    if (!PoppersInstance) {
+      return;
+    }
+    setTimeout(() => {
+      PoppersInstance.updatePoppers();
+    }, ANIMATION_DURATION);
+  };
+
+  const closeAllPoppers = () => {
+    PoppersInstance?.closePoppers();
+  };
+
+  const collapseButton = document.getElementById('btn-collapse');
+  if (collapseButton && SIDEBAR_EL) {
+    collapseButton.addEventListener('click', () => {
+      SIDEBAR_EL.classList.toggle('collapsed');
+      closeAllPoppers();
+      if (SIDEBAR_EL.classList.contains('collapsed')) {
+        FIRST_SUB_MENUS_BTN.forEach((button) => button.parentElement?.classList.remove('open'));
+      }
+      updatePoppersTimeout();
+    });
+  }
+
+  const toggleButton = document.getElementById('btn-toggle');
+  if (toggleButton && SIDEBAR_EL) {
+    toggleButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      SIDEBAR_EL.classList.toggle('toggled');
+      updatePoppersTimeout();
+    });
+  }
+
+  if (OVERLAY_EL && SIDEBAR_EL) {
+    OVERLAY_EL.addEventListener('click', () => {
+      SIDEBAR_EL.classList.remove('toggled');
+    });
+  }
+
+  const defaultOpenMenus = document.querySelectorAll('.menu-item.sub-menu.open');
+  defaultOpenMenus.forEach((element) => {
+    const subMenu = element.lastElementChild;
+    if (subMenu) {
+      subMenu.style.display = 'block';
+    }
+  });
+
+  FIRST_SUB_MENUS_BTN.forEach((element) => {
+    element.addEventListener('click', (event) => {
+      const subMenu = element.nextElementSibling;
+      if (!subMenu) {
+        return;
+      }
+      if (SIDEBAR_EL?.classList.contains('collapsed')) {
+        event.preventDefault();
+        PoppersInstance?.togglePopper(subMenu);
+      } else {
+        const parentMenu = element.closest('.menu.open-current-submenu');
+        if (parentMenu) {
+          parentMenu
+            .querySelectorAll(':scope > ul > .menu-item.sub-menu > a')
+            .forEach((anchor) => {
+              const next = anchor.nextElementSibling;
+              if (next && next !== subMenu && window.getComputedStyle(next).display !== 'none') {
+                slideUp(next);
+              }
+            });
+        }
+        slideToggle(subMenu);
+      }
+    });
+  });
+
+  INNER_SUB_MENUS_BTN.forEach((element) => {
+    element.addEventListener('click', (event) => {
+      const subMenu = element.nextElementSibling;
+      if (!subMenu) {
+        return;
+      }
+      event.preventDefault();
+      slideToggle(subMenu);
+    });
+  });
+
+  const panelSections = document.querySelectorAll('[data-panel]');
+  const panelLinks = document.querySelectorAll('[data-panel-target]');
+  const menuItems = document.querySelectorAll('.menu .menu-item');
+  const tabButtons = document.querySelectorAll('[data-orders-tab]');
+  const tabPanels = document.querySelectorAll('[data-orders-panel]');
+  const runTabButtons = document.querySelectorAll('[data-run-tab]');
+  const runTabPanels = document.querySelectorAll('[data-run-panel]');
+
+  const customerMapElement = document.getElementById('customer-locations-map');
+  let customerMap = null;
+  const customerMarkers = [];
+
+  const activateMenuItem = (targetId) => {
+    menuItems.forEach((item) => item.classList.remove('active'));
+    panelLinks.forEach((link) => {
+      const isActive = link.dataset.panelTarget === targetId;
+      const parentItem = link.closest('.menu-item');
+      if (!parentItem) {
+        return;
+      }
+      if (isActive) {
+        parentItem.classList.add('active');
+        const parentSubMenu = parentItem.closest('.menu-item.sub-menu');
+        if (parentSubMenu) {
+          parentSubMenu.classList.add('active');
+          const subList = parentSubMenu.querySelector(':scope > .sub-menu-list');
+          if (subList && window.getComputedStyle(subList).display === 'none') {
+            slideDown(subList, 200);
+          }
+        }
+      } else if (parentItem.classList.contains('sub-menu')) {
+        parentItem.classList.remove('active');
+      }
+    });
+  };
+
+  const setActivePanel = (panelId, { updateHash = true } = {}) => {
+    if (!panelId) {
+      return;
+    }
+    let targetPanel = document.getElementById(panelId);
+    if (!targetPanel) {
+      targetPanel = Array.from(panelSections).find((section) => section.id === panelId) || null;
+    }
+    if (!targetPanel) {
+      return;
+    }
+    panelSections.forEach((section) => {
+      section.classList.toggle('is-active', section === targetPanel);
+    });
+    activateMenuItem(panelId);
+    if (updateHash && window.location.hash !== `#${panelId}`) {
+      window.history.replaceState(null, '', `#${panelId}`);
+    }
+    if (SIDEBAR_EL?.classList.contains('toggled')) {
+      SIDEBAR_EL.classList.remove('toggled');
+    }
+    closeAllPoppers();
+    if (panelId === 'stores-admin' && window.L && typeof leafletMap?.invalidateSize === 'function') {
+      setTimeout(() => leafletMap.invalidateSize(), ANIMATION_DURATION);
+    }
+    if (panelId === 'customers-insights' && window.L && typeof customerMap?.invalidateSize === 'function') {
+      setTimeout(() => customerMap.invalidateSize(), ANIMATION_DURATION);
+    }
+  };
+
+  panelLinks.forEach((link) => {
+    link.addEventListener('click', (event) => {
+      const target = link.dataset.panelTarget;
+      if (!target) {
+        return;
+      }
+      event.preventDefault();
+      setActivePanel(target);
+    });
+  });
+
+  const handleHashNavigation = () => {
+    const hash = window.location.hash.replace('#', '') || 'home-overview';
+    setActivePanel(hash, { updateHash: false });
+  };
+
+  window.addEventListener('hashchange', handleHashNavigation);
+
+  const activateTab = (tabId) => {
+    if (!tabId) {
+      return;
+    }
+    tabButtons.forEach((button) => {
+      const isActive = button.dataset.ordersTab === tabId;
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    tabPanels.forEach((panel) => {
+      panel.classList.toggle('is-active', panel.dataset.ordersPanel === tabId);
+    });
+  };
+
+  tabButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      activateTab(button.dataset.ordersTab);
+    });
+  });
+
+  const activateRunTab = (tabId) => {
+    if (!tabId) {
+      return;
+    }
+    runTabButtons.forEach((button) => {
+      const isActive = button.dataset.runTab === tabId;
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    runTabPanels.forEach((panel) => {
+      panel.classList.toggle('is-active', panel.dataset.runPanel === tabId);
+    });
+  };
+
+  runTabButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      activateRunTab(button.dataset.runTab);
+    });
+  });
+
+  const initHomeChart = () => {
+    const canvas = document.getElementById('home-sales-chart');
+    if (!canvas || !window.Chart) {
+      return;
+    }
+    const context = canvas.getContext('2d');
+    const gradient = context.createLinearGradient(0, 0, 0, 240);
+    gradient.addColorStop(0, 'rgba(255, 129, 0, 0.45)');
+    gradient.addColorStop(1, 'rgba(255, 129, 0, 0)');
+
+    new window.Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: ['Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed'],
+        datasets: [
+          {
+            label: 'Gross sales',
+            data: [0, 0, 0, 0, 0, 0, 0],
+            borderColor: '#ff8100',
+            backgroundColor: gradient,
+            tension: 0.35,
+            fill: true,
+            borderWidth: 3,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(4,14,30,0.9)',
+            borderColor: 'rgba(255,129,0,0.6)',
+            borderWidth: 1,
+          },
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: '#cbd2e9' },
+          },
+          y: {
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: {
+              color: '#cbd2e9',
+              callback: (value) => `$${Number(value).toFixed(2)}`,
+            },
+          },
+        },
+      },
+    });
+  };
+
   const menuContainer = document.getElementById('menu-admin-container');
   const menuStatus = document.getElementById('menu-admin-status');
   const storeStatus = document.getElementById('store-admin-status');
@@ -15,6 +468,7 @@
   let activeProfileId = null;
   let leafletMap = null;
   const storeMarkers = new Map();
+  let cachedStores = [];
 
   function formatCurrency(value) {
     if (!Number.isFinite(value)) {
@@ -404,6 +858,45 @@
     });
   }
 
+  function renderCustomerLocations(stores) {
+    if (!customerMapElement || !window.L) {
+      return;
+    }
+    if (!customerMap) {
+      customerMap = window.L.map(customerMapElement, {
+        zoomControl: false,
+        attributionControl: false,
+      });
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+      }).addTo(customerMap);
+    }
+    customerMarkers.splice(0, customerMarkers.length).forEach((marker) => marker.remove());
+    const bounds = window.L.latLngBounds([]);
+    stores.forEach((store) => {
+      if (!Number.isFinite(store.latitude) || !Number.isFinite(store.longitude)) {
+        return;
+      }
+      const marker = window.L.circleMarker([store.latitude, store.longitude], {
+        radius: 7,
+        color: '#ff8100',
+        fillColor: '#ff8100',
+        fillOpacity: 0.75,
+        weight: 2,
+      });
+      marker.bindTooltip(store.label || 'Location', { direction: 'top' });
+      marker.addTo(customerMap);
+      customerMarkers.push(marker);
+      bounds.extend([store.latitude, store.longitude]);
+    });
+    if (bounds.isValid()) {
+      customerMap.fitBounds(bounds.pad(0.4));
+    } else {
+      customerMap.setView([39.9526, -75.1652], 12);
+    }
+    setTimeout(() => customerMap.invalidateSize(), ANIMATION_DURATION);
+  }
+
   function updateStoreCoordinatesDisplay(storeId, lat, lng) {
     const coords = storeList?.querySelector(`.coordinates[data-store-id="${storeId}"]`);
     if (coords) {
@@ -422,6 +915,10 @@
         body: JSON.stringify({ latitude: lat, longitude: lng }),
       });
       updateStoreCoordinatesDisplay(storeId, lat, lng);
+      cachedStores = cachedStores.map((store) =>
+        store.id === storeId ? { ...store, latitude: lat, longitude: lng } : store
+      );
+      renderCustomerLocations(cachedStores);
       setStatus(storeStatus, `Updated ${storeId}`, 'success');
     } catch (error) {
       setStatus(storeStatus, error.message || 'Failed to update store', 'error');
@@ -438,7 +935,9 @@
         setStatus(storeStatus, 'No stores configured', 'error');
         return;
       }
+      cachedStores = stores;
       renderStoreList(stores);
+      renderCustomerLocations(stores);
       if (!leafletMap) {
         leafletMap = L.map('store-map', { zoom: 12, scrollWheelZoom: true, attributionControl: false });
         const streetLayer = L.tileLayer(
@@ -612,6 +1111,11 @@
       hideProfileDetail();
     }
   });
+
+  activateTab(document.querySelector('[data-orders-tab].is-active')?.dataset.ordersTab || 'active');
+  activateRunTab(document.querySelector('[data-run-tab].is-active')?.dataset.runTab || 'marketplace');
+  initHomeChart();
+  handleHashNavigation();
 
   initializeMenu();
   initializeStoreMap();
