@@ -450,6 +450,12 @@
       color: var(--dw-primary-dark);
     }
 
+    .merch-product-price {
+      margin: 0;
+      font-weight: 600;
+      color: var(--dw-primary-dark);
+    }
+
     .merch-product-body p {
       margin: 0;
       color: var(--dw-text-muted);
@@ -676,6 +682,35 @@
       margin: 0;
       font-weight: 600;
       color: var(--dw-primary);
+    }
+
+    .merch-cart-summary {
+      display: grid;
+      gap: 6px;
+      padding: 4px 0 0;
+    }
+
+    .merch-cart-price,
+    .merch-cart-shipping,
+    .merch-cart-total {
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--dw-text-dark);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .merch-cart-price span,
+    .merch-cart-shipping span,
+    .merch-cart-total span {
+      font-weight: 600;
+    }
+
+    .merch-cart-total {
+      font-size: 1.05rem;
+      color: var(--dw-primary-dark);
     }
 
     .merch-cart-preview {
@@ -1144,8 +1179,9 @@
             </div>
             <div class="merch-product-body">
               <h3>Ash Hoodie</h3>
+              <p class="merch-product-price">From $33 + $11.99 S&amp;H</p>
               <p>Classic logo placement to rep the wok wherever you go.</p>
-              <button type="button" class="merch-add-button">Add to cart</button>
+              <button type="button" class="merch-add-button">Buy this hoodie</button>
             </div>
           </article>
           <article
@@ -1162,8 +1198,9 @@
             </div>
             <div class="merch-product-body">
               <h3>Black Hoodie</h3>
+              <p class="merch-product-price">From $33 + $11.99 S&amp;H</p>
               <p>The everyday essential with a subtle chest logo.</p>
-              <button type="button" class="merch-add-button">Add to cart</button>
+              <button type="button" class="merch-add-button">Buy this hoodie</button>
             </div>
           </article>
           <article
@@ -1180,8 +1217,9 @@
             </div>
             <div class="merch-product-body">
               <h3>Irish Green Hoodie</h3>
+              <p class="merch-product-price">From $33 + $11.99 S&amp;H</p>
               <p>Bright, bold, and ready for post-delivery adventures.</p>
-              <button type="button" class="merch-add-button">Add to cart</button>
+              <button type="button" class="merch-add-button">Buy this hoodie</button>
             </div>
           </article>
           <article
@@ -1198,8 +1236,9 @@
             </div>
             <div class="merch-product-body">
               <h3>Navy Hoodie</h3>
+              <p class="merch-product-price">From $33 + $11.99 S&amp;H</p>
               <p>Cozy fleece with a subtle front mark for everyday wear.</p>
-              <button type="button" class="merch-add-button">Add to cart</button>
+              <button type="button" class="merch-add-button">Buy this hoodie</button>
             </div>
           </article>
           <article
@@ -1216,8 +1255,9 @@
             </div>
             <div class="merch-product-body">
               <h3>Red Hoodie</h3>
+              <p class="merch-product-price">From $33 + $11.99 S&amp;H</p>
               <p>Match the Danny's Wok color story with a bold pop of red.</p>
-              <button type="button" class="merch-add-button">Add to cart</button>
+              <button type="button" class="merch-add-button">Buy this hoodie</button>
             </div>
           </article>
           <article
@@ -1234,8 +1274,9 @@
             </div>
             <div class="merch-product-body">
               <h3>Sport Grey Hoodie</h3>
+              <p class="merch-product-price">From $33 + $11.99 S&amp;H</p>
               <p>Easy to layer, easy to love, ready for your next feast.</p>
-              <button type="button" class="merch-add-button">Add to cart</button>
+              <button type="button" class="merch-add-button">Buy this hoodie</button>
             </div>
           </article>
           <article
@@ -1252,8 +1293,9 @@
             </div>
             <div class="merch-product-body">
               <h3>White Hoodie</h3>
+              <p class="merch-product-price">From $33 + $11.99 S&amp;H</p>
               <p>Crisp white fleece with a minimalist front graphic.</p>
-              <button type="button" class="merch-add-button">Add to cart</button>
+              <button type="button" class="merch-add-button">Buy this hoodie</button>
             </div>
           </article>
         </div>
@@ -1271,38 +1313,60 @@
       <div class="merch-cart-content">
         <h3 id="merchCartTitle">Finish your hoodie pick</h3>
         <p class="merch-cart-product" id="merchCartProduct">Ash Hoodie</p>
+        <div class="merch-cart-summary" id="merchCartSummary" aria-live="polite">
+          <p class="merch-cart-price">
+            <span>Hoodie</span>
+            <span id="merchCartPrice">$33.00</span>
+          </p>
+          <p class="merch-cart-shipping">
+            <span>Shipping &amp; Handling</span>
+            <span id="merchCartShipping">$11.99</span>
+          </p>
+          <p class="merch-cart-total">
+            <span>Total today</span>
+            <span id="merchCartTotal">$44.99</span>
+          </p>
+        </div>
         <figure class="merch-cart-preview" id="merchCartPreview" aria-hidden="true"></figure>
         <form class="merch-cart-form" id="merchCartForm">
           <fieldset>
             <legend class="visually-hidden">Select a hoodie size</legend>
             <div class="merch-size-options">
               <label>
-                <input type="radio" name="merch-size" value="XS" checked />
-                <span>XS</span>
+                <input type="radio" name="merch-size" value="XS" data-price="33" checked />
+                <span>XS · $33</span>
               </label>
               <label>
-                <input type="radio" name="merch-size" value="Small" />
-                <span>Small</span>
+                <input type="radio" name="merch-size" value="S" data-price="33" />
+                <span>S · $33</span>
               </label>
               <label>
-                <input type="radio" name="merch-size" value="Medium" />
-                <span>Medium</span>
+                <input type="radio" name="merch-size" value="M" data-price="33" />
+                <span>M · $33</span>
               </label>
               <label>
-                <input type="radio" name="merch-size" value="Large" />
-                <span>Large</span>
+                <input type="radio" name="merch-size" value="L" data-price="33" />
+                <span>L · $33</span>
               </label>
               <label>
-                <input type="radio" name="merch-size" value="X-Large" />
-                <span>X-Large</span>
+                <input type="radio" name="merch-size" value="XL" data-price="33" />
+                <span>XL · $33</span>
               </label>
               <label>
-                <input type="radio" name="merch-size" value="X3" />
-                <span>X3</span>
+                <input type="radio" name="merch-size" value="2XL" data-price="35" />
+                <span>2XL · $35</span>
               </label>
               <label>
-                <input type="radio" name="merch-size" value="X5" />
-                <span>X5</span>
+                <input type="radio" name="merch-size" value="3XL" data-price="35" />
+                <span>3XL · $35</span>
+              </label>
+              <label>
+                <input type="radio" name="merch-size" value="4XL" data-price="38" />
+                <span>4XL · $38</span>
+              </label>
+              <label>
+                <input type="radio" name="merch-size" value="5XL" data-price="40" />
+                <span>5XL · $40</span>
               </label>
             </div>
           </fieldset>
@@ -1342,11 +1406,11 @@
             </div>
           </fieldset>
           <div class="merch-cart-actions">
-            <button type="submit" class="merch-submit-button">Add hoodie &amp; keep shopping</button>
+            <button type="submit" class="merch-submit-button">Checkout &amp; pay</button>
             <p class="merch-cart-feedback" id="merchCartFeedback" role="status" aria-live="polite"></p>
           </div>
         </form>
-        <p class="merch-disclaimer">Shipping typically begins within 2 business days. We’ll send updates to your email.</p>
+        <p class="merch-disclaimer">Shipping &amp; handling is a flat $11.99. Orders typically leave our kitchen within 2 business days and updates go right to your email.</p>
       </div>
     </div>
     <div class="merch-lightbox is-hidden" id="merchLightbox" aria-hidden="true">
@@ -1389,6 +1453,42 @@
       "Rekindle your purpose; the world revolves in your favor.",
       "Respect your journey—the world is watching with wonder."
     ];
+
+    const HOODIE_PRICE_MAP = {
+      XS: 33,
+      S: 33,
+      M: 33,
+      L: 33,
+      XL: 33,
+      '2XL': 35,
+      '3XL': 35,
+      '4XL': 38,
+      '5XL': 40,
+    };
+    const HOODIE_SHIPPING = 11.99;
+    const MERCH_CHECKOUT_ENDPOINT = '/api/dannyswok/create-checkout-session';
+    const FORTUNE_LOG_ENDPOINT = '/api/fortunes';
+    const usdFormatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+    });
+
+    function formatUSD(value) {
+      const amount = typeof value === 'number' ? value : Number(value);
+      if (!Number.isFinite(amount)) {
+        return usdFormatter.format(0);
+      }
+      return usdFormatter.format(amount);
+    }
+
+    function getHoodiePriceForSize(size) {
+      if (!size) {
+        return null;
+      }
+      const price = HOODIE_PRICE_MAP[size];
+      return typeof price === 'number' ? price : null;
+    }
 
     const analyticsApi = window.DannysAnalytics;
     const LAST_ORDER_STORAGE_KEY =
@@ -1745,9 +1845,53 @@
       }, CONFETTI_DELAY);
     }
 
+    const fortuneLogQueue = [];
+    let fortuneLogInFlight = false;
+
+    async function flushFortuneQueue() {
+      if (fortuneLogInFlight) {
+        return;
+      }
+      if (!fortuneLogQueue.length) {
+        return;
+      }
+      const payload = fortuneLogQueue[0];
+      fortuneLogInFlight = true;
+      try {
+        await fetch(FORTUNE_LOG_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          keepalive: true,
+        });
+        fortuneLogQueue.shift();
+      } catch (error) {
+        fortuneLogQueue.shift();
+      } finally {
+        fortuneLogInFlight = false;
+        if (fortuneLogQueue.length) {
+          setTimeout(flushFortuneQueue, 250);
+        }
+      }
+    }
+
+    function queueFortuneLog(fortune) {
+      if (!fortune || typeof fortune !== 'string') {
+        return;
+      }
+      fortuneLogQueue.push({
+        text: fortune.slice(0, 280),
+        timestamp: new Date().toISOString(),
+        source: 'thankyou',
+      });
+      flushFortuneQueue();
+    }
+
     function selectQuote() {
       const index = Math.floor(Math.random() * quotes.length);
-      return quotes[index];
+      const fortune = quotes[index];
+      queueFortuneLog(fortune);
+      return fortune;
     }
 
     function startFortuneAnimation() {
@@ -1958,6 +2102,10 @@
       const closeMerchCartButton = document.getElementById('closeMerchCart');
       const merchAddButtons = document.querySelectorAll('.merch-add-button');
       const merchProductLabel = document.getElementById('merchCartProduct');
+      const merchCartSummary = document.getElementById('merchCartSummary');
+      const merchCartPriceValue = document.getElementById('merchCartPrice');
+      const merchCartShippingValue = document.getElementById('merchCartShipping');
+      const merchCartTotalValue = document.getElementById('merchCartTotal');
       const merchPreview = document.getElementById('merchCartPreview');
       const merchForm = document.getElementById('merchCartForm');
       const merchFeedback = document.getElementById('merchCartFeedback');
@@ -1972,6 +2120,39 @@
       let merchEscapeHandler = null;
       let lastPreviewTrigger = null;
       let merchLightboxEscapeHandler = null;
+      let currentMerchProductName =
+        (merchProductLabel?.textContent && merchProductLabel.textContent.trim()) || "Danny's Wok Hoodie";
+
+      function getSelectedSizeInput() {
+        if (!merchForm) {
+          return null;
+        }
+        return merchForm.querySelector("input[name='merch-size']:checked");
+      }
+
+      function updateMerchSummary() {
+        const selectedInput = getSelectedSizeInput();
+        const size = selectedInput?.value || null;
+        const basePrice = getHoodiePriceForSize(size) ?? getHoodiePriceForSize('XS') ?? 0;
+        if (merchCartPriceValue) {
+          merchCartPriceValue.textContent = formatUSD(basePrice);
+        }
+        if (merchCartShippingValue) {
+          merchCartShippingValue.textContent = formatUSD(HOODIE_SHIPPING);
+        }
+        if (merchCartTotalValue) {
+          merchCartTotalValue.textContent = formatUSD(basePrice + HOODIE_SHIPPING);
+        }
+        if (merchProductLabel) {
+          merchProductLabel.textContent = size
+            ? `${currentMerchProductName} — ${size}`
+            : currentMerchProductName;
+        }
+        if (merchCartSummary) {
+          const summaryLabel = `Hoodie ${formatUSD(basePrice)}, Shipping and Handling ${formatUSD(HOODIE_SHIPPING)}, total ${formatUSD(basePrice + HOODIE_SHIPPING)}`;
+          merchCartSummary.setAttribute('aria-label', summaryLabel);
+        }
+      }
 
       function setMerchCartState(visible) {
         if (!merchCart) return;
@@ -2042,18 +2223,18 @@
       }
 
       function updateMerchProduct(name, frontImage, backImage, frontAlt, backAlt) {
-        if (merchProductLabel) {
-          merchProductLabel.textContent = name;
-        }
+        const normalizedName = name || "Danny's Wok Hoodie";
+        currentMerchProductName = normalizedName;
+        updateMerchSummary();
         if (!merchPreview) return;
 
         const views = [];
         lastPreviewTrigger = null;
         if (frontImage) {
-          views.push({ src: frontImage, alt: frontAlt || `${name} front view` });
+          views.push({ src: frontImage, alt: frontAlt || `${normalizedName} front view` });
         }
         if (backImage) {
-          views.push({ src: backImage, alt: backAlt || `${name} back view` });
+          views.push({ src: backImage, alt: backAlt || `${normalizedName} back view` });
         }
 
         merchPreview.innerHTML = '';
@@ -2180,6 +2361,12 @@
           }
         });
 
+        const sizeInputs = merchForm.querySelectorAll("input[name='merch-size']");
+        sizeInputs.forEach((input) => {
+          input.addEventListener('change', updateMerchSummary);
+          input.addEventListener('input', updateMerchSummary);
+        });
+
         if (merchLightboxClose) {
           merchLightboxClose.addEventListener('click', closeMerchLightbox);
         }
@@ -2188,20 +2375,206 @@
           merchLightboxBackdrop.addEventListener('click', closeMerchLightbox);
         }
 
-        merchForm.addEventListener('submit', (event) => {
+        merchForm.addEventListener('submit', async (event) => {
           event.preventDefault();
-          if (merchFeedback && merchProductLabel) {
-            merchFeedback.textContent = `${merchProductLabel.textContent} was added to your cart!`;
+          if (typeof merchForm.reportValidity === 'function' && !merchForm.reportValidity()) {
+            return;
+          }
+
+          const submitButton = merchForm.querySelector('.merch-submit-button');
+          if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.classList.add('is-loading');
+          }
+
+          if (merchFeedback) {
+            merchFeedback.textContent = 'Starting secure checkout…';
             merchFeedback.classList.add('is-visible');
           }
-          merchForm.reset();
-          const firstSize = merchForm.querySelector("input[name='merch-size']");
-          if (firstSize) {
-            firstSize.checked = true;
+
+          const selectedInput = getSelectedSizeInput();
+          if (!selectedInput) {
+            if (merchFeedback) {
+              merchFeedback.textContent = 'Select a hoodie size to continue.';
+            }
+            if (submitButton) {
+              submitButton.disabled = false;
+              submitButton.classList.remove('is-loading');
+            }
+            return;
           }
-          setTimeout(() => {
-            closeMerchCart();
-          }, 1400);
+
+          const size = selectedInput.value;
+          const datasetPrice = Number(selectedInput.dataset.price);
+          const basePrice = Number.isFinite(datasetPrice)
+            ? datasetPrice
+            : getHoodiePriceForSize(size);
+
+          if (!Number.isFinite(basePrice) || basePrice <= 0) {
+            if (merchFeedback) {
+              merchFeedback.textContent = 'We could not determine the price for that size. Please try again.';
+            }
+            if (submitButton) {
+              submitButton.disabled = false;
+              submitButton.classList.remove('is-loading');
+            }
+            return;
+          }
+
+          const formData = new FormData(merchForm);
+          const shippingName = (formData.get('shipping-name') || '').toString().trim();
+          const shippingEmail = (formData.get('shipping-email') || '').toString().trim();
+          const shippingAddressLine = (formData.get('shipping-address') || '').toString().trim();
+          const shippingCity = (formData.get('shipping-city') || '').toString().trim();
+          const shippingState = (formData.get('shipping-state') || '').toString().trim();
+          const shippingZip = (formData.get('shipping-zip') || '').toString().trim();
+          const shippingNotes = (formData.get('shipping-notes') || '').toString().trim();
+
+          const shippingAddressParts = [
+            shippingAddressLine,
+            shippingCity,
+            shippingState,
+            shippingZip,
+          ].filter(Boolean);
+          const shippingAddress = shippingAddressParts.join(', ');
+
+          const hoodiePrice = Number(basePrice.toFixed(2));
+          const shippingPrice = Number(HOODIE_SHIPPING.toFixed(2));
+          const orderTotal = Number((hoodiePrice + shippingPrice).toFixed(2));
+          const hoodieLineItemName = `${currentMerchProductName} (${size})`;
+
+          const hoodieLineItem = {
+            name: hoodieLineItemName,
+            quantity: 1,
+            unitPrice: hoodiePrice,
+            total: hoodiePrice,
+          };
+          const shippingLineItem = {
+            name: 'Shipping & Handling',
+            quantity: 1,
+            unitPrice: shippingPrice,
+            total: shippingPrice,
+          };
+
+          const orderPayload = {
+            fulfilment: 'Merch Delivery',
+            isDelivery: true,
+            subtotal: hoodiePrice,
+            tipAmount: 0,
+            expressFee: 0,
+            deliveryFee: shippingPrice,
+            processingFee: 0,
+            feesAndEstimatedTax: 0,
+            taxAmount: 0,
+            grandTotal: orderTotal,
+            notes: shippingNotes ? [shippingNotes] : [],
+            items: [hoodieLineItem, shippingLineItem],
+          };
+
+          if (shippingName || shippingAddress) {
+            orderPayload.customer = {
+              name: shippingName || null,
+              phone: null,
+              address: shippingAddress || null,
+            };
+          }
+
+          const metadata = {
+            merch_product: currentMerchProductName,
+            merch_size: size,
+            shipping_name: shippingName,
+            shipping_email: shippingEmail,
+            shipping_address: shippingAddress,
+            shipping_city: shippingCity,
+            shipping_state: shippingState,
+            shipping_zip: shippingZip,
+            shipping_notes: shippingNotes,
+            order_type: 'hoodie_merch',
+          };
+
+          Object.keys(metadata).forEach((key) => {
+            if (metadata[key] === '' || metadata[key] === null || metadata[key] === undefined) {
+              delete metadata[key];
+            }
+          });
+
+          const orderSnapshot = {
+            fulfilment: orderPayload.fulfilment,
+            grandTotal: orderTotal,
+            subtotal: hoodiePrice,
+            processingFee: 0,
+            deliveryFee: shippingPrice,
+            expressFee: 0,
+            feesAndEstimatedTax: 0,
+            taxAmount: 0,
+            tipAmount: 0,
+            items: [
+              { name: hoodieLineItem.name, quantity: 1, total: hoodiePrice },
+              { name: shippingLineItem.name, quantity: 1, total: shippingPrice },
+            ],
+            timestamp: new Date().toISOString(),
+            reported: false,
+          };
+
+          try {
+            if (analyticsApi?.setStoredJson) {
+              analyticsApi.setStoredJson(LAST_ORDER_STORAGE_KEY, orderSnapshot);
+            } else if (window?.localStorage) {
+              window.localStorage.setItem(LAST_ORDER_STORAGE_KEY, JSON.stringify(orderSnapshot));
+            }
+          } catch (storageError) {
+            // eslint-disable-next-line no-console
+            console.warn('Unable to cache order summary', storageError);
+          }
+
+          if (analyticsApi?.sendEvent) {
+            analyticsApi.sendEvent('merch_checkout_started', {
+              product: currentMerchProductName,
+              size,
+              amount: orderTotal,
+            });
+          }
+
+          let redirected = false;
+
+          try {
+            const response = await fetch(MERCH_CHECKOUT_ENDPOINT, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ order: orderPayload, metadata }),
+            });
+
+            if (!response.ok) {
+              const errorPayload = await response.json().catch(() => ({}));
+              const message = errorPayload?.message || 'Unable to start checkout. Please try again.';
+              throw new Error(message);
+            }
+
+            const data = await response.json();
+            const redirectUrl = data?.url || null;
+            if (redirectUrl) {
+              if (merchFeedback) {
+                merchFeedback.textContent = 'Redirecting to secure checkout…';
+              }
+              redirected = true;
+              window.location.href = redirectUrl;
+              return;
+            }
+
+            throw new Error('Stripe checkout link was unavailable.');
+          } catch (error) {
+            if (merchFeedback) {
+              merchFeedback.textContent = error.message || 'Unable to start checkout. Please try again.';
+            }
+            // eslint-disable-next-line no-console
+            console.error('Merch checkout failed', error);
+          } finally {
+            if (!redirected && submitButton) {
+              submitButton.disabled = false;
+              submitButton.classList.remove('is-loading');
+            }
+          }
         });
       }
 
