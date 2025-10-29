@@ -1103,6 +1103,228 @@
     }
   }
 
+  const rewardsSettings = {
+    budgetPercent: 3.5,
+    revenueBaseline: 50000,
+    odds: {
+      instant: '1:5',
+      common: '1:25',
+      rare: '1:200',
+      legendary: '1:1000',
+    },
+  };
+
+  const rewardsAutomation = {
+    dynamicProbability: true,
+    expiringPieces: true,
+    flashEvents: true,
+    skillChallenges: true,
+    winSharing: true,
+    rewardPoints: true,
+  };
+
+  const rewardsBudgetRange = document.getElementById('rewardsBudgetRange');
+  const rewardsBudgetValue = document.getElementById('rewardsBudgetValue');
+  const rewardsBudgetDollars = document.getElementById('rewardsBudgetDollars');
+  const saveRewardsBudgetButton = document.getElementById('saveRewardsBudget');
+  const resetRewardsBudgetButton = document.getElementById('resetRewardsBudget');
+  const rewardsBudgetStatus = document.getElementById('rewardsBudgetStatus');
+
+  const rewardsOddsSummary = document.getElementById('rewardsOddsSummary');
+  const saveRewardsOddsButton = document.getElementById('saveRewardsOdds');
+  const rewardsOddsStatus = document.getElementById('rewardsOddsStatus');
+  const instantWinOddsSelect = document.getElementById('instantWinOdds');
+  const collectionCommonSelect = document.getElementById('collectionCommonOdds');
+  const collectionRareSelect = document.getElementById('collectionRareOdds');
+  const collectionLegendarySelect = document.getElementById('collectionLegendaryOdds');
+
+  const rewardsAutomationSummary = document.getElementById('rewardsAutomationSummary');
+  const rewardsAutomationBulletin = document.getElementById('rewardsAutomationBulletin');
+  const rewardsAutomationStatus = document.getElementById('rewardsAutomationStatus');
+  const saveRewardsAutomationButton = document.getElementById('saveRewardsAutomation');
+  const rewardsDynamicProbabilityToggle = document.getElementById('rewardsDynamicProbability');
+  const rewardsExpiringPiecesToggle = document.getElementById('rewardsExpiringPieces');
+  const rewardsFlashEventsToggle = document.getElementById('rewardsFlashEvents');
+  const rewardsSkillChallengesToggle = document.getElementById('rewardsSkillChallenges');
+  const rewardsWinSharingToggle = document.getElementById('rewardsWinSharing');
+  const rewardsRewardPointsToggle = document.getElementById('rewardsRewardPoints');
+
+  function formatRewardPercent(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+      return '0.00%';
+    }
+    return `${numeric.toFixed(2)}%`;
+  }
+
+  function updateBudgetSummary() {
+    const percent = Number(rewardsSettings.budgetPercent) || 0;
+    if (rewardsBudgetRange) {
+      rewardsBudgetRange.value = percent;
+    }
+    if (rewardsBudgetValue) {
+      rewardsBudgetValue.textContent = formatRewardPercent(percent);
+    }
+    if (rewardsBudgetDollars) {
+      const baseline = Number(rewardsSettings.revenueBaseline) || 0;
+      const pool = (baseline * percent) / 100;
+      rewardsBudgetDollars.textContent = formatCurrency(pool);
+    }
+  }
+
+  if (rewardsBudgetRange) {
+    rewardsBudgetRange.addEventListener('input', () => {
+      rewardsSettings.budgetPercent = Number(rewardsBudgetRange.value);
+      updateBudgetSummary();
+      setStatus(rewardsBudgetStatus, '');
+    });
+    updateBudgetSummary();
+  }
+
+  if (saveRewardsBudgetButton) {
+    saveRewardsBudgetButton.addEventListener('click', () => {
+      updateBudgetSummary();
+      setStatus(
+        rewardsBudgetStatus,
+        `Budget locked at ${formatRewardPercent(rewardsSettings.budgetPercent)} of promo revenue.`,
+        'success'
+      );
+    });
+  }
+
+  if (resetRewardsBudgetButton) {
+    resetRewardsBudgetButton.addEventListener('click', () => {
+      rewardsSettings.budgetPercent = 3.5;
+      updateBudgetSummary();
+      setStatus(rewardsBudgetStatus, 'Reset to recommended 3.5% allocation.', 'success');
+    });
+  }
+
+  function updateOddsSummary() {
+    if (!rewardsOddsSummary) {
+      return;
+    }
+    const summary = [
+      `<strong>Instant wins:</strong> ${rewardsSettings.odds.instant || '1:5'}`,
+      `<strong>Common sets:</strong> ${rewardsSettings.odds.common || '1:25'}`,
+      `<strong>Rare sets:</strong> ${rewardsSettings.odds.rare || '1:200'}`,
+      `<strong>Legendary:</strong> ${rewardsSettings.odds.legendary || '1:1000'}`,
+    ];
+    rewardsOddsSummary.innerHTML = `${summary.map((line) => `<p>${line}</p>`).join('')}<p class="muted">Odds auto-adjust for loyalty tiers and safeguard the monthly budget.</p>`;
+  }
+
+  const rewardsOddsInputs = [
+    { element: instantWinOddsSelect, key: 'instant' },
+    { element: collectionCommonSelect, key: 'common' },
+    { element: collectionRareSelect, key: 'rare' },
+    { element: collectionLegendarySelect, key: 'legendary' },
+  ];
+
+  rewardsOddsInputs.forEach(({ element, key }) => {
+    if (!element) {
+      return;
+    }
+    if (rewardsSettings.odds[key]) {
+      element.value = rewardsSettings.odds[key];
+    }
+    element.addEventListener('change', () => {
+      rewardsSettings.odds[key] = element.value;
+      updateOddsSummary();
+      setStatus(rewardsOddsStatus, '');
+    });
+  });
+
+  if (saveRewardsOddsButton) {
+    saveRewardsOddsButton.addEventListener('click', () => {
+      updateOddsSummary();
+      setStatus(rewardsOddsStatus, 'Drop rates updated. Changes go live within 5 minutes.', 'success');
+    });
+  }
+
+  updateOddsSummary();
+
+  function updateAutomationSummary() {
+    if (!rewardsAutomationSummary) {
+      return;
+    }
+    const activePrograms = [
+      rewardsAutomation.dynamicProbability && 'Dynamic probability',
+      rewardsAutomation.expiringPieces && 'Expiring pieces',
+      rewardsAutomation.flashEvents && 'Flash mini-events',
+      rewardsAutomation.skillChallenges && 'Skill challenges',
+      rewardsAutomation.winSharing && 'Win-sharing cards',
+      rewardsAutomation.rewardPoints && 'Reward points crossover',
+    ].filter(Boolean);
+
+    if (!activePrograms.length) {
+      rewardsAutomationSummary.textContent = 'No automations active. Players see baseline odds only.';
+      return;
+    }
+
+    rewardsAutomationSummary.textContent = `Active programs: ${activePrograms.join(' · ')}`;
+  }
+
+  function updateAutomationBulletin() {
+    if (!rewardsAutomationBulletin) {
+      return;
+    }
+    const bulletLines = [];
+    if (rewardsAutomation.flashEvents) {
+      bulletLines.push('Flash event queued: Double Moonlight drops this Friday 5–9 PM.');
+    }
+    if (rewardsAutomation.expiringPieces) {
+      bulletLines.push('Next expiry reminder: Moonlit Petal · Sunday 11:59 PM.');
+    }
+    if (rewardsAutomation.dynamicProbability) {
+      bulletLines.push('Dynamic probability live for streak tiers Silver and above.');
+    }
+    if (rewardsAutomation.skillChallenges) {
+      bulletLines.push("Tonight's skill challenge: 15-second chopstick catch (+10 XP).");
+    }
+
+    if (!bulletLines.length) {
+      rewardsAutomationBulletin.innerHTML = '<p class="muted">No automated pushes scheduled.</p>';
+      return;
+    }
+
+    rewardsAutomationBulletin.innerHTML = `<ul>${bulletLines.map((line) => `<li>${line}</li>`).join('')}</ul>`;
+  }
+
+  const automationToggles = [
+    { element: rewardsDynamicProbabilityToggle, key: 'dynamicProbability' },
+    { element: rewardsExpiringPiecesToggle, key: 'expiringPieces' },
+    { element: rewardsFlashEventsToggle, key: 'flashEvents' },
+    { element: rewardsSkillChallengesToggle, key: 'skillChallenges' },
+    { element: rewardsWinSharingToggle, key: 'winSharing' },
+    { element: rewardsRewardPointsToggle, key: 'rewardPoints' },
+  ];
+
+  automationToggles.forEach(({ element, key }) => {
+    if (!element) {
+      return;
+    }
+    element.checked = !!rewardsAutomation[key];
+    element.addEventListener('change', () => {
+      rewardsAutomation[key] = element.checked;
+      updateAutomationSummary();
+      updateAutomationBulletin();
+      setStatus(rewardsAutomationStatus, '');
+    });
+  });
+
+  if (saveRewardsAutomationButton) {
+    saveRewardsAutomationButton.addEventListener('click', () => {
+      const activeCount = Object.values(rewardsAutomation).filter(Boolean).length;
+      const message = activeCount
+        ? `Saved. ${activeCount} engagement program${activeCount === 1 ? '' : 's'} are now scheduled.`
+        : 'Saved. All automations paused.';
+      setStatus(rewardsAutomationStatus, message, 'success');
+    });
+  }
+
+  updateAutomationSummary();
+  updateAutomationBulletin();
+
   if (closeProfileDetailButton) {
     closeProfileDetailButton.addEventListener('click', hideProfileDetail);
   }

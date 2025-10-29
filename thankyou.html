@@ -225,6 +225,564 @@
       box-shadow: 0 10px 25px var(--dw-glow);
     }
 
+    .receipt-cta-group {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .fortune-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      border-radius: 999px;
+      border: 1px solid var(--dw-border-soft);
+      padding: 8px 16px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(255, 230, 200, 0.9));
+      color: var(--dw-primary-dark);
+      font-weight: 600;
+      font-size: 0.95rem;
+      box-shadow: 0 16px 28px rgba(243, 156, 18, 0.25);
+      cursor: pointer;
+      border: 1px solid rgba(243, 156, 18, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .fortune-pill img {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+      filter: drop-shadow(0 6px 12px rgba(243, 156, 18, 0.35));
+    }
+
+    .fortune-pill:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 20px 32px rgba(243, 156, 18, 0.32);
+    }
+
+    .fortune-pill:focus-visible {
+      outline: 3px solid rgba(243, 156, 18, 0.7);
+      outline-offset: 2px;
+    }
+
+    body.fortune-drawer-open {
+      overflow: hidden;
+    }
+
+    .fortune-drawer {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 1000;
+    }
+
+    .fortune-drawer.is-open {
+      pointer-events: auto;
+      opacity: 1;
+    }
+
+    .fortune-drawer__backdrop {
+      position: absolute;
+      inset: 0;
+      background: var(--dw-overlay);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      border: none;
+    }
+
+    .fortune-drawer.is-open .fortune-drawer__backdrop {
+      opacity: 1;
+    }
+
+    .fortune-drawer__panel {
+      position: relative;
+      width: min(960px, 92vw);
+      max-height: min(88vh, 760px);
+      background: var(--dw-surface-contrast);
+      border-radius: 24px;
+      border: 1px solid rgba(192, 57, 43, 0.2);
+      box-shadow: 0 40px 80px rgba(44, 26, 10, 0.25);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateY(32px);
+      opacity: 0;
+      transition: transform 0.35s ease, opacity 0.35s ease;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .fortune-drawer,
+      .fortune-drawer__panel,
+      .fortune-drawer__backdrop,
+      .fortune-inventory-item,
+      .fortune-pill {
+        transition: none !important;
+      }
+
+      .fortune-drawer__panel {
+        transform: none !important;
+      }
+    }
+
+    .fortune-drawer.is-open .fortune-drawer__panel {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .fortune-drawer__header {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 28px 32px 16px;
+      border-bottom: 1px solid var(--dw-border-soft);
+      background: linear-gradient(160deg, rgba(255, 246, 230, 0.95), rgba(243, 156, 18, 0.16));
+    }
+
+    .fortune-drawer__eyebrow {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--dw-primary-dark);
+      margin: 0 0 4px;
+      font-weight: 600;
+    }
+
+    .fortune-drawer__description {
+      margin: 8px 0 0;
+      color: var(--dw-text-muted);
+      max-width: 360px;
+    }
+
+    .fortune-drawer__stats {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .fortune-stat {
+      background: rgba(255, 255, 255, 0.78);
+      border-radius: 16px;
+      padding: 12px 16px;
+      border: 1px solid rgba(243, 156, 18, 0.22);
+      box-shadow: 0 16px 24px rgba(243, 156, 18, 0.18);
+      min-width: 160px;
+    }
+
+    .fortune-stat__label {
+      display: block;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--dw-text-muted);
+      margin-bottom: 6px;
+    }
+
+    .fortune-stat__value {
+      display: block;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--dw-primary-dark);
+    }
+
+    .fortune-stat__hint {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.85rem;
+      color: var(--dw-text-muted);
+    }
+
+    .fortune-drawer__close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid rgba(192, 57, 43, 0.2);
+      background: rgba(255, 255, 255, 0.85);
+      color: var(--dw-primary-dark);
+      font-size: 1.6rem;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 12px 24px rgba(44, 26, 10, 0.18);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .fortune-drawer__close:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 28px rgba(44, 26, 10, 0.24);
+    }
+
+    .fortune-drawer__close:focus-visible {
+      outline: 3px solid rgba(192, 57, 43, 0.4);
+      outline-offset: 2px;
+    }
+
+    .fortune-drawer__content {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 28px;
+      padding: 28px 32px 36px;
+      overflow-y: auto;
+    }
+
+    .fortune-detail {
+      background: linear-gradient(160deg, rgba(255, 246, 230, 0.8), rgba(255, 255, 255, 0.95));
+      border-radius: 20px;
+      border: 1px solid rgba(243, 156, 18, 0.28);
+      box-shadow: 0 26px 48px rgba(243, 156, 18, 0.18);
+      padding: 24px 28px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .fortune-detail__header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .fortune-detail__title {
+      margin: 0;
+      font-size: 1.5rem;
+      color: var(--dw-primary-dark);
+    }
+
+    .fortune-detail__reward {
+      margin: 0;
+      font-weight: 600;
+      color: var(--dw-primary-dark);
+      font-size: 1.05rem;
+    }
+
+    .fortune-detail__fortune {
+      margin: 0;
+      font-style: italic;
+      color: var(--dw-text-muted);
+    }
+
+    .fortune-detail__notes {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .fortune-detail__notes li {
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(243, 156, 18, 0.2);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: var(--dw-text-muted);
+      font-size: 0.95rem;
+    }
+
+    .fortune-drawer__right {
+      display: grid;
+      gap: 24px;
+    }
+
+    .fortune-inventory__header h3,
+    .fortune-board__header h3 {
+      margin: 0;
+      font-size: 1.15rem;
+      color: var(--dw-primary-dark);
+    }
+
+    .fortune-inventory__header p,
+    .fortune-board__header p {
+      margin: 6px 0 0;
+      color: var(--dw-text-muted);
+      font-size: 0.95rem;
+    }
+
+    .fortune-inventory__list {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .fortune-inventory-item {
+      border-radius: 16px;
+      border: 1px solid rgba(243, 156, 18, 0.22);
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 14px 28px rgba(44, 26, 10, 0.14);
+      padding: 14px 16px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 14px;
+      align-items: center;
+      cursor: pointer;
+      text-align: left;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .fortune-inventory-item.is-selected {
+      transform: translateY(-2px);
+      border-color: rgba(192, 57, 43, 0.4);
+      box-shadow: 0 18px 36px rgba(192, 57, 43, 0.24);
+    }
+
+    .fortune-inventory-item:focus-visible {
+      outline: 3px solid rgba(192, 57, 43, 0.4);
+      outline-offset: 2px;
+    }
+
+    .fortune-inventory-item__icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      background: rgba(243, 156, 18, 0.16);
+      box-shadow: inset 0 0 0 2px rgba(243, 156, 18, 0.25);
+    }
+
+    .fortune-inventory-item__meta {
+      display: grid;
+      gap: 4px;
+    }
+
+    .fortune-inventory-item__title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--dw-primary-dark);
+    }
+
+    .fortune-inventory-item__subtitle {
+      margin: 0;
+      color: var(--dw-text-muted);
+      font-size: 0.9rem;
+    }
+
+    .fortune-inventory-item__expires {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--dw-primary-dark);
+      font-weight: 600;
+    }
+
+    .fortune-inventory__empty {
+      grid-column: 1 / -1;
+      padding: 18px 20px;
+      border-radius: 16px;
+      border: 1px dashed rgba(243, 156, 18, 0.35);
+      background: rgba(255, 255, 255, 0.85);
+      color: var(--dw-text-muted);
+      text-align: center;
+      font-size: 0.95rem;
+    }
+
+    .fortune-inventory-item[data-variant='uncommon'] .fortune-inventory-item__icon {
+      background: rgba(46, 204, 113, 0.2);
+      box-shadow: inset 0 0 0 2px rgba(46, 204, 113, 0.32);
+    }
+
+    .fortune-inventory-item[data-variant='rare'] .fortune-inventory-item__icon {
+      background: rgba(52, 152, 219, 0.24);
+      box-shadow: inset 0 0 0 2px rgba(52, 152, 219, 0.34);
+    }
+
+    .fortune-inventory-item[data-variant='legendary'] .fortune-inventory-item__icon {
+      background: rgba(155, 89, 182, 0.24);
+      box-shadow: inset 0 0 0 2px rgba(155, 89, 182, 0.34);
+    }
+
+    .fortune-inventory-item[data-variant='instant'] .fortune-inventory-item__icon {
+      background: rgba(241, 196, 15, 0.26);
+      box-shadow: inset 0 0 0 2px rgba(241, 196, 15, 0.36);
+    }
+
+    .fortune-inventory-item[data-variant='xp'] .fortune-inventory-item__icon {
+      background: rgba(142, 68, 173, 0.24);
+      box-shadow: inset 0 0 0 2px rgba(142, 68, 173, 0.32);
+    }
+
+    .fortune-detail__badge {
+      margin: 0;
+    }
+
+    .fortune-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border: 1px solid transparent;
+    }
+
+    .fortune-chip--common {
+      background: rgba(243, 156, 18, 0.16);
+      color: var(--dw-primary-dark);
+      border-color: rgba(243, 156, 18, 0.35);
+    }
+
+    .fortune-chip--uncommon {
+      background: rgba(46, 204, 113, 0.18);
+      color: #1d7a3d;
+      border-color: rgba(46, 204, 113, 0.32);
+    }
+
+    .fortune-chip--rare {
+      background: rgba(52, 152, 219, 0.18);
+      color: #1b6ca8;
+      border-color: rgba(52, 152, 219, 0.32);
+    }
+
+    .fortune-chip--legendary {
+      background: rgba(155, 89, 182, 0.2);
+      color: #5a2d82;
+      border-color: rgba(155, 89, 182, 0.32);
+    }
+
+    .fortune-chip--instant {
+      background: rgba(241, 196, 15, 0.2);
+      color: #7a5a0a;
+      border-color: rgba(241, 196, 15, 0.32);
+    }
+
+    .fortune-chip--xp {
+      background: rgba(142, 68, 173, 0.18);
+      color: #5b2c6f;
+      border-color: rgba(142, 68, 173, 0.32);
+    }
+
+    .fortune-board__sets {
+      display: grid;
+      gap: 18px;
+    }
+
+    .fortune-set {
+      border-radius: 18px;
+      border: 1px solid rgba(192, 57, 43, 0.18);
+      background: rgba(255, 255, 255, 0.92);
+      padding: 18px 20px 20px;
+      box-shadow: 0 22px 44px rgba(44, 26, 10, 0.16);
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .fortune-set.is-active {
+      border-color: rgba(243, 156, 18, 0.6);
+      box-shadow: 0 28px 52px rgba(243, 156, 18, 0.26);
+    }
+
+    .fortune-set.is-complete {
+      border-color: rgba(46, 204, 113, 0.5);
+      box-shadow: 0 28px 52px rgba(46, 204, 113, 0.28);
+    }
+
+    .fortune-set__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .fortune-set__title {
+      margin: 0;
+      font-size: 1.1rem;
+      color: var(--dw-primary-dark);
+    }
+
+    .fortune-set__subtitle {
+      margin: 6px 0 0;
+      color: var(--dw-text-muted);
+      font-size: 0.92rem;
+    }
+
+    .fortune-set__progress {
+      margin-bottom: 14px;
+    }
+
+    .fortune-set__progress-label {
+      margin: 0 0 8px;
+      font-weight: 600;
+      color: var(--dw-text-muted);
+      font-size: 0.9rem;
+    }
+
+    .fortune-set__progress-bar {
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(243, 156, 18, 0.16);
+      overflow: hidden;
+    }
+
+    .fortune-set__progress-bar span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, rgba(192, 57, 43, 0.85), rgba(243, 156, 18, 0.85));
+      transition: width 0.3s ease;
+    }
+
+    .fortune-set__pieces {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    }
+
+    .fortune-piece {
+      --piece-accent: rgba(243, 156, 18, 0.65);
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px dashed rgba(192, 57, 43, 0.22);
+      border-radius: 14px;
+      padding: 12px 10px;
+      display: grid;
+      place-items: center;
+      gap: 6px;
+      text-align: center;
+      color: var(--dw-text-muted);
+      font-weight: 600;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .fortune-piece__icon {
+      font-size: 1.4rem;
+    }
+
+    .fortune-piece__label {
+      font-size: 0.85rem;
+    }
+
+    .fortune-piece.is-collected {
+      background: linear-gradient(150deg, rgba(255, 255, 255, 0.98), rgba(255, 240, 219, 0.9));
+      border-style: solid;
+      border-color: var(--piece-accent);
+      color: var(--dw-primary-dark);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 16px 32px rgba(243, 156, 18, 0.25);
+    }
+
+    .fortune-piece.is-active {
+      transform: translateY(-3px);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px var(--piece-accent), 0 20px 44px rgba(243, 156, 18, 0.32);
+    }
+
     .eta-icon {
       width: 32px;
       height: 32px;
@@ -1063,6 +1621,76 @@
       .merch-cart-preview {
         height: 180px;
       }
+
+      .receipt-cta-group {
+        justify-content: flex-start;
+        width: 100%;
+      }
+
+      .fortune-pill {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .fortune-drawer__panel {
+        width: min(640px, 96vw);
+      }
+
+      .fortune-drawer__stats {
+        grid-auto-flow: row;
+      }
+
+      .fortune-drawer__content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 24px 24px 28px;
+      }
+
+      .fortune-drawer__right {
+        gap: 20px;
+      }
+
+      .fortune-inventory__list {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      }
+
+      .fortune-detail {
+        padding: 20px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .fortune-drawer__panel {
+        width: 100vw;
+        max-height: 100vh;
+        border-radius: 0;
+      }
+
+      .fortune-drawer__header {
+        flex-direction: column;
+        gap: 12px;
+        padding: 24px 20px 14px;
+      }
+
+      .fortune-drawer__stats {
+        width: 100%;
+      }
+
+      .fortune-drawer__content {
+        padding: 20px;
+      }
+
+      .fortune-inventory__list {
+        grid-template-columns: 1fr;
+      }
+
+      .fortune-inventory-item {
+        grid-template-columns: auto 1fr;
+      }
+
+      .fortune-detail__title {
+        font-size: 1.3rem;
+      }
     }
   </style>
 </head>
@@ -1080,6 +1708,79 @@
     <audio id="cookieAudio" src="audio/cookieOpen_Full.mp3" preload="auto"></audio>
   </div>
 
+  <div class="fortune-drawer" id="fortuneDrawer" aria-hidden="true" hidden>
+    <button
+      type="button"
+      class="fortune-drawer__backdrop"
+      id="fortuneDrawerBackdrop"
+      aria-label="Close fortune rewards panel"
+    ></button>
+    <section
+      class="fortune-drawer__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="fortuneDrawerTitle"
+      tabindex="-1"
+    >
+      <header class="fortune-drawer__header">
+        <div>
+          <p class="fortune-drawer__eyebrow">🥠 Fortune Cookie Rewards</p>
+          <h2 id="fortuneDrawerTitle">Your reward blueprint</h2>
+          <p class="fortune-drawer__description">
+            Track instant wins, collectible sets, and jackpot progress every time you crack a cookie.
+          </p>
+        </div>
+        <div class="fortune-drawer__stats">
+          <div class="fortune-stat">
+            <span class="fortune-stat__label">Reward points</span>
+            <span class="fortune-stat__value" id="fortunePointsValue">0</span>
+            <span class="fortune-stat__hint" id="fortunePointsHint"></span>
+          </div>
+          <div class="fortune-stat">
+            <span class="fortune-stat__label">Streak</span>
+            <span class="fortune-stat__value" id="fortuneStreakValue">0</span>
+            <span class="fortune-stat__hint" id="fortuneStreakHint"></span>
+          </div>
+          <div class="fortune-stat">
+            <span class="fortune-stat__label">Instant wins</span>
+            <span class="fortune-stat__value" id="fortuneInstantValue">0</span>
+            <span class="fortune-stat__hint" id="fortuneInstantHint"></span>
+          </div>
+        </div>
+        <button type="button" class="fortune-drawer__close" id="fortuneDrawerClose" aria-label="Close fortune rewards panel">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </header>
+      <div class="fortune-drawer__content">
+        <article class="fortune-detail" id="fortuneDetailCard">
+          <div class="fortune-detail__header">
+            <span class="fortune-detail__badge fortune-chip fortune-chip--common" id="fortuneDetailBadge">Collection piece</span>
+            <h3 class="fortune-detail__title" id="fortuneDetailTitle">Select a cookie to replay its reveal</h3>
+          </div>
+          <p class="fortune-detail__reward" id="fortuneDetailReward">Tap one of your cookies to see its reward outcome.</p>
+          <p class="fortune-detail__fortune" id="fortuneDetailFortune"></p>
+          <ul class="fortune-detail__notes" id="fortuneDetailNotes"></ul>
+        </article>
+        <div class="fortune-drawer__right">
+          <section class="fortune-inventory" aria-labelledby="fortuneInventoryTitle">
+            <header class="fortune-inventory__header">
+              <h3 id="fortuneInventoryTitle">Cookie inventory</h3>
+              <p id="fortuneInventorySubtitle">Your latest reveals live here. Choose one to highlight its set.</p>
+            </header>
+            <div class="fortune-inventory__list" id="fortuneInventoryList" role="list"></div>
+          </section>
+          <section class="fortune-board" aria-labelledby="fortuneBoardTitle">
+            <header class="fortune-board__header">
+              <h3 id="fortuneBoardTitle">Collection board</h3>
+              <p id="fortuneBoardSubtitle">Glow = collected. Outline = still waiting.</p>
+            </header>
+            <div class="fortune-board__sets" id="fortuneBoardSets"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <main>
     <div class="receipt-card" aria-labelledby="thankYouTitle">
       <div class="receipt-header">
@@ -1087,11 +1788,24 @@
           <img src="images/logos1.png" alt="Danny's Wok logo" class="receipt-logo" />
           <h1 id="thankYouTitle">Thank you for ordering from Danny's Wok!</h1>
         </div>
-        <span class="eta-badge" aria-live="polite">
-          <img src="images/wok_flip.gif" alt="Animated wok flipping" class="eta-icon" />
-          <span id="timerLabel">ETA</span>
-          <span id="etaTimer" class="timer" aria-label="Estimated time of arrival">18:00</span>
-        </span>
+        <div class="receipt-cta-group">
+          <span class="eta-badge" aria-live="polite">
+            <img src="images/wok_flip.gif" alt="Animated wok flipping" class="eta-icon" />
+            <span id="timerLabel">ETA</span>
+            <span id="etaTimer" class="timer" aria-label="Estimated time of arrival">18:00</span>
+          </span>
+            <button
+              type="button"
+              class="fortune-pill"
+              id="fortuneRewardsButton"
+              aria-controls="fortuneDrawer"
+              aria-expanded="false"
+              aria-haspopup="dialog"
+            >
+            <img src="images/cookie_Buy.png" alt="" aria-hidden="true" />
+            <span>Fortune rewards</span>
+          </button>
+        </div>
       </div>
 
       <div class="status-grid">
@@ -11524,6 +12238,756 @@ const quotes = [
   "Your wisdom will help a thoughtful friend offer their heart."
 ];
 
+  const fortuneRewardProfile = {
+    points: 2480,
+    nextTier: 3000,
+    streakDays: 4,
+    streakBonus: 'Keep the streak alive to unlock 2× odds this weekend.',
+    instantWins: 2,
+    lastInstantReward: 'Free Chili Wonton',
+    inventory: [
+      {
+        id: 'cookie-ember',
+        label: 'Golden Ember Feather',
+        type: 'collection',
+        rarity: 'common',
+        icon: '🔥',
+        setId: 'phoenix',
+        pieceId: 'phoenix-ember',
+        rewardOutcome: 'Golden Phoenix piece unlocked — 3 of 5 feathers glowing.',
+        fortune: 'A beautiful moment brings sweet union into view.',
+        callToAction: 'Collect the remaining Phoenix feathers to earn a free full meal.',
+        progressNote: 'Board progress: 3 of 5 Phoenix feathers illuminated.',
+        collectedAt: '2024-06-10T21:10:00Z',
+      },
+      {
+        id: 'cookie-wing',
+        label: 'Solar Wingtip',
+        type: 'collection',
+        rarity: 'common',
+        icon: '🔥',
+        setId: 'phoenix',
+        pieceId: 'phoenix-wing',
+        rewardOutcome: '+50 reward points bonus for Phoenix synergy.',
+        fortune: 'A blessed surprise will mirror your courage in a moment.',
+        callToAction: 'Trade duplicates or keep scanning to finish the Phoenix set.',
+        progressNote: 'Glow shows 3 of 5 Phoenix pieces.',
+        collectedAt: '2024-06-12T19:03:00Z',
+      },
+      {
+        id: 'cookie-crest',
+        label: 'Blazing Crest Sigil',
+        type: 'collection',
+        rarity: 'common',
+        icon: '🔥',
+        setId: 'phoenix',
+        pieceId: 'phoenix-crest',
+        rewardOutcome: 'Fire crest unlocked — you’re 2 feathers away from the full meal.',
+        fortune: 'A blessed path leads to unexpected text through your joy.',
+        callToAction: 'Weekend surge alert: Phoenix drops double on Saturdays.',
+        progressNote: 'Board auto-tracks your Phoenix feathers.',
+        collectedAt: '2024-06-13T11:44:00Z',
+      },
+      {
+        id: 'cookie-jade',
+        label: 'Jade Prism Shard',
+        type: 'collection',
+        rarity: 'uncommon',
+        icon: '💎',
+        setId: 'jade',
+        pieceId: 'jade-prism',
+        rewardOutcome: 'Lucky Jade shard secured! 1 of 5 gems locked in.',
+        fortune: 'A beautiful whisper reminds you tender exchange is approaching.',
+        callToAction: 'Collect 4 more Jade pieces to unlock a $10 food order credit.',
+        progressNote: 'Next Jade shard unlocks a 1.5× point boost.',
+        collectedAt: '2024-06-08T16:22:00Z',
+      },
+      {
+        id: 'cookie-moon',
+        label: 'Moonlit Petal',
+        type: 'collection',
+        rarity: 'rare',
+        icon: '🌙',
+        setId: 'moonlight',
+        pieceId: 'moonlight-petal',
+        rewardOutcome: 'Rare Moon Token! Collect all 5 for a $25 food credit.',
+        fortune: 'A blessed sparkling reunion opens when you share your purity.',
+        callToAction: 'Track Moonlight Lotus progress from the board — rare drops get a halo.',
+        progressNote: 'Your board glows violet for Moonlight pieces.',
+        collectedAt: '2024-06-14T08:37:00Z',
+        expiresAt: '2024-06-30T04:00:00Z',
+      },
+      {
+        id: 'cookie-instant',
+        label: 'Crispy Sesame Surprise',
+        type: 'instant',
+        rarity: 'instant',
+        icon: '⚡',
+        rewardOutcome: 'Instant Win! Free Chili Wonton on your next order.',
+        fortune: 'A blessed spark of secret message comes from your energy.',
+        callToAction: 'Redeem this perk at checkout before Sunday night.',
+        progressNote: 'Auto-added to Rewards wallet.',
+        collectedAt: '2024-06-09T15:11:00Z',
+        expiresAt: '2024-06-16T04:00:00Z',
+      },
+      {
+        id: 'cookie-xp',
+        label: 'Skill Streak Bonus',
+        type: 'points',
+        rarity: 'xp',
+        icon: '✨',
+        rewardOutcome: '+25 Fortune XP — streak extended to 4 days.',
+        fortune: 'A adventurous path leads to beautiful journey through your passion.',
+        callToAction: 'Complete tonight’s chopstick challenge for a +10 XP boost.',
+        progressNote: 'Keep the streak alive to trigger 2× odds weekend.',
+        collectedAt: '2024-06-13T23:59:00Z',
+      },
+    ],
+    sets: [
+      {
+        id: 'phoenix',
+        name: 'Golden Phoenix Set',
+        rarity: 'common',
+        prize: 'Free full meal',
+        theme: 'Fire, wings, rebirth',
+        accentColor: '#f39c12',
+        pieces: [
+          { id: 'phoenix-ember', label: 'Ember Feather', shortLabel: 'Ember', icon: '🔥' },
+          { id: 'phoenix-wing', label: 'Solar Wingtip', shortLabel: 'Wingtip', icon: '🔥' },
+          { id: 'phoenix-crest', label: 'Blazing Crest', shortLabel: 'Crest', icon: '🔥' },
+          { id: 'phoenix-tail', label: 'Tail Flame', shortLabel: 'Tail', icon: '🔥' },
+          { id: 'phoenix-heart', label: 'Heartfire Core', shortLabel: 'Core', icon: '🔥' },
+        ],
+      },
+      {
+        id: 'jade',
+        name: 'Lucky Jade Set',
+        rarity: 'uncommon',
+        prize: '$10 food order credit',
+        theme: 'Gems & prosperity',
+        accentColor: '#2ecc71',
+        pieces: [
+          { id: 'jade-prism', label: 'Prism Gem', shortLabel: 'Prism', icon: '💎' },
+          { id: 'jade-coin', label: 'Prosperity Coin', shortLabel: 'Coin', icon: '🪙' },
+          { id: 'jade-charm', label: 'Jade Charm', shortLabel: 'Charm', icon: '📿' },
+          { id: 'jade-dragon', label: 'Guardian Dragon', shortLabel: 'Dragon', icon: '🐉' },
+          { id: 'jade-lantern', label: 'Lucky Lantern', shortLabel: 'Lantern', icon: '🏮' },
+        ],
+      },
+      {
+        id: 'moonlight',
+        name: 'Moonlight Lotus Set',
+        rarity: 'rare',
+        prize: '$25 food credit or bonus perk',
+        theme: 'Celestial petals',
+        accentColor: '#9b59b6',
+        pieces: [
+          { id: 'moonlight-petal', label: 'Moonlit Petal', shortLabel: 'Petal', icon: '🌙' },
+          { id: 'moonlight-glisten', label: 'Glistening Dew', shortLabel: 'Dew', icon: '💧' },
+          { id: 'moonlight-orbit', label: 'Orbit Shard', shortLabel: 'Orbit', icon: '🪐' },
+          { id: 'moonlight-lantern', label: 'Starlit Lantern', shortLabel: 'Lantern', icon: '🏮' },
+          { id: 'moonlight-core', label: 'Lunar Core', shortLabel: 'Core', icon: '✨' },
+        ],
+      },
+      {
+        id: 'dragon',
+        name: 'Eternal Dragon Set',
+        rarity: 'legendary',
+        prize: '$100 cash or $50 food credit',
+        theme: 'Dragon scales & legend',
+        accentColor: '#d35400',
+        pieces: [
+          { id: 'dragon-scale', label: 'Crimson Scale', shortLabel: 'Scale', icon: '🐲' },
+          { id: 'dragon-whisker', label: 'Dragon Whisker', shortLabel: 'Whisker', icon: '🪄' },
+          { id: 'dragon-claw', label: 'Skyfire Claw', shortLabel: 'Claw', icon: '🔥' },
+          { id: 'dragon-heart', label: 'Eternal Heart', shortLabel: 'Heart', icon: '💖' },
+          { id: 'dragon-orb', label: 'Mythic Orb', shortLabel: 'Orb', icon: '🧿' },
+        ],
+      },
+    ],
+  };
+
+  const fortuneRarityLabels = {
+    common: 'Common',
+    uncommon: 'Uncommon',
+    rare: 'Rare',
+    legendary: 'Legendary',
+  };
+
+  const fortuneNumberFormatter = new Intl.NumberFormat('en-US');
+  const fortuneListDateFormatter = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
+  const fortuneDetailDateFormatter = new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  function formatFortuneNumber(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+      return '0';
+    }
+    return fortuneNumberFormatter.format(Math.max(0, Math.round(numeric)));
+  }
+
+  function getFortuneBadgeClassSuffix(item) {
+    if (!item) {
+      return 'common';
+    }
+    if (item.type === 'instant' || item.rarity === 'instant') {
+      return 'instant';
+    }
+    if (item.type === 'points' || item.rarity === 'xp') {
+      return 'xp';
+    }
+    if (item.rarity && fortuneRarityLabels[item.rarity]) {
+      return item.rarity;
+    }
+    return item.type === 'points' ? 'xp' : 'common';
+  }
+
+  function getFortuneBadgeLabel(item) {
+    if (!item) {
+      return 'Collection piece';
+    }
+    if (item.type === 'instant' || item.rarity === 'instant') {
+      return 'Instant win';
+    }
+    if (item.type === 'points' || item.rarity === 'xp') {
+      return 'XP boost';
+    }
+    if (item.type === 'collection') {
+      const rarity = item.rarity && fortuneRarityLabels[item.rarity] ? fortuneRarityLabels[item.rarity] : 'Collection';
+      return `${rarity} piece`;
+    }
+    return fortuneRarityLabels[item.rarity] ? `${fortuneRarityLabels[item.rarity]} piece` : 'Fortune';
+  }
+
+  function formatFortuneListTimestamp(value) {
+    if (!value) {
+      return '';
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    return `Unlocked ${fortuneListDateFormatter.format(date)}`;
+  }
+
+  function formatFortuneUnlock(value) {
+    if (!value) {
+      return '';
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    return `Unlocked ${fortuneDetailDateFormatter.format(date)}`;
+  }
+
+  function formatFortuneExpiration(value) {
+    if (!value) {
+      return '';
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    const now = new Date();
+    const diffMs = date.getTime() - now.getTime();
+    const dayMs = 24 * 60 * 60 * 1000;
+    const formatted = date.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    if (diffMs <= 0) {
+      return `Redeem by ${formatted}`;
+    }
+    const dayDiff = Math.floor(diffMs / dayMs);
+    if (dayDiff <= 0) {
+      return `Expires today (${formatted})`;
+    }
+    if (dayDiff === 1) {
+      return `Expires tomorrow (${formatted})`;
+    }
+    return `Expires in ${dayDiff} days (${formatted})`;
+  }
+
+  function initFortuneRewards() {
+    const toggleButton = document.getElementById('fortuneRewardsButton');
+    const drawer = document.getElementById('fortuneDrawer');
+    const drawerPanel = drawer?.querySelector('.fortune-drawer__panel');
+    const closeButton = document.getElementById('fortuneDrawerClose');
+    const backdrop = document.getElementById('fortuneDrawerBackdrop');
+    const inventoryList = document.getElementById('fortuneInventoryList');
+    const boardSets = document.getElementById('fortuneBoardSets');
+    const detailTitle = document.getElementById('fortuneDetailTitle');
+    const detailReward = document.getElementById('fortuneDetailReward');
+    const detailFortune = document.getElementById('fortuneDetailFortune');
+    const detailNotes = document.getElementById('fortuneDetailNotes');
+    const detailBadge = document.getElementById('fortuneDetailBadge');
+    const pointsValue = document.getElementById('fortunePointsValue');
+    const pointsHint = document.getElementById('fortunePointsHint');
+    const streakValue = document.getElementById('fortuneStreakValue');
+    const streakHint = document.getElementById('fortuneStreakHint');
+    const instantValue = document.getElementById('fortuneInstantValue');
+    const instantHint = document.getElementById('fortuneInstantHint');
+
+    if (
+      !toggleButton ||
+      !drawer ||
+      !drawerPanel ||
+      !closeButton ||
+      !inventoryList ||
+      !boardSets ||
+      !detailTitle ||
+      !detailReward ||
+      !detailFortune ||
+      !detailNotes ||
+      !detailBadge
+    ) {
+      return;
+    }
+
+    const profile = fortuneRewardProfile || {};
+    const inventory = Array.isArray(profile.inventory) ? profile.inventory.slice() : [];
+    const sets = Array.isArray(profile.sets) ? profile.sets.slice() : [];
+    const reduceMotionQuery =
+      typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+        ? window.matchMedia('(prefers-reduced-motion: reduce)')
+        : null;
+    let reduceMotion = reduceMotionQuery ? reduceMotionQuery.matches : false;
+    const handleReduceMotionChange = (event) => {
+      reduceMotion = !!(event && event.matches);
+    };
+
+    if (reduceMotionQuery) {
+      if (typeof reduceMotionQuery.addEventListener === 'function') {
+        reduceMotionQuery.addEventListener('change', handleReduceMotionChange);
+      } else if (typeof reduceMotionQuery.addListener === 'function') {
+        reduceMotionQuery.addListener(handleReduceMotionChange);
+      }
+    }
+
+    let activeCookieId = inventory[0]?.id || null;
+    let lastFocusedElement = null;
+    let trapHandler = null;
+
+    function renderStats() {
+      const points = Number(profile.points) || 0;
+      if (pointsValue) {
+        pointsValue.textContent = formatFortuneNumber(points);
+      }
+      if (pointsHint) {
+        const nextTier = Number(profile.nextTier);
+        if (Number.isFinite(nextTier) && nextTier > points) {
+          const remaining = nextTier - points;
+          pointsHint.textContent = `${formatFortuneNumber(remaining)} pts to next Mega Meal boost`;
+        } else if (Number.isFinite(nextTier) && nextTier > 0) {
+          pointsHint.textContent = 'Next boost unlocked!';
+        } else {
+          pointsHint.textContent = 'Scan receipts to earn more reward points.';
+        }
+      }
+      if (streakValue) {
+        const streak = Number(profile.streakDays) || 0;
+        streakValue.textContent = `${streak}-day streak`;
+      }
+      if (streakHint) {
+        streakHint.textContent = profile.streakBonus || 'Start a streak to unlock 2× odds weekends.';
+      }
+      if (instantValue) {
+        const wins = Number(profile.instantWins) || 0;
+        instantValue.textContent = `${wins} ${wins === 1 ? 'win' : 'wins'}`;
+      }
+      if (instantHint) {
+        instantHint.textContent = profile.lastInstantReward
+          ? `Last win: ${profile.lastInstantReward}`
+          : 'Instant win odds currently 1 in 5.';
+      }
+    }
+
+    function renderInventory() {
+      inventoryList.innerHTML = '';
+      if (!inventory.length) {
+        const empty = document.createElement('p');
+        empty.className = 'fortune-inventory__empty';
+        empty.textContent = 'No cookies yet. Crack a fortune to start your collection.';
+        inventoryList.appendChild(empty);
+        return;
+      }
+
+      inventory.forEach((item) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'fortune-inventory-item';
+        button.dataset.cookieId = item.id || '';
+        const variant = getFortuneBadgeClassSuffix(item);
+        button.dataset.variant = variant;
+        button.setAttribute('aria-pressed', item.id === activeCookieId ? 'true' : 'false');
+        button.setAttribute('role', 'listitem');
+        if (item.id === activeCookieId) {
+          button.classList.add('is-selected');
+        }
+
+        const icon = document.createElement('span');
+        icon.className = 'fortune-inventory-item__icon';
+        icon.textContent = item.icon || '🥠';
+
+        const meta = document.createElement('div');
+        meta.className = 'fortune-inventory-item__meta';
+
+        const badge = document.createElement('span');
+        badge.className = `fortune-chip fortune-chip--${variant}`;
+        badge.textContent = getFortuneBadgeLabel(item);
+
+        const title = document.createElement('p');
+        title.className = 'fortune-inventory-item__title';
+        title.textContent = item.label || 'Fortune cookie reward';
+
+        const subtitle = document.createElement('p');
+        subtitle.className = 'fortune-inventory-item__subtitle';
+        subtitle.textContent = item.rewardOutcome || 'Keep collecting fortunes for surprises.';
+
+        meta.append(badge, title, subtitle);
+
+        const unlocked = formatFortuneListTimestamp(item.collectedAt);
+        if (unlocked) {
+          const unlockedEl = document.createElement('p');
+          unlockedEl.className = 'fortune-inventory-item__subtitle';
+          unlockedEl.textContent = unlocked;
+          meta.appendChild(unlockedEl);
+        }
+
+        if (item.expiresAt) {
+          const expires = formatFortuneExpiration(item.expiresAt);
+          if (expires) {
+            const expiresEl = document.createElement('p');
+            expiresEl.className = 'fortune-inventory-item__expires';
+            expiresEl.textContent = expires;
+            meta.appendChild(expiresEl);
+          }
+        }
+
+        button.append(icon, meta);
+
+        button.addEventListener('click', () => {
+          handleSelectCookie(item.id);
+        });
+
+        inventoryList.appendChild(button);
+      });
+    }
+
+    function renderBoard() {
+      boardSets.innerHTML = '';
+      if (!sets.length) {
+        return;
+      }
+
+      const collectedPieceIds = new Set(
+        inventory
+          .filter((item) => item && item.type === 'collection' && item.pieceId)
+          .map((item) => item.pieceId)
+      );
+      const activeCookie = inventory.find((item) => item.id === activeCookieId) || null;
+      const activePieceId = activeCookie?.pieceId || null;
+      const activeSetId = activeCookie?.setId || null;
+
+      sets.forEach((set) => {
+        const card = document.createElement('article');
+        card.className = 'fortune-set';
+        card.dataset.setId = set.id || '';
+        if (set.accentColor) {
+          card.style.setProperty('--piece-accent', set.accentColor);
+        }
+
+        const header = document.createElement('div');
+        header.className = 'fortune-set__header';
+
+        const titleWrap = document.createElement('div');
+        const title = document.createElement('h4');
+        title.className = 'fortune-set__title';
+        title.textContent = set.name || 'Collection set';
+        titleWrap.appendChild(title);
+
+        if (set.theme || set.prize) {
+          const subtitle = document.createElement('p');
+          subtitle.className = 'fortune-set__subtitle';
+          if (set.theme && set.prize) {
+            subtitle.textContent = `${set.theme} · Prize: ${set.prize}`;
+          } else if (set.theme) {
+            subtitle.textContent = set.theme;
+          } else {
+            subtitle.textContent = `Prize: ${set.prize}`;
+          }
+          titleWrap.appendChild(subtitle);
+        }
+
+        header.appendChild(titleWrap);
+
+        const raritySuffix = getFortuneBadgeClassSuffix({ type: 'collection', rarity: set.rarity });
+        const chip = document.createElement('span');
+        chip.className = `fortune-chip fortune-chip--${raritySuffix}`;
+        chip.textContent = fortuneRarityLabels[set.rarity] ? `${fortuneRarityLabels[set.rarity]} set` : 'Collection set';
+        header.appendChild(chip);
+
+        card.appendChild(header);
+
+        const totalPieces = Array.isArray(set.pieces) ? set.pieces.length : 0;
+        const collectedCount = Array.isArray(set.pieces)
+          ? set.pieces.reduce((count, piece) => (collectedPieceIds.has(piece.id) ? count + 1 : count), 0)
+          : 0;
+
+        if (totalPieces && collectedCount >= totalPieces) {
+          card.classList.add('is-complete');
+        }
+        if (set.id && set.id === activeSetId) {
+          card.classList.add('is-active');
+        }
+
+        const progress = document.createElement('div');
+        progress.className = 'fortune-set__progress';
+
+        const progressLabel = document.createElement('p');
+        progressLabel.className = 'fortune-set__progress-label';
+        if (totalPieces) {
+          const piecesLabel = `${collectedCount} of ${totalPieces} collected`;
+          progressLabel.textContent = set.prize ? `${piecesLabel} · ${set.prize}` : piecesLabel;
+        } else if (set.prize) {
+          progressLabel.textContent = set.prize;
+        } else {
+          progressLabel.textContent = 'Set progress';
+        }
+
+        const progressBar = document.createElement('div');
+        progressBar.className = 'fortune-set__progress-bar';
+        const progressFill = document.createElement('span');
+        const progressWidth = totalPieces ? Math.min(100, Math.max(0, (collectedCount / totalPieces) * 100)) : 0;
+        progressFill.style.width = `${progressWidth}%`;
+        progressBar.appendChild(progressFill);
+
+        progress.append(progressLabel, progressBar);
+        card.appendChild(progress);
+
+        const piecesGrid = document.createElement('div');
+        piecesGrid.className = 'fortune-set__pieces';
+
+        if (Array.isArray(set.pieces) && set.pieces.length) {
+          set.pieces.forEach((piece) => {
+            const pieceElement = document.createElement('div');
+            pieceElement.className = 'fortune-piece';
+            if (set.accentColor) {
+              pieceElement.style.setProperty('--piece-accent', set.accentColor);
+            }
+            const collected = collectedPieceIds.has(piece.id);
+            if (collected) {
+              pieceElement.classList.add('is-collected');
+            }
+            if (piece.id && piece.id === activePieceId) {
+              pieceElement.classList.add('is-active');
+            }
+            pieceElement.dataset.pieceId = piece.id || '';
+            const icon = document.createElement('span');
+            icon.className = 'fortune-piece__icon';
+            icon.textContent = piece.icon || '🥠';
+            const label = document.createElement('span');
+            label.className = 'fortune-piece__label';
+            label.textContent = piece.shortLabel || piece.label || 'Piece';
+            pieceElement.setAttribute(
+              'aria-label',
+              `${piece.label || piece.shortLabel || 'Collection piece'}${collected ? ' collected' : ' not collected yet'}`
+            );
+            pieceElement.append(icon, label);
+            piecesGrid.appendChild(pieceElement);
+          });
+        } else {
+          const placeholder = document.createElement('p');
+          placeholder.className = 'fortune-inventory-item__subtitle';
+          placeholder.textContent = 'Pieces coming soon.';
+          piecesGrid.appendChild(placeholder);
+        }
+
+        card.appendChild(piecesGrid);
+        boardSets.appendChild(card);
+      });
+    }
+
+    function updateDetail() {
+      const activeCookie = inventory.find((item) => item.id === activeCookieId) || null;
+      if (!activeCookie) {
+        detailTitle.textContent = 'Select a cookie to replay its reveal';
+        detailReward.textContent = 'Tap one of your cookies to see its reward outcome.';
+        detailFortune.textContent = '';
+        detailBadge.className = 'fortune-detail__badge fortune-chip fortune-chip--common';
+        detailBadge.textContent = 'Collection piece';
+        detailNotes.innerHTML = '';
+        return;
+      }
+
+      detailTitle.textContent = activeCookie.label || 'Fortune cookie reward';
+      detailReward.textContent = activeCookie.rewardOutcome || 'Keep collecting fortunes for surprises.';
+      detailFortune.textContent = activeCookie.fortune ? `“${activeCookie.fortune}”` : '';
+      const badgeSuffix = getFortuneBadgeClassSuffix(activeCookie);
+      detailBadge.className = `fortune-detail__badge fortune-chip fortune-chip--${badgeSuffix}`;
+      detailBadge.textContent = getFortuneBadgeLabel(activeCookie);
+
+      detailNotes.innerHTML = '';
+      const notes = [];
+      if (activeCookie.progressNote) {
+        notes.push(activeCookie.progressNote);
+      }
+      if (activeCookie.callToAction) {
+        notes.push(activeCookie.callToAction);
+      }
+      if (activeCookie.expiresAt) {
+        const expires = formatFortuneExpiration(activeCookie.expiresAt);
+        if (expires) {
+          notes.push(expires);
+        }
+      }
+      if (activeCookie.collectedAt) {
+        const unlocked = formatFortuneUnlock(activeCookie.collectedAt);
+        if (unlocked) {
+          notes.push(unlocked);
+        }
+      }
+
+      if (!notes.length) {
+        const fallback = document.createElement('li');
+        fallback.textContent = 'Keep scanning slips to uncover more pieces and prizes.';
+        detailNotes.appendChild(fallback);
+      } else {
+        notes.forEach((note) => {
+          if (!note) {
+            return;
+          }
+          const item = document.createElement('li');
+          item.textContent = note;
+          detailNotes.appendChild(item);
+        });
+      }
+    }
+
+    function renderAll() {
+      renderStats();
+      renderInventory();
+      renderBoard();
+      updateDetail();
+    }
+
+    function openDrawer() {
+      if (drawer.hidden) {
+        drawer.hidden = false;
+      }
+      if (reduceMotion) {
+        drawer.classList.add('is-open');
+      } else {
+        requestAnimationFrame(() => {
+          drawer.classList.add('is-open');
+        });
+      }
+      drawer.setAttribute('aria-hidden', 'false');
+      toggleButton.setAttribute('aria-expanded', 'true');
+      document.body.classList.add('fortune-drawer-open');
+      lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      renderAll();
+      if (drawerPanel) {
+        try {
+          drawerPanel.focus({ preventScroll: true });
+        } catch (error) {
+          drawerPanel.focus();
+        }
+      }
+      if (!trapHandler) {
+        trapHandler = (event) => {
+          if (event.key !== 'Tab') {
+            return;
+          }
+          const focusable = drawerPanel.querySelectorAll(
+            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          );
+          if (!focusable.length) {
+            return;
+          }
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (event.shiftKey) {
+            if (document.activeElement === first) {
+              event.preventDefault();
+              last.focus();
+            }
+          } else if (document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        };
+        drawerPanel.addEventListener('keydown', trapHandler);
+      }
+    }
+
+    function closeDrawer() {
+      drawer.classList.remove('is-open');
+      drawer.setAttribute('aria-hidden', 'true');
+      toggleButton.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('fortune-drawer-open');
+      const hideDelay = reduceMotion ? 0 : 350;
+      if (hideDelay === 0) {
+        drawer.hidden = true;
+      } else {
+        setTimeout(() => {
+          drawer.hidden = true;
+        }, hideDelay);
+      }
+      if (trapHandler) {
+        drawerPanel.removeEventListener('keydown', trapHandler);
+        trapHandler = null;
+      }
+      if (lastFocusedElement && document.contains(lastFocusedElement)) {
+        try {
+          lastFocusedElement.focus({ preventScroll: true });
+        } catch (error) {
+          lastFocusedElement.focus();
+        }
+      }
+    }
+
+    function handleSelectCookie(cookieId) {
+      if (!cookieId) {
+        return;
+      }
+      if (cookieId === activeCookieId) {
+        updateDetail();
+        return;
+      }
+      activeCookieId = cookieId;
+      renderInventory();
+      renderBoard();
+      updateDetail();
+    }
+
+    toggleButton.addEventListener('click', () => {
+      if (drawer.classList.contains('is-open')) {
+        closeDrawer();
+      } else {
+        openDrawer();
+      }
+    });
+
+    closeButton.addEventListener('click', closeDrawer);
+
+    if (backdrop) {
+      backdrop.addEventListener('click', closeDrawer);
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && drawer.classList.contains('is-open')) {
+        event.preventDefault();
+        closeDrawer();
+      }
+    });
+
+    renderAll();
+  }
+
 
     const HOODIE_PRICE_MAP = {
       XS: 33,
@@ -12286,6 +13750,7 @@ const quotes = [
       }
 
       setupTimer();
+      initFortuneRewards();
 
       const merchCart = document.getElementById('merchCart');
       const closeMerchCartButton = document.getElementById('closeMerchCart');
