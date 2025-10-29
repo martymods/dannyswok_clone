@@ -851,20 +851,70 @@
       });
   }
 
+  const defaultStoreRecords = [
+    {
+      id: 'southwest',
+      label: 'Southwest',
+      address: '5750 BALTIMORE AVE, PHILADELPHIA PA 19143',
+      shortAddress: '5750 BALTIMORE AVE',
+      phone: '215-471-9020',
+      latitude: 39.94346,
+      longitude: -75.23863,
+    },
+    {
+      id: 'olney',
+      label: 'One & Olney Plaza',
+      address: '5675 N Front St Unit 280, PHILADELPHIA, PA, 19120',
+      shortAddress: '5675 N FRONT',
+      phone: '215-276-8885',
+      latitude: 40.039947,
+      longitude: -75.122995,
+    },
+    {
+      id: 'hunting-park',
+      label: 'Hunting Park',
+      address: '4322 North Broad Street, Philadelphia, PA 19140',
+      shortAddress: '4322 NORTH BROAD STREET',
+      phone: '267-331-6699',
+      latitude: 40.016985,
+      longitude: -75.145408,
+    },
+  ];
+
+  function normalizeStoreRecords(stores) {
+    if (!Array.isArray(stores)) {
+      return [];
+    }
+    return stores.map((store) => ({
+      id: store.id,
+      label: store.label || store.shortAddress || 'Store',
+      address: store.address || store.shortAddress || '',
+      phone: store.phone || '',
+      latitude: Number(store.latitude),
+      longitude: Number(store.longitude),
+    }));
+  }
+
   async function fetchStoreData() {
-    const data = await fetchJson('/api/admin/stores', { cache: 'no-store' })
-      .catch(() => fetchJson('/api/menu/stores', { cache: 'no-store' }))
-      .catch(() => ({ stores: [] }));
-    return Array.isArray(data.stores)
-      ? data.stores.map((store) => ({
-          id: store.id,
-          label: store.label || store.shortAddress || 'Store',
-          address: store.address || store.shortAddress || '',
-          phone: store.phone || '',
-          latitude: Number(store.latitude),
-          longitude: Number(store.longitude),
-        }))
-      : [];
+    const storeSources = [
+      { url: '/api/admin/stores', label: 'api' },
+      { url: '/api/menu/stores', label: 'api' },
+      { url: 'data/stores.json', label: 'local' },
+    ];
+
+    for (const source of storeSources) {
+      try {
+        const data = await fetchJson(source.url, { cache: 'no-store' });
+        const stores = normalizeStoreRecords(data?.stores);
+        if (stores.length) {
+          return { stores, source: source.label };
+        }
+      } catch (error) {
+        // Try the next source.
+      }
+    }
+
+    return { stores: normalizeStoreRecords(defaultStoreRecords), source: 'fallback' };
   }
 
   function renderStoreList(stores) {
@@ -967,7 +1017,7 @@
       return;
     }
     try {
-      const stores = await fetchStoreData();
+      const { stores, source } = await fetchStoreData();
       if (!stores.length) {
         setStatus(storeStatus, 'No stores configured', 'error');
         return;
@@ -1002,7 +1052,14 @@
       if (bounds.isValid()) {
         leafletMap.fitBounds(bounds.pad(0.25));
       }
-      setStatus(storeStatus, `Loaded ${stores.length} stores`, 'success');
+      const statusNote =
+        source === 'local'
+          ? 'Loaded from local data. Connect to the admin API to sync live locations.'
+          : source === 'fallback'
+          ? 'Loaded from fallback data. Connect to the admin API to sync live locations.'
+          : '';
+      const message = [`Loaded ${stores.length} stores`, statusNote].filter(Boolean).join(' — ');
+      setStatus(storeStatus, message, 'success');
     } catch (error) {
       setStatus(storeStatus, error.message || 'Unable to load stores', 'error');
     }
