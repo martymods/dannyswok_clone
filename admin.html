@@ -131,6 +131,13 @@
                   <span class="menu-title">Store availability</span>
                 </a>
               </li>
+              <li class="menu-header"><span>REWARDS</span></li>
+              <li class="menu-item">
+                <a href="#rewards-admin" data-panel-target="rewards-admin">
+                  <span class="menu-icon"><i class="ri-treasure-map-line"></i></span>
+                  <span class="menu-title">Fortune rewards</span>
+                </a>
+              </li>
               <li class="menu-header"><span>FINANCIALS</span></li>
               <li class="menu-item">
                 <a href="#financial-transactions" data-panel-target="financial-transactions">
@@ -785,6 +792,153 @@
               </tbody>
             </table>
           </article>
+        </section>
+
+        <section id="rewards-admin" class="panel-section" data-panel>
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Rewards</p>
+              <h1>Fortune rewards control</h1>
+            </div>
+            <div class="section-meta">
+              <span class="meta-chip">Tune odds &amp; prize budgets</span>
+            </div>
+          </header>
+          <div class="rewards-grid">
+            <article class="dashboard-card rewards-card">
+              <header>
+                <h2>Prize budget allocation</h2>
+                <span class="muted">Allocate 2–5% of promo revenue.</span>
+              </header>
+              <form class="rewards-form" id="rewardsBudgetForm">
+                <label class="rewards-field" for="rewardsBudgetRange">
+                  <span class="rewards-field__label">Budget share</span>
+                  <input type="range" min="2" max="5" step="0.25" value="3.5" id="rewardsBudgetRange" />
+                  <div class="rewards-range-values">
+                    <span>2%</span>
+                    <span>5%</span>
+                  </div>
+                </label>
+                <div class="rewards-budget-summary">
+                  <p>
+                    <strong id="rewardsBudgetValue">3.5%</strong> of promo revenue →
+                    <span id="rewardsBudgetDollars">$1,750</span> monthly pool.
+                  </p>
+                  <p class="muted">Matches the McDonald's promo ratio (2–5%).</p>
+                </div>
+                <div class="rewards-actions">
+                  <button type="button" class="admin-button admin-button--primary" id="saveRewardsBudget">Save budget</button>
+                  <button type="button" class="admin-button admin-button--secondary" id="resetRewardsBudget">Reset</button>
+                </div>
+                <p class="admin-status" id="rewardsBudgetStatus" aria-live="polite"></p>
+              </form>
+            </article>
+
+            <article class="dashboard-card rewards-card">
+              <header>
+                <h2>Drop rate targets</h2>
+                <span class="muted">Control instant wins, collections, and jackpots.</span>
+              </header>
+              <form class="rewards-form" id="rewardsOddsForm">
+                <div class="rewards-field">
+                  <label for="instantWinOdds" class="rewards-field__label">Instant win odds</label>
+                  <select id="instantWinOdds">
+                    <option value="1:4">1 in 4 (aggressive)</option>
+                    <option value="1:5" selected>1 in 5 (recommended)</option>
+                    <option value="1:6">1 in 6 (budget-friendly)</option>
+                  </select>
+                </div>
+                <div class="rewards-field">
+                  <label for="collectionCommonOdds" class="rewards-field__label">Common set piece odds</label>
+                  <select id="collectionCommonOdds">
+                    <option value="1:20">1 in 20</option>
+                    <option value="1:25" selected>1 in 25</option>
+                    <option value="1:30">1 in 30</option>
+                  </select>
+                </div>
+                <div class="rewards-field">
+                  <label for="collectionRareOdds" class="rewards-field__label">Rare set piece odds</label>
+                  <select id="collectionRareOdds">
+                    <option value="1:150">1 in 150</option>
+                    <option value="1:200" selected>1 in 200</option>
+                    <option value="1:250">1 in 250</option>
+                  </select>
+                </div>
+                <div class="rewards-field">
+                  <label for="collectionLegendaryOdds" class="rewards-field__label">Legendary drop odds</label>
+                  <select id="collectionLegendaryOdds">
+                    <option value="1:800">1 in 800</option>
+                    <option value="1:1000" selected>1 in 1000</option>
+                    <option value="1:1200">1 in 1200</option>
+                  </select>
+                </div>
+                <div class="rewards-odds-summary" id="rewardsOddsSummary"></div>
+                <div class="rewards-actions">
+                  <button type="button" class="admin-button admin-button--primary" id="saveRewardsOdds">Update odds</button>
+                </div>
+                <p class="admin-status" id="rewardsOddsStatus" aria-live="polite"></p>
+              </form>
+            </article>
+
+            <article class="dashboard-card rewards-card rewards-card--wide">
+              <header>
+                <h2>Engagement programs</h2>
+                <span class="muted">Automate streak boosts, flash events, and social proof.</span>
+              </header>
+              <form class="rewards-form" id="rewardsAutomationForm">
+                <div class="rewards-fieldset">
+                  <label class="rewards-toggle">
+                    <input type="checkbox" id="rewardsDynamicProbability" checked />
+                    <span>
+                      <strong>Dynamic probability tuning</strong>
+                      <span class="rewards-toggle__hint">Streak-aware odds that stay within ethical guardrails.</span>
+                    </span>
+                  </label>
+                  <label class="rewards-toggle">
+                    <input type="checkbox" id="rewardsExpiringPieces" checked />
+                    <span>
+                      <strong>Expiring pieces</strong>
+                      <span class="rewards-toggle__hint">Add Sunday deadlines to drive weekend visits.</span>
+                    </span>
+                  </label>
+                  <label class="rewards-toggle">
+                    <input type="checkbox" id="rewardsFlashEvents" checked />
+                    <span>
+                      <strong>Flash mini-events</strong>
+                      <span class="rewards-toggle__hint">Schedule 24-hour double odds boosts.</span>
+                    </span>
+                  </label>
+                  <label class="rewards-toggle">
+                    <input type="checkbox" id="rewardsSkillChallenges" checked />
+                    <span>
+                      <strong>Skill challenges</strong>
+                      <span class="rewards-toggle__hint">Unlock bonus XP for mini skill games.</span>
+                    </span>
+                  </label>
+                  <label class="rewards-toggle">
+                    <input type="checkbox" id="rewardsWinSharing" checked />
+                    <span>
+                      <strong>Win-sharing social cards</strong>
+                      <span class="rewards-toggle__hint">Auto-generate “I found the Golden Phoenix piece!” posts.</span>
+                    </span>
+                  </label>
+                  <label class="rewards-toggle">
+                    <input type="checkbox" id="rewardsRewardPoints" checked />
+                    <span>
+                      <strong>Reward points crossover</strong>
+                      <span class="rewards-toggle__hint">Sync wins directly into the Rewards wallet.</span>
+                    </span>
+                  </label>
+                </div>
+                <div class="rewards-automation-summary" id="rewardsAutomationSummary"></div>
+                <div class="rewards-automation-bulletin" id="rewardsAutomationBulletin"></div>
+                <div class="rewards-actions">
+                  <button type="button" class="admin-button admin-button--primary" id="saveRewardsAutomation">Save automations</button>
+                </div>
+                <p class="admin-status" id="rewardsAutomationStatus" aria-live="polite"></p>
+              </form>
+            </article>
+          </div>
         </section>
 
         <section id="financial-transactions" class="panel-section" data-panel>
