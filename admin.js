@@ -510,6 +510,33 @@
     element.dataset.status = variant;
   }
 
+  function resolveFetchUrl(url) {
+    if (typeof url !== 'string') {
+      return url;
+    }
+
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        return url;
+      }
+    } catch (error) {
+      // Ignore errors from invalid URLs so we can resolve relative paths below.
+    }
+
+    const backendOrigin =
+      window.DELCO_BACKEND_BASE ||
+      window.DANNYS_WOK_BACKEND_BASE ||
+      window.DANNYSWOK_BACKEND_BASE ||
+      window.location.origin;
+
+    try {
+      return new URL(url, backendOrigin).toString();
+    } catch (error) {
+      return url;
+    }
+  }
+
   async function fetchJson(url, options = {}) {
     const resolvedUrl = resolveFetchUrl(url);
     try {
