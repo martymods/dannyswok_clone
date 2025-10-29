@@ -135,6 +135,15 @@ let storeDataPromise = null;
 let pickupScheduleLockActive = false;
 let pickupScheduleIntervalId = null;
 
+function buildApiUrl(path) {
+  const trimmedBase = typeof API_BASE === 'string' ? API_BASE.replace(/\/+$/, '') : '';
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  if (trimmedBase) {
+    return `${trimmedBase}${normalizedPath}`;
+  }
+  return normalizedPath;
+}
+
 function getStoreById(storeId) {
   if (!storeId) {
     return null;
@@ -149,7 +158,7 @@ function getStoreList() {
 
 async function fetchStoreDataFromApi() {
   try {
-    const response = await fetch('/api/menu/stores', { cache: 'no-store' });
+    const response = await fetch(buildApiUrl('/api/menu/stores'), { cache: 'no-store' });
     if (response.ok) {
       const data = await response.json();
       if (data && Array.isArray(data.stores) && data.stores.length) {
@@ -1731,7 +1740,7 @@ async function fetchMenuDataFromApi() {
     setMenuDataFromSource(DEFAULT_MENU_DATA);
   }
   try {
-    const response = await fetch('/api/menu/overrides', { cache: 'no-store' });
+    const response = await fetch(buildApiUrl('/api/menu/overrides'), { cache: 'no-store' });
     if (response.ok) {
       const overrides = await response.json();
       setMenuOverridesFromData(overrides);
