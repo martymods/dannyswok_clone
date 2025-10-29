@@ -8,6 +8,7 @@ const createDannysWokPayRouter = require('./routes/dannyswok-pay');
 const createAnalyticsRouter = require('./routes/analytics');
 const createMenuRouter = require('./routes/menu');
 const createAdminRouter = require('./routes/admin');
+const createRewardsRouter = require('./routes/rewards');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -81,6 +82,7 @@ app.use(express.static(path.join(__dirname)));
 
 app.use('/api/menu', createMenuRouter());
 app.use('/api/admin', createAdminRouter());
+app.use('/api/rewards', createRewardsRouter());
 app.use(
   '/api/dannyswok',
   createDannysWokPayRouter({
