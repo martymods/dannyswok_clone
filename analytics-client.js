@@ -2,6 +2,7 @@
   const TRACKING_STORAGE_KEY = 'dwkTrackingId';
   const LOCATION_STORAGE_KEY = 'dwkUserLocation';
   const LAST_ORDER_STORAGE_KEY = 'dwkLastOrderSummary';
+  const ORDER_HISTORY_STORAGE_KEY = 'dwkOrderHistory';
   const PROFILE_ENDPOINT = '/api/analytics/profile';
   const EVENTS_ENDPOINT = '/api/analytics/events';
   const MAX_EVENT_PAYLOAD_LENGTH = 10000;
@@ -146,6 +147,19 @@
     }
   }
 
+  function getOrderHistory() {
+    const stored = getStoredJson(ORDER_HISTORY_STORAGE_KEY);
+    return Array.isArray(stored) ? stored : [];
+  }
+
+  function setOrderHistory(history) {
+    if (!Array.isArray(history)) {
+      setStoredJson(ORDER_HISTORY_STORAGE_KEY, []);
+      return;
+    }
+    setStoredJson(ORDER_HISTORY_STORAGE_KEY, history);
+  }
+
   const api = {
     ensureProfile,
     sendEvent,
@@ -153,10 +167,13 @@
     setTrackingId,
     getStoredJson,
     setStoredJson,
+    getOrderHistory,
+    setOrderHistory,
     storageKeys: {
       tracking: TRACKING_STORAGE_KEY,
       location: LOCATION_STORAGE_KEY,
       lastOrder: LAST_ORDER_STORAGE_KEY,
+      orderHistory: ORDER_HISTORY_STORAGE_KEY,
     },
   };
 

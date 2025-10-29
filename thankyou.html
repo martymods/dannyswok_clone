@@ -1589,6 +1589,8 @@
     const analyticsApi = window.DannysAnalytics;
     const LAST_ORDER_STORAGE_KEY =
       analyticsApi?.storageKeys?.lastOrder || 'dwkLastOrderSummary';
+    const ORDER_HISTORY_STORAGE_KEY =
+      analyticsApi?.storageKeys?.orderHistory || 'dwkOrderHistory';
 
     if (analyticsApi?.sendEvent) {
       analyticsApi.sendEvent(
@@ -1660,6 +1662,115 @@
       }
     }
 
+    const ORDER_HISTORY_MAX_ENTRIES = 20;
+
+    function getStoredOrderHistory() {
+      if (analyticsApi?.getOrderHistory) {
+        try {
+          const history = analyticsApi.getOrderHistory();
+          return Array.isArray(history) ? history : [];
+        } catch (error) {
+          return [];
+        }
+      }
+      if (analyticsApi?.getStoredJson) {
+        const stored = analyticsApi.getStoredJson(ORDER_HISTORY_STORAGE_KEY);
+        return Array.isArray(stored) ? stored : [];
+      }
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return [];
+      }
+      try {
+        const raw = window.localStorage.getItem(ORDER_HISTORY_STORAGE_KEY);
+        if (!raw) {
+          return [];
+        }
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveStoredOrderHistory(value) {
+      if (analyticsApi?.setOrderHistory) {
+        analyticsApi.setOrderHistory(Array.isArray(value) ? value : []);
+        return;
+      }
+      if (analyticsApi?.setStoredJson) {
+        analyticsApi.setStoredJson(ORDER_HISTORY_STORAGE_KEY, Array.isArray(value) ? value : []);
+        return;
+      }
+      if (typeof window === 'undefined' || !window.localStorage) {
+        return;
+      }
+      try {
+        if (!Array.isArray(value) || !value.length) {
+          window.localStorage.removeItem(ORDER_HISTORY_STORAGE_KEY);
+          return;
+        }
+        window.localStorage.setItem(ORDER_HISTORY_STORAGE_KEY, JSON.stringify(value));
+      } catch (error) {
+        // Ignore storage access issues
+      }
+    }
+
+    function sanitizeHistoryEntry(order) {
+      if (!order || typeof order !== 'object') {
+        return null;
+      }
+      const timestampSource = typeof order.timestamp === 'string' ? order.timestamp : null;
+      const timestamp = timestampSource && !Number.isNaN(Date.parse(timestampSource))
+        ? timestampSource
+        : new Date().toISOString();
+      const fulfilment = typeof order.fulfilment === 'string' ? order.fulfilment : '';
+      const items = Array.isArray(order.items)
+        ? order.items
+            .slice(0, 50)
+            .map((item) => {
+              if (!item || typeof item !== 'object') {
+                return null;
+              }
+              const id = typeof item.id === 'string' ? item.id : null;
+              const name = typeof item.name === 'string' ? item.name : '';
+              if (!id && !name) {
+                return null;
+              }
+              const quantityNumber = Number.isFinite(item.quantity) ? item.quantity : Number(item.quantity);
+              const quantity = Number.isFinite(quantityNumber) && quantityNumber > 0
+                ? Math.round(quantityNumber)
+                : 1;
+              return {
+                id,
+                name: name || 'Menu item',
+                quantity,
+              };
+            })
+            .filter(Boolean)
+        : [];
+      if (!items.length) {
+        return null;
+      }
+      return { timestamp, fulfilment, items };
+    }
+
+    function addOrderToHistory(order) {
+      const entry = sanitizeHistoryEntry(order);
+      if (!entry) {
+        return;
+      }
+      const history = getStoredOrderHistory();
+      const deduped = history.filter((existing) => {
+        if (!existing || typeof existing !== 'object') {
+          return false;
+        }
+        const existingTimestamp = typeof existing.timestamp === 'string' ? existing.timestamp : '';
+        return existingTimestamp !== entry.timestamp;
+      });
+      const updated = [entry, ...deduped].slice(0, ORDER_HISTORY_MAX_ENTRIES);
+      saveStoredOrderHistory(updated);
+    }
+
     function normalizeOrder(order) {
       if (!order || typeof order !== 'object') {
         return null;
@@ -1687,11 +1798,17 @@
       normalized.feesAndEstimatedTax = feesAndEstimatedTax;
       normalized.items = Array.isArray(order.items)
         ? order.items.slice(0, 50).map((item) => ({
+            id: typeof item?.id === 'string' ? item.id : null,
             name: typeof item?.name === 'string' ? item.name : 'Menu item',
             quantity: toDisplayQuantity(item?.quantity),
             total: normalizeMoney(item?.total),
           }))
         : [];
+
+      normalized.timestamp =
+        typeof order.timestamp === 'string' && !Number.isNaN(Date.parse(order.timestamp))
+          ? order.timestamp
+          : new Date().toISOString();
 
       return normalized;
     }
@@ -1751,6 +1868,7 @@
     const storedOrder = normalizeOrder(getStoredOrder());
     if (storedOrder) {
       renderReceipt(storedOrder);
+      addOrderToHistory(storedOrder);
       if (analyticsApi?.sendEvent && !storedOrder.reported) {
         const eventPayload = { ...storedOrder, page: 'thankyou' };
         analyticsApi.sendEvent('purchase_complete', eventPayload, { keepalive: true });
