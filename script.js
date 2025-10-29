@@ -192,6 +192,156 @@ let headerFulfilmentMode = 'pickup';
 const analyticsApi = typeof window !== 'undefined' ? window.DannysAnalytics || null : null;
 const LOCATION_STORAGE_KEY = analyticsApi?.storageKeys?.location || 'dwkUserLocation';
 const LAST_ORDER_STORAGE_KEY = analyticsApi?.storageKeys?.lastOrder || 'dwkLastOrderSummary';
+const ORDER_HISTORY_STORAGE_KEY = analyticsApi?.storageKeys?.orderHistory || 'dwkOrderHistory';
+
+const QUICK_REORDER_MAX_ENTRIES = 5;
+const ORDER_HISTORY_MAX_ENTRIES = 20;
+
+let quickReorderOrders = [];
+
+function readOrderHistoryStorage() {
+  if (analyticsApi?.getOrderHistory) {
+    try {
+      const history = analyticsApi.getOrderHistory();
+      return Array.isArray(history) ? history : [];
+    } catch (error) {
+      return [];
+    }
+  }
+  if (analyticsApi?.getStoredJson) {
+    const stored = analyticsApi.getStoredJson(ORDER_HISTORY_STORAGE_KEY);
+    return Array.isArray(stored) ? stored : [];
+  }
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return [];
+  }
+  try {
+    const raw = window.localStorage.getItem(ORDER_HISTORY_STORAGE_KEY);
+    if (!raw) {
+      return [];
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function writeOrderHistoryStorage(value) {
+  if (analyticsApi?.setOrderHistory) {
+    analyticsApi.setOrderHistory(Array.isArray(value) ? value : []);
+    return;
+  }
+  if (analyticsApi?.setStoredJson) {
+    analyticsApi.setStoredJson(ORDER_HISTORY_STORAGE_KEY, Array.isArray(value) ? value : []);
+    return;
+  }
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return;
+  }
+  try {
+    if (!Array.isArray(value) || !value.length) {
+      window.localStorage.removeItem(ORDER_HISTORY_STORAGE_KEY);
+      return;
+    }
+    window.localStorage.setItem(ORDER_HISTORY_STORAGE_KEY, JSON.stringify(value));
+  } catch (error) {
+    // Ignore storage exceptions (e.g. private browsing)
+  }
+}
+
+function sanitizeHistoryEntry(rawEntry) {
+  if (!rawEntry || typeof rawEntry !== 'object') {
+    return null;
+  }
+  const timestampSource = typeof rawEntry.timestamp === 'string' ? rawEntry.timestamp : null;
+  const timestamp = timestampSource && !Number.isNaN(Date.parse(timestampSource))
+    ? timestampSource
+    : new Date().toISOString();
+  const fulfilment = typeof rawEntry.fulfilment === 'string' ? rawEntry.fulfilment : '';
+  const items = Array.isArray(rawEntry.items)
+    ? rawEntry.items
+        .slice(0, 50)
+        .map((item) => {
+          if (!item || typeof item !== 'object') {
+            return null;
+          }
+          const id = typeof item.id === 'string' ? item.id : null;
+          const name = typeof item.name === 'string' ? item.name : '';
+          if (!id && !name) {
+            return null;
+          }
+          const quantityNumber = Number.isFinite(item.quantity) ? item.quantity : Number(item.quantity);
+          const quantity = Number.isFinite(quantityNumber) && quantityNumber > 0
+            ? Math.round(quantityNumber)
+            : 1;
+          return {
+            id,
+            name: name || 'Menu item',
+            quantity,
+          };
+        })
+        .filter(Boolean)
+    : [];
+  if (!items.length) {
+    return null;
+  }
+  return {
+    timestamp,
+    fulfilment,
+    items,
+  };
+}
+
+function loadOrderHistoryEntries() {
+  const stored = readOrderHistoryStorage();
+  const entries = stored
+    .map((entry) => sanitizeHistoryEntry(entry))
+    .filter(Boolean)
+    .sort((a, b) => {
+      const timeA = Date.parse(a.timestamp) || 0;
+      const timeB = Date.parse(b.timestamp) || 0;
+      return timeB - timeA;
+    });
+  if (entries.length > ORDER_HISTORY_MAX_ENTRIES) {
+    writeOrderHistoryStorage(entries.slice(0, ORDER_HISTORY_MAX_ENTRIES));
+    return entries.slice(0, ORDER_HISTORY_MAX_ENTRIES);
+  }
+  return entries;
+}
+
+function formatOrderTimestamp(isoString) {
+  if (!isoString) {
+    return '';
+  }
+  try {
+    const date = new Date(isoString);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  } catch (error) {
+    return '';
+  }
+}
+
+function formatOrderSummary(entry) {
+  if (!entry || !entry.items || !entry.items.length) {
+    return 'Previous order';
+  }
+  const [firstItem, ...rest] = entry.items;
+  const baseName = firstItem.quantity > 1 ? `${firstItem.quantity}× ${firstItem.name}` : firstItem.name;
+  if (!rest.length) {
+    return baseName;
+  }
+  return `${baseName} + ${rest.length}`;
+}
 
 let activeStoreId = null;
 let deliveryMap = null;
@@ -1611,6 +1761,243 @@ function findMenuItemById(id) {
   return menuItemsById.get(id) || null;
 }
 
+function showQuickReorderMessage(card, message, tone = 'info') {
+  if (!card) {
+    return;
+  }
+  const feedback = card.querySelector('.quick-reorder__feedback');
+  if (!feedback) {
+    return;
+  }
+  feedback.textContent = message;
+  feedback.hidden = false;
+  feedback.classList.remove(
+    'quick-reorder__feedback--success',
+    'quick-reorder__feedback--warning',
+  );
+  if (tone === 'success') {
+    feedback.classList.add('quick-reorder__feedback--success');
+  } else if (tone === 'warning') {
+    feedback.classList.add('quick-reorder__feedback--warning');
+  }
+}
+
+function addOrderItemsToCart(order) {
+  if (!order || !Array.isArray(order.items) || !order.items.length) {
+    return { addedCount: 0, missing: [] };
+  }
+  let addedCount = 0;
+  const missing = [];
+  order.items.forEach((orderItem) => {
+    if (!orderItem) {
+      return;
+    }
+    const menuItem = findMenuItemById(orderItem.id);
+    if (!menuItem) {
+      const fallbackName = typeof orderItem.name === 'string' ? orderItem.name : null;
+      if (fallbackName) {
+        missing.push(fallbackName);
+      }
+      return;
+    }
+    const quantityNumber = Number.isFinite(orderItem.quantity)
+      ? orderItem.quantity
+      : Number(orderItem.quantity);
+    const quantity = Number.isFinite(quantityNumber) && quantityNumber > 0
+      ? Math.round(quantityNumber)
+      : 1;
+    if (cart[menuItem.id]) {
+      cart[menuItem.id].quantity += quantity;
+    } else {
+      cart[menuItem.id] = {
+        name: menuItem.name,
+        price: menuItem.price,
+        quantity,
+        instructions: '',
+      };
+    }
+    addedCount += quantity;
+  });
+  if (addedCount > 0) {
+    updateCart();
+    playCartSound();
+    trackEvent('order_reordered', {
+      source: 'quick_reorder',
+      totalItems: addedCount,
+      missingItems: missing.length,
+      orderTimestamp: order.timestamp || null,
+      fulfilment: order.fulfilment || null,
+    });
+  }
+  return { addedCount, missing };
+}
+
+function toggleQuickReorderDetails(card, expanded) {
+  if (!card) {
+    return;
+  }
+  const detail = card.querySelector('.quick-reorder__details');
+  const summaryButton = card.querySelector('.quick-reorder__summary');
+  const detailsButton = card.querySelector('.quick-reorder__details-button');
+  if (!detail) {
+    return;
+  }
+  const nextExpanded = typeof expanded === 'boolean' ? expanded : detail.hidden;
+  detail.hidden = !nextExpanded;
+  if (summaryButton) {
+    summaryButton.setAttribute('aria-expanded', String(nextExpanded));
+  }
+  if (detailsButton) {
+    detailsButton.textContent = nextExpanded ? 'Hide details' : 'Details';
+    detailsButton.setAttribute('aria-expanded', String(nextExpanded));
+  }
+}
+
+function handleQuickReorderToggle(event) {
+  const button = event.currentTarget;
+  if (!button) {
+    return;
+  }
+  const card = button.closest('.quick-reorder__card');
+  if (!card) {
+    return;
+  }
+  const detail = card.querySelector('.quick-reorder__details');
+  const isExpanded = detail ? !detail.hidden : false;
+  toggleQuickReorderDetails(card, !isExpanded);
+}
+
+function handleQuickReorderReorder(event) {
+  const button = event.currentTarget;
+  if (!button) {
+    return;
+  }
+  const index = Number(button.dataset.orderIndex);
+  if (!Number.isFinite(index) || index < 0 || index >= quickReorderOrders.length) {
+    return;
+  }
+  const order = quickReorderOrders[index];
+  const card = button.closest('.quick-reorder__card');
+  if (!order || !card) {
+    return;
+  }
+  const { addedCount, missing } = addOrderItemsToCart(order);
+  toggleQuickReorderDetails(card, true);
+  if (addedCount > 0) {
+    if (missing.length) {
+      const missingLabel = missing.length === 1 ? 'item' : 'items';
+      showQuickReorderMessage(
+        card,
+        `Added available dishes to your cart. ${missing.length} ${missingLabel} not available.`,
+        'warning',
+      );
+    } else {
+      showQuickReorderMessage(card, 'Added items to your cart.', 'success');
+    }
+  } else if (missing.length) {
+    showQuickReorderMessage(
+      card,
+      'Those dishes are no longer available, please build a new order.',
+      'warning',
+    );
+  } else {
+    showQuickReorderMessage(card, 'We could not add those dishes right now.', 'warning');
+  }
+}
+
+function renderQuickReorderShelf() {
+  const container = document.getElementById('quick-reorder');
+  if (!container) {
+    return;
+  }
+  const list = container.querySelector('.quick-reorder__list');
+  if (!list) {
+    return;
+  }
+  const history = loadOrderHistoryEntries();
+  quickReorderOrders = history.slice(0, QUICK_REORDER_MAX_ENTRIES);
+  list.innerHTML = '';
+  if (!quickReorderOrders.length) {
+    container.hidden = true;
+    container.setAttribute('aria-hidden', 'true');
+    return;
+  }
+  container.hidden = false;
+  container.setAttribute('aria-hidden', 'false');
+  const fragment = document.createDocumentFragment();
+  quickReorderOrders.forEach((order, index) => {
+    const card = document.createElement('article');
+    card.className = 'quick-reorder__card';
+    card.setAttribute('role', 'listitem');
+
+    const summaryButton = document.createElement('button');
+    summaryButton.type = 'button';
+    summaryButton.className = 'quick-reorder__summary';
+    summaryButton.dataset.orderIndex = String(index);
+    summaryButton.setAttribute('aria-expanded', 'false');
+
+    const summaryText = document.createElement('span');
+    summaryText.className = 'quick-reorder__summary-text';
+    summaryText.textContent = formatOrderSummary(order);
+
+    const meta = document.createElement('span');
+    meta.className = 'quick-reorder__meta';
+    const timestampText = formatOrderTimestamp(order.timestamp);
+    meta.textContent = timestampText ? timestampText : 'Previous order';
+
+    summaryButton.append(summaryText, meta);
+
+    const actions = document.createElement('div');
+    actions.className = 'quick-reorder__actions';
+
+    const detailsButton = document.createElement('button');
+    detailsButton.type = 'button';
+    detailsButton.className = 'quick-reorder__details-button';
+    detailsButton.dataset.orderIndex = String(index);
+    detailsButton.textContent = 'Details';
+    detailsButton.setAttribute('aria-expanded', 'false');
+
+    const reorderButton = document.createElement('button');
+    reorderButton.type = 'button';
+    reorderButton.className = 'quick-reorder__reorder-button';
+    reorderButton.dataset.orderIndex = String(index);
+    reorderButton.textContent = 'Reorder';
+
+    actions.append(detailsButton, reorderButton);
+
+    const details = document.createElement('div');
+    details.className = 'quick-reorder__details';
+    details.hidden = true;
+    const detailId = `quick-reorder-details-${index}`;
+    details.id = detailId;
+    summaryButton.setAttribute('aria-controls', detailId);
+    detailsButton.setAttribute('aria-controls', detailId);
+
+    const itemsList = document.createElement('ul');
+    itemsList.className = 'quick-reorder__items';
+    order.items.forEach((item) => {
+      const li = document.createElement('li');
+      li.textContent = item.quantity > 1 ? `${item.quantity}× ${item.name}` : item.name;
+      itemsList.appendChild(li);
+    });
+
+    const feedback = document.createElement('p');
+    feedback.className = 'quick-reorder__feedback';
+    feedback.setAttribute('role', 'status');
+    feedback.hidden = true;
+
+    details.append(itemsList, feedback);
+
+    summaryButton.addEventListener('click', handleQuickReorderToggle);
+    detailsButton.addEventListener('click', handleQuickReorderToggle);
+    reorderButton.addEventListener('click', handleQuickReorderReorder);
+
+    card.append(summaryButton, actions, details);
+    fragment.appendChild(card);
+  });
+  list.appendChild(fragment);
+}
+
 // Cart state.  Each entry in the cart contains an item id, name, quantity,
 // price and any special instructions entered during checkout.  We track
 // unique ids to update quantities rather than adding duplicates.
@@ -2808,6 +3195,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   buildHeroCarousel();
   renderMenu();
+  renderQuickReorderShelf();
   handleMenuLoadingScreen();
   updateCart();
   const rebuildHeroForViewport = () => buildHeroCarousel();
@@ -3726,6 +4114,7 @@ function buildOrderDetailsForPayment() {
         taxAmount: order.taxAmount,
         tipAmount: order.tipAmount,
         items: order.items.slice(0, 20).map((item) => ({
+          id: item.id,
           name: item.name,
           quantity: item.quantity,
           total: item.total,
