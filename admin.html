@@ -938,6 +938,42 @@
                 <p class="admin-status" id="rewardsAutomationStatus" aria-live="polite"></p>
               </form>
             </article>
+
+            <article class="dashboard-card rewards-card rewards-card--wide" id="rewardsSummaryCard">
+              <header>
+                <h2>Program pulse</h2>
+                <span class="muted">Live stats from the Rewards service.</span>
+              </header>
+              <div class="rewards-summary" id="rewardsSummaryMetrics">
+                <p class="muted">Loading summary…</p>
+              </div>
+              <footer class="rewards-summary-footer">
+                <span id="rewardsSummaryUpdatedAt" class="muted"></span>
+              </footer>
+              <p class="admin-status" id="rewardsSummaryStatus" aria-live="polite"></p>
+            </article>
+
+            <article class="dashboard-card rewards-card" id="rewardsWinnersCard">
+              <header>
+                <h2>Recent winners</h2>
+                <span class="muted">Latest 25 announcements.</span>
+              </header>
+              <ul class="rewards-winners-list" id="rewardsWinnersList">
+                <li class="muted">Loading winners…</li>
+              </ul>
+              <p class="admin-status" id="rewardsWinnersStatus" aria-live="polite"></p>
+            </article>
+
+            <article class="dashboard-card rewards-card" id="rewardsEventsCard">
+              <header>
+                <h2>Active events</h2>
+                <span class="muted">Flash boosts, expirations, and streak boosts.</span>
+              </header>
+              <div class="rewards-events" id="rewardsEventsList">
+                <p class="muted">Loading events…</p>
+              </div>
+              <p class="admin-status" id="rewardsEventsStatus" aria-live="polite"></p>
+            </article>
           </div>
         </section>
 

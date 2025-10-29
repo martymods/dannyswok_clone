@@ -477,6 +477,15 @@
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
   }
 
+  function formatNumber(value, { maximumFractionDigits = 0 } = {}) {
+    if (!Number.isFinite(value)) {
+      return '0';
+    }
+    return new Intl.NumberFormat('en-US', {
+      maximumFractionDigits,
+    }).format(value);
+  }
+
   function formatDate(value) {
     if (!value) {
       return '—';
@@ -1123,6 +1132,15 @@
     rewardPoints: true,
   };
 
+  let rewardsSummaryData = null;
+  let rewardsEventsData = {
+    flashEvents: [],
+    expiringPieces: [],
+    streakBoosts: [],
+    marketingMoments: [],
+  };
+  let rewardsWinnersData = [];
+
   const rewardsBudgetRange = document.getElementById('rewardsBudgetRange');
   const rewardsBudgetValue = document.getElementById('rewardsBudgetValue');
   const rewardsBudgetDollars = document.getElementById('rewardsBudgetDollars');
@@ -1149,12 +1167,254 @@
   const rewardsWinSharingToggle = document.getElementById('rewardsWinSharing');
   const rewardsRewardPointsToggle = document.getElementById('rewardsRewardPoints');
 
+  const rewardsSummaryMetrics = document.getElementById('rewardsSummaryMetrics');
+  const rewardsSummaryUpdatedAt = document.getElementById('rewardsSummaryUpdatedAt');
+  const rewardsSummaryStatus = document.getElementById('rewardsSummaryStatus');
+  const rewardsWinnersList = document.getElementById('rewardsWinnersList');
+  const rewardsWinnersStatus = document.getElementById('rewardsWinnersStatus');
+  const rewardsEventsList = document.getElementById('rewardsEventsList');
+  const rewardsEventsStatus = document.getElementById('rewardsEventsStatus');
+
   function formatRewardPercent(value) {
     const numeric = Number(value);
     if (!Number.isFinite(numeric)) {
       return '0.00%';
     }
     return `${numeric.toFixed(2)}%`;
+  }
+
+  function formatEventWindow(start, end) {
+    const startText = formatDate(start);
+    const endText = formatDate(end);
+    if (startText !== '—' && endText !== '—') {
+      return `${startText} → ${endText}`;
+    }
+    if (startText !== '—') {
+      return startText;
+    }
+    if (endText !== '—') {
+      return endText;
+    }
+    return '—';
+  }
+
+  function syncRewardsOddsInputs() {
+    const mapping = [
+      { element: instantWinOddsSelect, key: 'instant' },
+      { element: collectionCommonSelect, key: 'common' },
+      { element: collectionRareSelect, key: 'rare' },
+      { element: collectionLegendarySelect, key: 'legendary' },
+    ];
+    mapping.forEach(({ element, key }) => {
+      if (!element) {
+        return;
+      }
+      if (rewardsSettings.odds && rewardsSettings.odds[key]) {
+        element.value = rewardsSettings.odds[key];
+      }
+    });
+  }
+
+  function syncAutomationToggles() {
+    const toggles = [
+      { element: rewardsDynamicProbabilityToggle, key: 'dynamicProbability' },
+      { element: rewardsExpiringPiecesToggle, key: 'expiringPieces' },
+      { element: rewardsFlashEventsToggle, key: 'flashEvents' },
+      { element: rewardsSkillChallengesToggle, key: 'skillChallenges' },
+      { element: rewardsWinSharingToggle, key: 'winSharing' },
+      { element: rewardsRewardPointsToggle, key: 'rewardPoints' },
+    ];
+    toggles.forEach(({ element, key }) => {
+      if (element) {
+        element.checked = !!rewardsAutomation[key];
+      }
+    });
+  }
+
+  function renderRewardsSummary() {
+    if (!rewardsSummaryMetrics) {
+      return;
+    }
+    const hasMetrics =
+      rewardsSummaryData &&
+      ['players', 'activeStreaks', 'instantWins', 'completedSets', 'totalPoints'].some((key) =>
+        Number.isFinite(Number(rewardsSummaryData?.[key])),
+      );
+
+    if (!hasMetrics) {
+      rewardsSummaryMetrics.innerHTML = '<p class="muted">No summary available yet.</p>';
+      if (rewardsSummaryUpdatedAt) {
+        rewardsSummaryUpdatedAt.textContent = '';
+      }
+      return;
+    }
+    const stats = [
+      { label: 'Players', value: formatNumber(Number(rewardsSummaryData.players) || 0) },
+      { label: 'Active streaks', value: formatNumber(Number(rewardsSummaryData.activeStreaks) || 0) },
+      { label: 'Instant wins', value: formatNumber(Number(rewardsSummaryData.instantWins) || 0) },
+      { label: 'Completed sets', value: formatNumber(Number(rewardsSummaryData.completedSets) || 0) },
+      { label: 'Active collections', value: formatNumber(Number(rewardsSummaryData.activeCollections) || 0) },
+      { label: 'Pieces collected', value: formatNumber(Number(rewardsSummaryData.collectionPieces) || 0) },
+      { label: 'Total points', value: formatNumber(Number(rewardsSummaryData.totalPoints) || 0) },
+      { label: 'Prize pool', value: formatCurrency(Number(rewardsSummaryData.prizeBudget?.pool) || 0) },
+    ];
+    rewardsSummaryMetrics.innerHTML = stats
+      .map(
+        (stat) => `
+          <div class="rewards-summary__stat">
+            <span class="rewards-summary__value">${stat.value}</span>
+            <span class="rewards-summary__label">${stat.label}</span>
+          </div>
+        `,
+      )
+      .join('');
+    if (rewardsSummaryUpdatedAt) {
+      const budgetPercent = rewardsSummaryData.prizeBudget?.percent ?? rewardsSettings.budgetPercent;
+      const budgetBaseline = rewardsSummaryData.prizeBudget?.baseline ?? rewardsSettings.revenueBaseline;
+      const piecesText = `Prize allocation ${formatRewardPercent(budgetPercent)} of ${formatCurrency(
+        Number(budgetBaseline) || 0,
+      )} baseline.`;
+      const updatedText = rewardsSummaryData.updatedAt && rewardsSummaryData.updatedAt !== '—'
+        ? `Summary refreshed ${formatDate(rewardsSummaryData.updatedAt)}.`
+        : '';
+      rewardsSummaryUpdatedAt.textContent = `${updatedText} ${piecesText}`.trim();
+    }
+  }
+
+  function renderRewardsWinners() {
+    if (!rewardsWinnersList) {
+      return;
+    }
+    if (!rewardsWinnersData || !rewardsWinnersData.length) {
+      rewardsWinnersList.innerHTML = '<li class="muted">No winners announced yet.</li>';
+      return;
+    }
+    rewardsWinnersList.innerHTML = rewardsWinnersData.slice(0, 10)
+      .map((winner) => {
+        const announcedAt = formatDate(winner?.announcedAt);
+        const location = winner?.location ? `<span>${winner.location}</span>` : '';
+        const variant = winner?.variant ? `<span>${winner.variant}</span>` : '';
+        const userId = winner?.userId ? `<span>#${winner.userId}</span>` : '';
+        const note = winner?.shareCard
+          ? `<p class="rewards-winner__note">${winner.shareCard}</p>`
+          : '';
+        return `
+          <li class="rewards-winner">
+            <strong>${winner?.prize || 'Reward winner'}</strong>
+            <div class="rewards-winner__meta">
+              ${variant}
+              <span>${announcedAt}</span>
+              ${location}
+              ${userId}
+            </div>
+            ${note}
+          </li>
+        `;
+      })
+      .join('');
+  }
+
+  function renderRewardEvents() {
+    if (!rewardsEventsList) {
+      return;
+    }
+    const groups = [
+      {
+        key: 'flashEvents',
+        label: 'Flash events',
+        empty: 'No flash events scheduled.',
+        format: (event) => {
+          const multiplier = Number(event?.multiplier);
+          const multiplierText = Number.isFinite(multiplier) && multiplier > 1 ? ` · ${multiplier}× odds` : '';
+          const set = event?.setId ? ` · ${event.setId}` : '';
+          return `
+            <li class="rewards-event">
+              <span class="rewards-event__title">${event?.title || 'Flash event'}</span>
+              <span class="rewards-event__meta">${formatEventWindow(event?.startsAt, event?.endsAt)}${multiplierText}${set}</span>
+              ${event?.description ? `<span class="rewards-event__note">${event.description}</span>` : ''}
+            </li>
+          `;
+        },
+      },
+      {
+        key: 'expiringPieces',
+        label: 'Expiring pieces',
+        empty: 'No pieces expiring this week.',
+        format: (event) => {
+          const label = event?.label || 'Collection piece';
+          const set = event?.setId ? ` · ${event.setId}` : '';
+          return `
+            <li class="rewards-event">
+              <span class="rewards-event__title">${label}</span>
+              <span class="rewards-event__meta">Expires ${formatDate(event?.expiresAt)}${set}</span>
+              ${event?.reminder ? `<span class="rewards-event__note">${event.reminder}</span>` : ''}
+            </li>
+          `;
+        },
+      },
+      {
+        key: 'streakBoosts',
+        label: 'Streak boosts',
+        empty: 'No streak boosts active.',
+        format: (event) => {
+          const minDays = Number(event?.minimumDays);
+          const requirement = Number.isFinite(minDays) && minDays > 0 ? `${minDays}-day streak` : 'Streak bonus';
+          return `
+            <li class="rewards-event">
+              <span class="rewards-event__title">${requirement}</span>
+              <span class="rewards-event__meta">${event?.reward || 'Bonus reward'}</span>
+              ${event?.description ? `<span class="rewards-event__note">${event.description}</span>` : ''}
+            </li>
+          `;
+        },
+      },
+      {
+        key: 'marketingMoments',
+        label: 'Marketing moments',
+        empty: 'No marketing pushes scheduled.',
+        format: (event) => `
+          <li class="rewards-event">
+            <span class="rewards-event__title">${event?.headline || 'Marketing moment'}</span>
+            ${event?.callToAction ? `<span class="rewards-event__note">${event.callToAction}</span>` : ''}
+          </li>
+        `,
+      },
+    ];
+
+    rewardsEventsList.innerHTML = groups
+      .map((group) => {
+        const items = Array.isArray(rewardsEventsData?.[group.key]) ? rewardsEventsData[group.key] : [];
+        if (!items.length) {
+          return `
+            <div class="rewards-event-group">
+              <h3>${group.label}</h3>
+              <p class="muted">${group.empty}</p>
+            </div>
+          `;
+        }
+        const list = items
+          .slice(0, 3)
+          .map((item) => group.format(item))
+          .join('');
+        return `
+          <div class="rewards-event-group">
+            <h3>${group.label}</h3>
+            <ul class="rewards-event-list">${list}</ul>
+          </div>
+        `;
+      })
+      .join('');
+  }
+
+  function buildAutomationPayload() {
+    return {
+      dynamicProbability: Boolean(rewardsAutomation.dynamicProbability),
+      expiringPieces: Boolean(rewardsAutomation.expiringPieces),
+      flashEvents: Boolean(rewardsAutomation.flashEvents),
+      skillChallenges: Boolean(rewardsAutomation.skillChallenges),
+      winSharing: Boolean(rewardsAutomation.winSharing),
+      rewardPoints: Boolean(rewardsAutomation.rewardPoints),
+    };
   }
 
   function updateBudgetSummary() {
@@ -1182,13 +1442,43 @@
   }
 
   if (saveRewardsBudgetButton) {
-    saveRewardsBudgetButton.addEventListener('click', () => {
+    saveRewardsBudgetButton.addEventListener('click', async () => {
       updateBudgetSummary();
-      setStatus(
-        rewardsBudgetStatus,
-        `Budget locked at ${formatRewardPercent(rewardsSettings.budgetPercent)} of promo revenue.`,
-        'success'
-      );
+      setStatus(rewardsBudgetStatus, 'Saving budget…');
+      try {
+        const payload = {
+          budgetPercent: Number(rewardsSettings.budgetPercent),
+          updatedBy: 'admin-dashboard',
+        };
+        const response = await fetchJson('/api/rewards/settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const updated = response?.settings;
+        if (!updated) {
+          throw new Error('Rewards service returned an unexpected response.');
+        }
+        rewardsSettings.budgetPercent = Number(updated.budgetPercent ?? rewardsSettings.budgetPercent);
+        rewardsSettings.revenueBaseline = Number(updated.revenueBaseline ?? rewardsSettings.revenueBaseline);
+        rewardsSettings.odds = { ...rewardsSettings.odds, ...(updated.odds || {}) };
+        updateBudgetSummary();
+        syncRewardsOddsInputs();
+        updateOddsSummary();
+        if (!Number.isNaN(Number(updated.budgetPool))) {
+          rewardsSummaryData = rewardsSummaryData || {};
+          rewardsSummaryData.prizeBudget = {
+            percent: rewardsSettings.budgetPercent,
+            baseline: rewardsSettings.revenueBaseline,
+            pool: Number(updated.budgetPool),
+          };
+          renderRewardsSummary();
+        }
+        const message = `Budget locked at ${formatRewardPercent(rewardsSettings.budgetPercent)} of promo revenue.`;
+        setStatus(rewardsBudgetStatus, message, 'success');
+      } catch (error) {
+        setStatus(rewardsBudgetStatus, error.message || 'Failed to save budget.', 'error');
+      }
     });
   }
 
@@ -1224,9 +1514,6 @@
     if (!element) {
       return;
     }
-    if (rewardsSettings.odds[key]) {
-      element.value = rewardsSettings.odds[key];
-    }
     element.addEventListener('change', () => {
       rewardsSettings.odds[key] = element.value;
       updateOddsSummary();
@@ -1234,10 +1521,32 @@
     });
   });
 
+  syncRewardsOddsInputs();
   if (saveRewardsOddsButton) {
-    saveRewardsOddsButton.addEventListener('click', () => {
+    saveRewardsOddsButton.addEventListener('click', async () => {
       updateOddsSummary();
-      setStatus(rewardsOddsStatus, 'Drop rates updated. Changes go live within 5 minutes.', 'success');
+      setStatus(rewardsOddsStatus, 'Updating drop rates…');
+      try {
+        const payload = {
+          odds: { ...rewardsSettings.odds },
+          updatedBy: 'admin-dashboard',
+        };
+        const response = await fetchJson('/api/rewards/settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const updated = response?.settings;
+        if (!updated || !updated.odds) {
+          throw new Error('Rewards service did not return updated odds.');
+        }
+        rewardsSettings.odds = { ...rewardsSettings.odds, ...updated.odds };
+        syncRewardsOddsInputs();
+        updateOddsSummary();
+        setStatus(rewardsOddsStatus, 'Drop rates updated. Changes go live within 5 minutes.', 'success');
+      } catch (error) {
+        setStatus(rewardsOddsStatus, error.message || 'Failed to update drop rates.', 'error');
+      }
     });
   }
 
@@ -1270,24 +1579,216 @@
     }
     const bulletLines = [];
     if (rewardsAutomation.flashEvents) {
-      bulletLines.push('Flash event queued: Double Moonlight drops this Friday 5–9 PM.');
-    }
-    if (rewardsAutomation.expiringPieces) {
-      bulletLines.push('Next expiry reminder: Moonlit Petal · Sunday 11:59 PM.');
-    }
-    if (rewardsAutomation.dynamicProbability) {
-      bulletLines.push('Dynamic probability live for streak tiers Silver and above.');
-    }
-    if (rewardsAutomation.skillChallenges) {
-      bulletLines.push("Tonight's skill challenge: 15-second chopstick catch (+10 XP).");
+      const upcoming = Array.isArray(rewardsEventsData?.flashEvents) ? rewardsEventsData.flashEvents[0] : null;
+      if (upcoming) {
+        bulletLines.push(
+          `Flash event: ${upcoming.title || 'Flash event'} · ${formatEventWindow(upcoming.startsAt, upcoming.endsAt)}.`,
+        );
+      } else {
+        bulletLines.push('Flash events enabled — schedule the next boost to drive urgency.');
+      }
+    } else {
+      bulletLines.push('Flash events paused.');
     }
 
-    if (!bulletLines.length) {
+    if (rewardsAutomation.expiringPieces) {
+      const expiring = Array.isArray(rewardsEventsData?.expiringPieces) ? rewardsEventsData.expiringPieces[0] : null;
+      if (expiring) {
+        bulletLines.push(
+          `Expiry alert: ${expiring.label || 'Collection piece'} expires ${formatDate(expiring.expiresAt)}.`,
+        );
+      } else {
+        bulletLines.push('Expiring pieces enabled — no expirations queued.');
+      }
+    } else {
+      bulletLines.push('Expiry nudges paused.');
+    }
+
+    if (rewardsAutomation.dynamicProbability) {
+      bulletLines.push('Dynamic probability live for streak tiers.');
+    } else {
+      bulletLines.push('Dynamic probability paused — baseline odds only.');
+    }
+
+    if (rewardsAutomation.skillChallenges) {
+      bulletLines.push("Skill challenges enabled — rotate tonight’s prompt for +XP.");
+    } else {
+      bulletLines.push('Skill challenges paused.');
+    }
+
+    if (rewardsAutomation.winSharing) {
+      const topWinner = rewardsWinnersData?.[0];
+      if (topWinner?.shareCard) {
+        bulletLines.push(`Latest share card: “${topWinner.shareCard}”.`);
+      } else {
+        bulletLines.push('Win-sharing enabled — publish the latest winner highlight.');
+      }
+    } else {
+      bulletLines.push('Win-sharing cards disabled.');
+    }
+
+    if (rewardsAutomation.rewardPoints) {
+      bulletLines.push('Rewards wallet sync active — instant wins post automatically.');
+    } else {
+      bulletLines.push('Rewards wallet sync paused.');
+    }
+
+    const lines = bulletLines.filter(Boolean).slice(0, 6);
+    if (!lines.length) {
       rewardsAutomationBulletin.innerHTML = '<p class="muted">No automated pushes scheduled.</p>';
       return;
     }
 
-    rewardsAutomationBulletin.innerHTML = `<ul>${bulletLines.map((line) => `<li>${line}</li>`).join('')}</ul>`;
+    rewardsAutomationBulletin.innerHTML = `<ul>${lines.map((line) => `<li>${line}</li>`).join('')}</ul>`;
+  }
+
+  async function loadRewardsOverview() {
+    if (rewardsBudgetStatus) {
+      setStatus(rewardsBudgetStatus, 'Loading settings…');
+    }
+    if (rewardsOddsStatus) {
+      setStatus(rewardsOddsStatus, 'Loading drop rates…');
+    }
+    if (rewardsAutomationStatus) {
+      setStatus(rewardsAutomationStatus, 'Loading automations…');
+    }
+    if (rewardsSummaryStatus) {
+      setStatus(rewardsSummaryStatus, 'Loading summary…');
+    }
+    if (rewardsWinnersStatus) {
+      setStatus(rewardsWinnersStatus, 'Loading winners…');
+    }
+    if (rewardsEventsStatus) {
+      setStatus(rewardsEventsStatus, 'Loading events…');
+    }
+
+    try {
+      const [settingsResult, winnersResult, eventsResult] = await Promise.allSettled([
+        fetchJson('/api/rewards/settings', { cache: 'no-store' }),
+        fetchJson('/api/rewards/winners', { cache: 'no-store' }),
+        fetchJson('/api/rewards/events', { cache: 'no-store' }),
+      ]);
+
+      if (settingsResult.status === 'fulfilled') {
+        const payload = settingsResult.value || {};
+        const settings = payload.settings || null;
+        const automation = payload.automation || null;
+        const summary = payload.summary || null;
+
+        if (settings) {
+          rewardsSettings.budgetPercent = Number(settings.budgetPercent ?? rewardsSettings.budgetPercent);
+          rewardsSettings.revenueBaseline = Number(settings.revenueBaseline ?? rewardsSettings.revenueBaseline);
+          rewardsSettings.odds = { ...rewardsSettings.odds, ...(settings.odds || {}) };
+          updateBudgetSummary();
+          syncRewardsOddsInputs();
+          updateOddsSummary();
+          const budgetMessage = settings.updatedAt
+            ? `Synced ${formatDate(settings.updatedAt)} by ${settings.updatedBy || 'system'}.`
+            : 'Loaded reward settings.';
+          setStatus(rewardsBudgetStatus, budgetMessage, 'success');
+          setStatus(rewardsOddsStatus, 'Drop rates synced from Rewards service.', 'success');
+        } else {
+          setStatus(rewardsBudgetStatus, 'No reward settings available.', 'error');
+          setStatus(rewardsOddsStatus, 'No drop rates available.', 'error');
+        }
+
+        if (automation) {
+          Object.assign(rewardsAutomation, automation);
+          syncAutomationToggles();
+          updateAutomationSummary();
+          updateAutomationBulletin();
+          const automationMessage = automation.updatedAt
+            ? `Synced ${formatDate(automation.updatedAt)} by ${automation.updatedBy || 'system'}.`
+            : 'Automation defaults loaded.';
+          setStatus(rewardsAutomationStatus, automationMessage, 'success');
+        } else {
+          setStatus(rewardsAutomationStatus, 'No automation configuration available.', 'error');
+        }
+
+        if (summary) {
+          const baseline = Number(summary.prizeBudget?.baseline ?? rewardsSettings.revenueBaseline);
+          const percent = Number(summary.prizeBudget?.percent ?? rewardsSettings.budgetPercent);
+          const pool = Number(summary.prizeBudget?.pool ?? (baseline * percent) / 100);
+          rewardsSummaryData = {
+            ...summary,
+            prizeBudget: {
+              baseline,
+              percent,
+              pool,
+            },
+          };
+          renderRewardsSummary();
+          const summaryMessage = summary.updatedAt
+            ? `Summary refreshed ${formatDate(summary.updatedAt)}.`
+            : 'Summary loaded.';
+          setStatus(rewardsSummaryStatus, summaryMessage, 'success');
+          if (!rewardsWinnersData.length && Array.isArray(summary.latestWinners)) {
+            rewardsWinnersData = summary.latestWinners;
+            renderRewardsWinners();
+          }
+        } else {
+          setStatus(rewardsSummaryStatus, 'No summary data returned.', 'error');
+        }
+      } else {
+        const message = settingsResult.reason?.message || 'Unable to load reward settings.';
+        setStatus(rewardsBudgetStatus, message, 'error');
+        setStatus(rewardsOddsStatus, message, 'error');
+        setStatus(rewardsAutomationStatus, message, 'error');
+        setStatus(rewardsSummaryStatus, message, 'error');
+      }
+
+      if (winnersResult.status === 'fulfilled') {
+        const winners = Array.isArray(winnersResult.value?.winners) ? winnersResult.value.winners : [];
+        rewardsWinnersData = winners;
+        renderRewardsWinners();
+        if (winners.length) {
+          setStatus(rewardsWinnersStatus, `Loaded ${winners.length} winners.`, 'success');
+        } else {
+          setStatus(rewardsWinnersStatus, 'No winners recorded yet.', '');
+        }
+        updateAutomationBulletin();
+      } else {
+        if (!rewardsWinnersData.length && rewardsSummaryData?.latestWinners?.length) {
+          rewardsWinnersData = rewardsSummaryData.latestWinners;
+          renderRewardsWinners();
+          updateAutomationBulletin();
+        }
+        const message = winnersResult.reason?.message || 'Unable to load winners.';
+        setStatus(rewardsWinnersStatus, message, 'error');
+      }
+
+      if (eventsResult.status === 'fulfilled') {
+        const eventsPayload = eventsResult.value?.events || {};
+        rewardsEventsData = {
+          flashEvents: Array.isArray(eventsPayload.flashEvents) ? eventsPayload.flashEvents : [],
+          expiringPieces: Array.isArray(eventsPayload.expiringPieces) ? eventsPayload.expiringPieces : [],
+          streakBoosts: Array.isArray(eventsPayload.streakBoosts) ? eventsPayload.streakBoosts : [],
+          marketingMoments: Array.isArray(eventsPayload.marketingMoments) ? eventsPayload.marketingMoments : [],
+        };
+        renderRewardEvents();
+        updateAutomationBulletin();
+        const totalEvents =
+          rewardsEventsData.flashEvents.length +
+          rewardsEventsData.expiringPieces.length +
+          rewardsEventsData.streakBoosts.length +
+          rewardsEventsData.marketingMoments.length;
+        const eventsMessage = totalEvents
+          ? `Loaded ${totalEvents} active event${totalEvents === 1 ? '' : 's'}.`
+          : 'No active reward events.';
+        setStatus(rewardsEventsStatus, eventsMessage, totalEvents ? 'success' : '');
+      } else {
+        const message = eventsResult.reason?.message || 'Unable to load reward events.';
+        setStatus(rewardsEventsStatus, message, 'error');
+      }
+    } catch (error) {
+      const message = error.message || 'Unable to load rewards data.';
+      setStatus(rewardsBudgetStatus, message, 'error');
+      setStatus(rewardsOddsStatus, message, 'error');
+      setStatus(rewardsAutomationStatus, message, 'error');
+      setStatus(rewardsSummaryStatus, message, 'error');
+      setStatus(rewardsWinnersStatus, message, 'error');
+      setStatus(rewardsEventsStatus, message, 'error');
+    }
   }
 
   const automationToggles = [
@@ -1303,7 +1804,6 @@
     if (!element) {
       return;
     }
-    element.checked = !!rewardsAutomation[key];
     element.addEventListener('change', () => {
       rewardsAutomation[key] = element.checked;
       updateAutomationSummary();
@@ -1312,13 +1812,36 @@
     });
   });
 
+  syncAutomationToggles();
   if (saveRewardsAutomationButton) {
-    saveRewardsAutomationButton.addEventListener('click', () => {
-      const activeCount = Object.values(rewardsAutomation).filter(Boolean).length;
-      const message = activeCount
-        ? `Saved. ${activeCount} engagement program${activeCount === 1 ? '' : 's'} are now scheduled.`
-        : 'Saved. All automations paused.';
-      setStatus(rewardsAutomationStatus, message, 'success');
+    saveRewardsAutomationButton.addEventListener('click', async () => {
+      setStatus(rewardsAutomationStatus, 'Saving automations…');
+      try {
+        const payload = {
+          ...buildAutomationPayload(),
+          updatedBy: 'admin-dashboard',
+        };
+        const response = await fetchJson('/api/rewards/automation', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const updated = response?.automation;
+        if (!updated) {
+          throw new Error('Rewards service did not return updated automation settings.');
+        }
+        Object.assign(rewardsAutomation, updated);
+        syncAutomationToggles();
+        updateAutomationSummary();
+        updateAutomationBulletin();
+        const activeCount = Object.values(buildAutomationPayload()).filter(Boolean).length;
+        const message = activeCount
+          ? `Saved. ${activeCount} engagement program${activeCount === 1 ? '' : 's'} are now scheduled.`
+          : 'Saved. All automations paused.';
+        setStatus(rewardsAutomationStatus, message, 'success');
+      } catch (error) {
+        setStatus(rewardsAutomationStatus, error.message || 'Failed to save automations.', 'error');
+      }
     });
   }
 
@@ -1342,6 +1865,7 @@
 
   initializeMenu();
   initializeStoreMap();
+  loadRewardsOverview();
   loadProfiles();
   loadOrders();
 })();
