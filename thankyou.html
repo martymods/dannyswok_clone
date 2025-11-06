@@ -1810,12 +1810,12 @@
 
       <div class="status-grid">
         <div class="status-card">
-          <h2>Relax, your driver is getting ready</h2>
-          <p>We’re preparing your world-famous dishes and syncing with your driver. Keep an eye on the live countdown while we ready your order.</p>
+          <h2 id="statusHeadline">Relax, your driver is getting ready</h2>
+          <p id="statusDescription">We’re preparing your world-famous dishes and syncing with your driver. Keep an eye on the live countdown while we ready your order.</p>
         </div>
         <div class="status-card status-card--accent">
-          <h2>Delivery window</h2>
-          <p>Your meal will be ready for pickup at <span id="readyTime"></span> and on its way to you shortly after.</p>
+          <h2 id="statusWindowTitle">Delivery window</h2>
+          <p id="statusWindowDescription">Your meal will be ready for pickup at <span id="readyTime"></span> and on its way to you shortly after.</p>
         </div>
       </div>
 
@@ -1853,7 +1853,7 @@
         </div>
       </section>
 
-      <p class="footnote">You’ll receive a notification when your driver leaves our kitchen. Feel free to keep this tab open and watch the countdown—your world of flavor is on the way!</p>
+      <p class="footnote" id="statusFootnote">You’ll receive a notification when your driver leaves our kitchen. Feel free to keep this tab open and watch the countdown—your world of flavor is on the way!</p>
     </div>
 
     <section class="merch-upsell" aria-labelledby="merchTitle">
@@ -13304,7 +13304,87 @@ const quotes = [
       }
     }
 
+    const fulfilmentMessaging = {
+      delivery: {
+        headline: "Relax, your driver is getting ready",
+        description:
+          "We’re preparing your world-famous dishes and syncing with your driver. Keep an eye on the live countdown while we ready your order.",
+        windowTitle: 'Delivery window',
+        windowDescription: {
+          before: 'Your meal will be ready for pickup at ',
+          after: ' and on its way to you shortly after.',
+        },
+        fallbackWindowDescription:
+          'Your meal will be ready for pickup soon and on its way to you shortly after.',
+        footnote:
+          "You’ll receive a notification when your driver leaves our kitchen. Feel free to keep this tab open and watch the countdown—your world of flavor is on the way!",
+      },
+      pickup: {
+        headline: 'Hang tight—your pickup is almost ready',
+        description:
+          'We’re finishing up your order and counting down to when it hits the pickup shelf. Watch the timer so you can swing by right on time.',
+        windowTitle: 'Pickup time',
+        windowDescription: {
+          before: 'Your meal will be ready for pickup at ',
+          after: '. Stop by the counter as soon as the countdown reaches zero.',
+        },
+        fallbackWindowDescription:
+          'Your meal will be ready for pickup soon. Stop by the counter as soon as the countdown reaches zero.',
+        footnote:
+          'We’ll let you know the moment your order is bagged and waiting. Keep this tab open for the latest updates, then head over when you’re ready.',
+      },
+    };
+
+    function applyFulfilmentMessaging(order) {
+      const fulfilmentRaw = typeof order?.fulfilment === 'string' ? order.fulfilment.trim().toLowerCase() : '';
+      const mode = fulfilmentRaw === 'pickup' ? 'pickup' : 'delivery';
+      const messaging = fulfilmentMessaging[mode];
+
+      const headlineElement = document.getElementById('statusHeadline');
+      if (headlineElement) {
+        headlineElement.textContent = messaging.headline;
+      }
+
+      const descriptionElement = document.getElementById('statusDescription');
+      if (descriptionElement) {
+        descriptionElement.textContent = messaging.description;
+      }
+
+      const windowTitleElement = document.getElementById('statusWindowTitle');
+      if (windowTitleElement) {
+        windowTitleElement.textContent = messaging.windowTitle;
+      }
+
+      const windowDescriptionElement = document.getElementById('statusWindowDescription');
+      if (windowDescriptionElement) {
+        const readyTimeElement = document.getElementById('readyTime');
+        if (readyTimeElement) {
+          const beforeText = messaging.windowDescription?.before || '';
+          const afterText = messaging.windowDescription?.after || '';
+          windowDescriptionElement.textContent = '';
+          if (beforeText) {
+            windowDescriptionElement.append(document.createTextNode(beforeText));
+          }
+          windowDescriptionElement.append(readyTimeElement);
+          if (afterText) {
+            windowDescriptionElement.append(document.createTextNode(afterText));
+          }
+        } else {
+          const fallback = messaging.fallbackWindowDescription || '';
+          if (fallback) {
+            windowDescriptionElement.textContent = fallback;
+          }
+        }
+      }
+
+      const footnoteElement = document.getElementById('statusFootnote');
+      if (footnoteElement) {
+        footnoteElement.textContent = messaging.footnote;
+      }
+    }
+
     const storedOrder = normalizeOrder(getStoredOrder());
+    applyFulfilmentMessaging(storedOrder);
     if (storedOrder) {
       renderReceipt(storedOrder);
       addOrderToHistory(storedOrder);
