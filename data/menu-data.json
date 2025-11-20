@@ -807,72 +807,87 @@
     "id": "whole-wings",
     "name": "Whole Wings",
     "items": [
-      {
-        "id": "W4",
-        "name": "4 Chicken Wings",
-        "description": "Four whole chicken wings fried crisp and seasoned.",
-        "price": 6.6
-      },
-      {
-        "id": "W8",
-        "name": "8 Chicken Wings",
-        "description": "Eight whole wings fried to order with a crunchy coating.",
-        "price": 13.2
-      },
-      {
-        "id": "W12",
-        "name": "12 Chicken Wings",
-        "description": "A dozen whole wings fried golden and juicy.",
-        "price": 19.8
-      },
-      {
-        "id": "W16",
-        "name": "16 Chicken Wings",
-        "description": "Sixteen crispy whole wings perfect for sharing.",
-        "price": 26.4
-      },
-      {
-        "id": "W20",
-        "name": "20 Chicken Wings",
-        "description": "Twenty whole wings fried crisp with house seasoning.",
-        "price": 33
-      }
+    { "id": "W4",   "name": "4 Chicken Wings",   "description": "Four whole chicken wings fried crisp and seasoned.", "price": 7.40 },
+    { "id": "W5",   "name": "5 Chicken Wings",   "description": "Five whole wings fried crisp with house seasoning.", "price": 9.15 },
+    { "id": "W6",   "name": "6 Chicken Wings",   "description": "Six whole wings fried golden and juicy.", "price": 11.00 },
+    { "id": "W7",   "name": "7 Chicken Wings",   "description": "Seven crispy whole wings with house seasoning.", "price": 12.85 },
+    { "id": "W8",   "name": "8 Chicken Wings",   "description": "Eight whole wings fried to order with a crunchy coating.", "price": 14.65 },
+    { "id": "W9",   "name": "9 Chicken Wings",   "description": "Nine whole wings fried crisp and seasoned.", "price": 16.50 },
+    { "id": "W10",  "name": "10 Chicken Wings",  "description": "Ten whole wings fried golden and juicy.", "price": 18.35 },
+    { "id": "W11",  "name": "11 Chicken Wings",  "description": "Eleven crispy whole wings with house seasoning.", "price": 20.15 },
+    { "id": "W12",  "name": "12 Chicken Wings",  "description": "A dozen whole wings fried golden and juicy.", "price": 22.00 },
+    { "id": "W13",  "name": "13 Chicken Wings",  "description": "Thirteen whole wings fried crisp and seasoned.", "price": 23.80 },
+    { "id": "W14",  "name": "14 Chicken Wings",  "description": "Fourteen whole wings with a crunchy golden coating.", "price": 25.60 },
+    { "id": "W15",  "name": "15 Chicken Wings",  "description": "Fifteen crispy whole wings perfect for snacking.", "price": 27.45 },
+    { "id": "W16",  "name": "16 Chicken Wings",  "description": "Sixteen crispy whole wings perfect for sharing.", "price": 29.30 },
+    { "id": "W17",  "name": "17 Chicken Wings",  "description": "Seventeen whole wings fried crisp with house seasoning.", "price": 31.10 },
+    { "id": "W18",  "name": "18 Chicken Wings",  "description": "Eighteen golden fried whole wings.", "price": 32.95 },
+    { "id": "W19",  "name": "19 Chicken Wings",  "description": "Nineteen whole wings fried crisp and juicy.", "price": 34.80 },
+    { "id": "W20",  "name": "20 Chicken Wings",  "description": "Twenty whole wings fried crisp with house seasoning.", "price": 36.65 },
+
+    { "id": "W21",  "name": "21 Chicken Wings",  "description": "Twenty-one crispy whole wings for hungry guests.", "price": 38.45 },
+    { "id": "W22",  "name": "22 Chicken Wings",  "description": "Twenty-two whole wings fried golden and seasoned.", "price": 40.30 },
+    { "id": "W23",  "name": "23 Chicken Wings",  "description": "Twenty-three whole wings with a crunchy coating.", "price": 42.15 },
+    { "id": "W24",  "name": "24 Chicken Wings",  "description": "Twenty-four crispy whole wings perfect for sharing.", "price": 44.00 },
+    { "id": "W25",  "name": "25 Chicken Wings",  "description": "Twenty-five whole wings fried crisp and juicy.", "price": 45.75 },
+    { "id": "W26",  "name": "26 Chicken Wings",  "description": "Twenty-six golden fried whole wings.", "price": 47.60 },
+    { "id": "W27",  "name": "27 Chicken Wings",  "description": "Twenty-seven crispy whole wings with house seasoning.", "price": 49.45 },
+    { "id": "W28",  "name": "28 Chicken Wings",  "description": "Twenty-eight whole wings fried crisp and seasoned.", "price": 51.30 },
+    { "id": "W29",  "name": "29 Chicken Wings",  "description": "Twenty-nine whole wings fried golden and juicy.", "price": 53.10 },
+    { "id": "W30",  "name": "30 Chicken Wings",  "description": "Thirty whole wings fried crisp with house seasoning.", "price": 55.00 },
+
+    { "id": "W35",  "name": "35 Chicken Wings",  "description": "Thirty-five whole wings for a small gathering.", "price": 64.00 },
+    { "id": "W40",  "name": "40 Chicken Wings",  "description": "Forty whole wings fried crisp with house seasoning.", "price": 73.25 },
+    { "id": "W45",  "name": "45 Chicken Wings",  "description": "Forty-five crispy whole wings for sharing.", "price": 82.50 },
+    { "id": "W50",  "name": "50 Chicken Wings",  "description": "Fifty whole wings seasoned and fried to perfection.", "price": 91.50 },
+
+    { "id": "W60",  "name": "60 Chicken Wings",  "description": "Sixty crispy whole wings for big appetites.", "price": 110.00 },
+    { "id": "W70",  "name": "70 Chicken Wings",  "description": "Seventy crispy whole wings for a wing feast.", "price": 128.00 },
+    { "id": "W75",  "name": "75 Chicken Wings",  "description": "Seventy-five whole wings for parties and events.", "price": 137.50 },
+    { "id": "W80",  "name": "80 Chicken Wings",  "description": "Eighty seasoned whole wings fried golden.", "price": 146.50 },
+    { "id": "W90",  "name": "90 Chicken Wings",  "description": "Ninety crispy whole wings for a serious crowd.", "price": 165.00 },
+    { "id": "W100", "name": "100 Chicken Wings", "description": "A full tray of one hundred crispy whole wings.", "price": 183.50 },
+
+    { "id": "W120", "name": "120 Chicken Wings", "description": "One hundred twenty whole wings, fried to order.", "price": 220.00 },
+    { "id": "W125", "name": "125 Chicken Wings", "description": "One hundred twenty-five whole wings for large groups.", "price": 229.00 },
+    { "id": "W150", "name": "150 Chicken Wings", "description": "One hundred fifty wings for large gatherings.", "price": 274.75 },
+    { "id": "W180", "name": "180 Chicken Wings", "description": "One hundred eighty crispy whole wings.", "price": 330.00 },
+    { "id": "W200", "name": "200 Chicken Wings", "description": "Two hundred wings — bulk order special.", "price": 366.00 },
+
+    { "id": "W220", "name": "220 Chicken Wings", "description": "Two hundred twenty wings seasoned and crispy.", "price": 403.00 },
+    { "id": "W250", "name": "250 Chicken Wings", "description": "Two hundred fifty-piece party wing tray.", "price": 458.00 },
+    { "id": "W280", "name": "280 Chicken Wings", "description": "Two hundred eighty wings for serious crowd-pleasing.", "price": 513.00 },
+    { "id": "W300", "name": "300 Chicken Wings", "description": "Three hundred crispy whole wings — event catering level.", "price": 549.50 },
+    { "id": "W350", "name": "350 Chicken Wings", "description": "Three hundred fifty wings for big events and parties.", "price": 641.00 },
+    { "id": "W400", "name": "400 Chicken Wings", "description": "Four hundred whole wings for large catering orders.", "price": 732.50 },
+    { "id": "W450", "name": "450 Chicken Wings", "description": "Four hundred fifty wings to feed a serious crowd.", "price": 824.00 },
+    { "id": "W500", "name": "500 Chicken Wings", "description": "Five hundred crispy whole wings — maximum party tray.", "price": 973.50 }
     ]
   },
   {
     "id": "party-wing-dings",
     "name": "Party Wing Dings",
     "items": [
-      {
-        "id": "PD12",
-        "name": "12 Wing Dings",
-        "description": "Twelve breaded wing pieces fried crunchy.",
-        "price": 9.85
-      },
-      {
-        "id": "PD20",
-        "name": "20 Wing Dings",
-        "description": "Twenty wing dings fried crisp for snacking.",
-        "price": 16.4
-      },
-      {
-        "id": "PD30",
-        "name": "30 Wing Dings",
-        "description": "Thirty bite-size wing sections fried golden.",
-        "price": 24.6
-      },
-      {
-        "id": "PD50",
-        "name": "50 Wing Dings",
-        "description": "Fifty crispy wing dings ideal for gatherings.",
-        "price": 41
-      },
-      {
-        "id": "PD100",
-        "name": "100 Wing Dings",
-        "description": "One hundred seasoned wing dings fried to a crunch.",
-        "price": 82
-      }
+    { "id": "PD12",   "name": "12 Wing Dings",   "description": "Twelve breaded wing pieces fried crunchy.",                "price": 9.85 },
+    { "id": "PD20",   "name": "20 Wing Dings",   "description": "Twenty wing dings fried crisp for snacking.",              "price": 16.45 },
+    { "id": "PD30",   "name": "30 Wing Dings",   "description": "Thirty bite-size wing sections fried golden.",             "price": 24.70 },
+    { "id": "PD50",   "name": "50 Wing Dings",   "description": "Fifty crispy wing dings ideal for gatherings.",            "price": 41.30 },
+    { "id": "PD100",  "name": "100 Wing Dings",  "description": "One hundred seasoned wing dings fried to a crunch.",       "price": 83.40 },
+
+    { "id": "PD150",  "name": "150 Wing Dings",  "description": "One hundred fifty crunchy wing dings for parties.",        "price": 126.20 },
+    { "id": "PD200",  "name": "200 Wing Dings",  "description": "Two hundred crispy wing dings for larger events.",         "price": 169.75 },
+    { "id": "PD250",  "name": "250 Wing Dings",  "description": "Two hundred fifty wing dings for serious snack tables.",   "price": 214.00 },
+    { "id": "PD300",  "name": "300 Wing Dings",  "description": "Three hundred golden wing dings for big crowds.",          "price": 259.05 },
+    { "id": "PD350",  "name": "350 Wing Dings",  "description": "Three hundred fifty crunchy wing dings for events.",       "price": 304.80 },
+    { "id": "PD400",  "name": "400 Wing Dings",  "description": "Four hundred seasoned wing dings for catering trays.",     "price": 351.30 },
+    { "id": "PD450",  "name": "450 Wing Dings",  "description": "Four hundred fifty wing dings to feed a hungry crowd.",    "price": 398.55 },
+
+    { "id": "PD500",  "name": "500 Wing Dings",  "description": "Five hundred crispy wing dings — party package.",          "price": 446.55 },
+    { "id": "PD600",  "name": "600 Wing Dings",  "description": "Six hundred wing dings, perfect for large functions.",     "price": 544.75 },
+    { "id": "PD700",  "name": "700 Wing Dings",  "description": "Seven hundred seasoned wing dings for big celebrations.",  "price": 645.90 },
+    { "id": "PD800",  "name": "800 Wing Dings",  "description": "Eight hundred crunchy wing dings for major events.",       "price": 750.00 },
+    { "id": "PD900",  "name": "900 Wing Dings",  "description": "Nine hundred wing dings for wall-to-wall wing lovers.",    "price": 857.10 },
+    { "id": "PD1000", "name": "1000 Wing Dings", "description": "One thousand crispy wing dings — full-on catering level.", "price": 967.10 }
     ]
   },
   {
