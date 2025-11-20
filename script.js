@@ -1589,15 +1589,31 @@ const DEFAULT_MENU_DATA = [
    ],
   },
   {
-    id: 'party-wing-dings',
-    name: 'Party Wing Dings',
-    items: [
-      { id: 'PD12', name: '12 Wing Dings', description: 'Twelve breaded wing pieces fried crunchy.', price: 9.85 },
-      { id: 'PD20', name: '20 Wing Dings', description: 'Twenty wing dings fried crisp for snacking.', price: 16.40 },
-      { id: 'PD30', name: '30 Wing Dings', description: 'Thirty bite-size wing sections fried golden.', price: 24.60 },
-      { id: 'PD50', name: '50 Wing Dings', description: 'Fifty crispy wing dings ideal for gatherings.', price: 41.00 },
-      { id: 'PD100', name: '100 Wing Dings', description: 'One hundred seasoned wing dings fried to a crunch.', price: 82.00 },
-    ],
+  id: 'party-wing-dings',
+  name: 'Party Wing Dings',
+  items: [
+    { id: 'PD12',   name: '12 Wing Dings',   description: 'Twelve breaded wing pieces fried crunchy.',                price: 9.85 },
+    { id: 'PD20',   name: '20 Wing Dings',   description: 'Twenty wing dings fried crisp for snacking.',              price: 16.45 },
+    { id: 'PD30',   name: '30 Wing Dings',   description: 'Thirty bite-size wing sections fried golden.',             price: 24.70 },
+    { id: 'PD50',   name: '50 Wing Dings',   description: 'Fifty crispy wing dings ideal for gatherings.',            price: 41.30 },
+    { id: 'PD100',  name: '100 Wing Dings',  description: 'One hundred seasoned wing dings fried to a crunch.',       price: 83.40 },
+
+    { id: 'PD150',  name: '150 Wing Dings',  description: 'One hundred fifty crunchy wing dings for parties.',        price: 126.20 },
+    { id: 'PD200',  name: '200 Wing Dings',  description: 'Two hundred crispy wing dings for larger events.',         price: 169.75 },
+    { id: 'PD250',  name: '250 Wing Dings',  description: 'Two hundred fifty wing dings for serious snack tables.',   price: 214.00 },
+    { id: 'PD300',  name: '300 Wing Dings',  description: 'Three hundred golden wing dings for big crowds.',          price: 259.05 },
+    { id: 'PD350',  name: '350 Wing Dings',  description: 'Three hundred fifty crunchy wing dings for events.',       price: 304.80 },
+    { id: 'PD400',  name: '400 Wing Dings',  description: 'Four hundred seasoned wing dings for catering trays.',     price: 351.30 },
+    { id: 'PD450',  name: '450 Wing Dings',  description: 'Four hundred fifty wing dings to feed a hungry crowd.',    price: 398.55 },
+
+    // Higher trays with gradually higher margin (up to ~19% at 1000)
+    { id: 'PD500',  name: '500 Wing Dings',  description: 'Five hundred crispy wing dings — party package.',          price: 446.55 },
+    { id: 'PD600',  name: '600 Wing Dings',  description: 'Six hundred wing dings, perfect for large functions.',     price: 544.75 },
+    { id: 'PD700',  name: '700 Wing Dings',  description: 'Seven hundred seasoned wing dings for big celebrations.',  price: 645.90 },
+    { id: 'PD800',  name: '800 Wing Dings',  description: 'Eight hundred crunchy wing dings for major events.',       price: 750.00 },
+    { id: 'PD900',  name: '900 Wing Dings',  description: 'Nine hundred wing dings for wall-to-wall wing lovers.',    price: 857.10 },
+    { id: 'PD1000', name: '1000 Wing Dings', description: 'One thousand crispy wing dings — full-on catering level.', price: 967.10 },
+  ],
   },
   {
     id: 'lunch-special',
