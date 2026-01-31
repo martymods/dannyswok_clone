@@ -3,6 +3,40 @@
   const storeSelectSound = typeof Audio === 'function' ? new Audio('audio/ui_map_nav.mp3') : null;
   const analyticsApi = window.DannysAnalytics || null;
 
+  function resolveApiBase() {
+    const globalObject = typeof window !== 'undefined' ? window : globalThis;
+    const candidateKeys = [
+      'DELCO_BACKEND_BASE',
+      'DANNYS_WOK_BACKEND_BASE',
+      'DANNYSWOK_BACKEND_BASE',
+    ];
+    for (const key of candidateKeys) {
+      const value = globalObject && typeof globalObject[key] === 'string' ? globalObject[key].trim() : '';
+      if (value) {
+        return value;
+      }
+    }
+    const origin = globalObject?.location?.origin;
+    if (typeof origin === 'string' && origin.trim()) {
+      const trimmedOrigin = origin.trim();
+      if (/localhost|127\.0\.0\.1|::1/.test(trimmedOrigin)) {
+        return trimmedOrigin;
+      }
+    }
+    return 'https://www.delcotechdivision.com';
+  }
+
+  const API_BASE = resolveApiBase();
+
+  function buildApiUrl(path) {
+    const trimmedBase = typeof API_BASE === 'string' ? API_BASE.replace(/\/+$/, '') : '';
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    if (trimmedBase) {
+      return `${trimmedBase}${normalizedPath}`;
+    }
+    return normalizedPath;
+  }
+
   const DEFAULT_STORES = [
     {
       id: 'southwest',
@@ -48,7 +82,7 @@
 
   async function loadStoreData() {
     try {
-      const response = await fetch('/api/menu/stores', { cache: 'no-store' });
+      const response = await fetch(buildApiUrl('/api/menu/stores'), { cache: 'no-store' });
       if (response.ok) {
         const data = await response.json();
         if (data && Array.isArray(data.stores) && data.stores.length) {
